@@ -39,3 +39,7 @@ authz: interface.py (Principal, PrincipalKind, AuthorizedScope), scope.py (RepoF
 ### 2026-09-19T00:17:30Z · COMMIT · myan · claude-code/opus-5 · parent:91b31fd
 feat(authz): leased authorization scope, row predicate and fenced refresh
 12 files changed, 884 insertions(+), 1 deletion(-)
+
+### 2026-09-19T00:18:05Z · COMMIT · myan · claude-code/opus-5 · parent:6d17d75
+docs(authz): verify the contract card against the landed interface
+1 file changed, 22 insertions(+), 10 deletions(-)

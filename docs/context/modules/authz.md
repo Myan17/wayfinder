@@ -24,8 +24,11 @@ verified_on: 2026-09-18
 
 # authz
 
-> Worked example of a contract card. Written before the code so the shape is agreed first; the hash
-> and `verified_at` are filled in by the first pull request that lands the interface.
+> **Implementation status (2026-09-18):** the pure kernel has landed — `build_scope`,
+> `sql_predicate`, `assert_rows_authorized`, the fenced refresh, and `FixtureAuthz`. Still to come in
+> this module: `resolve_principal` (needs sessions), `authorized_repos` (needs the database layer) and
+> `reauthorize_manifest` (needs stored evidence manifests). Those three are marked below; everything
+> else on this card is real and pinned by a test.
 
 ## Purpose
 
@@ -40,9 +43,14 @@ class Principal(Protocol):
     id: int
     kind: Literal["user", "anonymous"]
 
-async def resolve_principal(request) -> Principal: ...
+async def resolve_principal(request) -> Principal: ...        # NOT YET IMPLEMENTED (needs sessions)
 
-async def authorized_repos(principal: Principal) -> AuthorizedScope: ...
+async def authorized_repos(principal: Principal) -> AuthorizedScope: ...   # NOT YET IMPLEMENTED (needs the DB layer)
+# Landed today, and what `authorized_repos` will be built from:
+def build_scope(principal, *, facts, grants, grants_valid_until, now, policy_revision=0) -> AuthorizedScope: ...
+def start_refresh(state) -> RefreshToken: ...
+def apply_refresh(state, token, *, fetched, complete, now, lease) -> RefreshResult: ...
+def invalidate_repo(state, *, repo_id, now) -> AccessState: ...
 # AuthorizedScope carries: granted_repo_ids: list[int]
 #                          policy_revision: int
 #                          degraded: list[str]        # e.g. ["permissions_public_only"]
@@ -55,7 +63,7 @@ def sql_predicate(alias: str, scope: AuthorizedScope) -> tuple[str, dict]: ...
 async def assert_rows_authorized(rows, scope) -> None: ...
 # Post-retrieval defence in depth; raises AuthorizationViolation and increments the alert counter.
 
-async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> ManifestVerdict: ...
+async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> ManifestVerdict: ...  # NOT YET IMPLEMENTED
 # For cached answers, stored traces and source expansion.
 ```
 
@@ -102,11 +110,15 @@ touching these needs a BCR.
 
 | Test | Pins |
 |---|---|
-| `apps/api/tests/authz/test_predicate.py::test_expired_visibility_denies` | Lease expiry denies public repositories |
-| `apps/api/tests/authz/test_events.py::test_team_event_drops_grants` | 5-second bound for team-scoped revocation |
-| `apps/api/tests/authz/test_refresh.py::test_stale_refresh_rejected` | Revision fencing |
-| `apps/api/tests/authz/test_manifest.py::test_revoked_artifact_denied` | Artifact re-authorization |
-| `apps/api/tests/authz/test_state_machine.py` | Sequence behaviour against the independent oracle |
+| `test_scope.py::test_expired_visibility_lease_denies_a_public_repository` | Lease expiry denies public repositories |
+| `test_scope.py::test_denied_serving_state_beats_a_valid_grant` | Synchronous denial outranks a grant |
+| `test_scope.py::test_scope_expires_at_the_earliest_lease_it_depends_on` | Scope lifetime |
+| `test_predicate.py::test_empty_scope_produces_a_predicate_that_matches_nothing` | Fail closed |
+| `test_predicate.py::test_assertion_accepts_exactly_the_rows_the_scope_allows` | Property: assertion agrees with the scope |
+| `test_refresh.py::test_refresh_is_rejected_when_the_revision_moved_while_it_was_fetching` | Revision fencing (WF-02) |
+| `test_refresh.py::test_partial_pagination_is_never_treated_as_success` | All-or-nothing refresh |
+| `test_fake_matches_contract.py` | The fake is never more permissive than the real logic |
+| _planned_ `test_events.py`, `test_manifest.py`, `test_state_machine.py` | Webhook bound, artifact re-authorization, sequences |
 
 ## Fake
 
