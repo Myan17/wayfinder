@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Two jobs, both required by AGENTS.md:
+#   §6 — add and validate the identity trailers
+#   §5 — warn early if the branch has no task log (the post-commit hook writes the COMMIT entry)
+# Install once per clone/worktree:  git config core.hooksPath .githooks
+set -euo pipefail
+MSG_FILE="$1"
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+source scripts/lib.sh
+
+MSG="$(head -1 "$MSG_FILE")"
+case "$MSG" in "fixup!"*|"squash!"*) exit 0 ;; esac
+# Skip while git is replaying commits: rebase, cherry-pick and merge all reuse existing messages.
+for marker in rebase-merge rebase-apply CHERRY_PICK_HEAD MERGE_HEAD; do
+  if [[ -e "$(git rev-parse --git-path "$marker")" ]]; then exit 0; fi
+done
+
+OP="$(operator)"; AGENT="$(agent)"; SESSION="$(session)"
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+TASK="$(echo "$BRANCH" | tr '/' '-')"
+
+# ── 1. subject convention ────────────────────────────────────────────────────
+if ! echo "$MSG" | grep -qE '^(feat|fix|docs|test|refactor|perf|build|ci|chore|revert)\([a-z0-9-]+\)!?: .{3,}'; then
+  cat >&2 <<EOF
+commit-msg: subject must be Conventional Commits with a module scope, e.g.
+  feat(authz): evaluate allowed() with visibility leases
+got: $MSG
+EOF
+  exit 1
+fi
+
+# ── 2. identity trailers ─────────────────────────────────────────────────────
+printf '\n' >> "$MSG_FILE"
+add_trailer() { grep -qE "^$1:" "$MSG_FILE" || printf '%s: %s\n' "$1" "$2" >> "$MSG_FILE"; }
+add_trailer "Agent" "$AGENT"
+add_trailer "Operator" "$OP"
+add_trailer "Session" "$SESSION"
+add_trailer "Task" "$TASK"
+if [[ "$AGENT" == claude-code/* ]]; then
+  add_trailer "Co-Authored-By" "Claude Opus 5 (1M context) <noreply@anthropic.com>"
+fi
+if [[ "$AGENT" == "human" ]]; then
+  echo "commit-msg: note — WAYFINDER_AGENT unset, recording this commit as human-authored." >&2
+fi
+
+# ── 3. task log must exist (post-commit writes the entry) ────────────────────
+LOG="$(log_path "$TASK")"
+if [[ ! -f "$LOG" ]]; then
+  echo "commit-msg: no task log at $LOG — branch '$BRANCH' was not started with scripts/new-task.sh." >&2
+  echo "            CI will reject this pull request (AGENTS.md §5)." >&2
+fi

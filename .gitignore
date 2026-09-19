@@ -1,0 +1,32 @@
+# secrets — never commit; see .env.example
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# go
+apps/ingestd/bin/
+*.test
+
+# node
+node_modules/
+.next/
+out/
+
+# local state
+*.sqlite
+*.db
+.DS_Store
+clones/
+eval/results/local/

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Appends the COMMIT entry to the task log and folds it into the commit it describes (AGENTS.md §5).
+#
+# Why post-commit and not commit-msg: `git add` during commit-msg lands in the index, not in the
+# commit being written — git has already built the tree by then. So we append, then amend with hooks
+# disabled (no recursion). The entry records `parent:<sha>`, which an amend does not change, so the
+# log stays accurate afterwards.
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+source scripts/lib.sh
+
+# Never rewrite history git is already replaying, and never rewrite a commit that has been published.
+for marker in rebase-merge rebase-apply CHERRY_PICK_HEAD MERGE_HEAD BISECT_LOG; do
+  if [[ -e "$(git rev-parse --git-path "$marker")" ]]; then exit 0; fi
+done
+if [[ "${WAYFINDER_NO_AMEND:-}" == "1" ]]; then exit 0; fi
+
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+TASK="$(echo "$BRANCH" | tr '/' '-')"
+LOG="$(log_path "$TASK")"
+[[ -f "$LOG" ]] || exit 0                      # unmanaged branch; CI flags it
+
+SHA="$(git rev-parse --short HEAD)"
+PARENT="$(git rev-parse --short HEAD^ 2>/dev/null || echo root)"
+SUBJECT="$(git log -1 --format=%s)"
+STAT="$(git show --stat --format="" HEAD | tail -1 | sed 's/^ *//')"
+
+# Idempotence: if this commit already logged itself, stop (an amend re-fires post-commit).
+if git show "HEAD:$LOG" 2>/dev/null | tail -20 | grep -qF "$SUBJECT" \
+   && git show "HEAD:$LOG" 2>/dev/null | tail -20 | grep -q "· COMMIT ·"; then
+  exit 0
+fi
+
+if [[ -n "$(git branch -r --contains HEAD 2>/dev/null)" ]]; then
+  # Already pushed: appending is safe, amending is not.
+  {
+    printf '\n### %s · COMMIT · %s · %s · parent:%s\n' "$(now_utc)" "$(operator)" "$(agent)" "$PARENT"
+    printf '%s\n%s\n' "$SUBJECT" "$STAT"
+  } >> "$LOG"
+  echo "post-commit: $SHA is already pushed; log entry appended but NOT folded in — commit $LOG separately." >&2
+  exit 0
+fi
+
+{
+  printf '\n### %s · COMMIT · %s · %s · parent:%s\n' "$(now_utc)" "$(operator)" "$(agent)" "$PARENT"
+  printf '%s\n%s\n' "$SUBJECT" "$STAT"
+} >> "$LOG"
+git add "$LOG"
+git -c core.hooksPath=/dev/null commit --amend --no-edit --no-verify --quiet

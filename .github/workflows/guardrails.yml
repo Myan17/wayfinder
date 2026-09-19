@@ -1,0 +1,100 @@
+name: guardrails
+
+# Collaboration guardrails from AGENTS.md. These run on every pull request and are required checks on
+# `main`. They are deliberately cheap: they protect the process, while the suites in DESIGN §16.1
+# protect the product.
+
+on:
+  pull_request:
+    branches: [main]
+  merge_group:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # the checks compare against the merge base
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Resolve refs
+        id: refs
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          BASE=$(git merge-base "origin/$BASE_REF" HEAD)
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE head=$(git rev-parse --short HEAD)"
+
+      - name: Branch name convention
+        env:
+          BRANCH: ${{ github.head_ref }}      # via env: never interpolated into the shell command
+        run: |
+          if ! echo "$BRANCH" | grep -qE '^[a-z0-9_-]+/[a-z0-9-]+/[a-z0-9-]+$'; then
+            echo "::error::branch '$BRANCH' must be <operator>/<module>/<slug> (AGENTS.md §2.1)"
+            exit 1
+          fi
+
+      - name: Commit identity
+        run: python3 scripts/check_commit_identity.py "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}"
+
+      - name: Task scope and ownership
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python3 scripts/check_ownership.py "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}"
+
+      - name: CODEOWNERS matches ownership
+        run: python3 scripts/gen_codeowners.py --check
+
+      - name: Contract card freshness
+        run: python3 scripts/check_context_freshness.py
+
+      - name: Agent log
+        run: python3 scripts/check_agent_log.py "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}"
+
+      - name: Schema lock
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE: ${{ steps.refs.outputs.base }}
+          HEAD: ${{ steps.refs.outputs.head }}
+        run: |
+          # Migrations already on main are immutable (DESIGN §18.3).
+          CHANGED=$(git diff --name-only --diff-filter=MD "$BASE...$HEAD" -- db/migrations || true)
+          if [ -n "$CHANGED" ]; then
+            echo "::error::migrations already merged were modified or deleted:"
+            echo "$CHANGED"
+            echo "::error::write a new migration instead"
+            exit 1
+          fi
+          if git diff --name-only "$BASE...$HEAD" -- db | grep -q .; then
+            echo "::notice::schema changed — this pull request needs BOTH owners' approval (docs/team/OWNERSHIP.md)"
+            printf '%s' "$PR_BODY" | grep -qi "schema" || \
+              echo "::warning::say in the work record what the schema change does to the other side"
+          fi
+
+      - name: Work record present
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          for section in "## Work record" "Cards read" "Evidence"; do
+            echo "$PR_BODY" | grep -qi "$section" || {
+              echo "::error::pull request body is missing '$section' — use .github/pull_request_template.md"
+              exit 1
+            }
+          done
+
+  # Placeholder for the product suites: DESIGN §16.1 maps change classes to required suites.
+  # Engineer B owns this file; the suites land as the code does.
+  required-suites:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "wire up unit / property / contract / authorization / integration suites here (DESIGN §16.1)"

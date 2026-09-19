@@ -1,0 +1,121 @@
+# Working agreement — two engineers, two agent fleets
+
+Human-facing companion to `AGENTS.md` (the agent contract) and `docs/team/OWNERSHIP.md` (modules and
+scope). Agreed before code exists so the rules are not negotiated during a disagreement.
+
+**Current shape:** `myan` implements with Claude Code; `gupta958` reviews every pull request with
+ChatGPT's help and merges it. The reviewer is the only gate between a branch and `main`, which is why
+most of this document is about making a change reviewable by someone who did not write it.
+
+## 0. Day-zero setup (both engineers, before the first task)
+
+**Repository settings** — the guardrails only bite if these are on:
+
+- Branch protection on `main`: no direct pushes, linear history, squash merge only,
+  "require review from Code Owners" = on, required checks = the `guardrails` job, dismiss stale
+  approvals on new commits.
+- Default merge message: "pull request title and description", so the work record lands on `main`.
+- Actions: pin third-party actions by commit SHA; untrusted fork pull requests get no secrets.
+
+**Each clone and each worktree**:
+
+```bash
+git config core.hooksPath .githooks
+git config wayfinder.operator <your handle>
+git config user.email <the address in docs/team/ROSTER.md>
+export WAYFINDER_AGENT="<tool>/<model>"     # in your agent's environment, not your shell profile
+```
+
+Verify the setup works before writing code: `scripts/new-task.sh` a throwaway task, commit, and check
+that the commit carries trailers and the log carries a `COMMIT` entry.
+
+## 1. What we are optimizing for
+
+Neither of us should have to read the other's code to build our own features, and a reviewer should be
+able to judge a change from the diff, the contract card and the task log — without rebuilding the
+author's context. Everything below serves that.
+
+## 2. Review protocol
+
+| Item | Rule |
+|---|---|
+| Who reviews | `gupta958`, every pull request. CODEOWNERS on `*` enforces it |
+| Size | ≤ 400 changed lines and ≤ 3 days of work. Larger changes are split before review |
+| Turnaround | First response within one working day; if you cannot, say so in the pull request so the author can re-plan |
+| What a reviewer reads | The diff, the **Work record** in the pull request, the task log, and the contract card of any interface that changed. Not the whole module |
+| Approval | A human approves. ChatGPT may draft the review — paste the diff, the work record and the relevant contract card, not the whole repository — and comments it drafts are marked `[agent-draft]` so the author knows what was machine-generated |
+| Merge | The **reviewer** merges after approval, squash, pull request body as the commit body. The author never merges their own work |
+| Security-sensitive paths | `authz`, `egress`, `webhooks`, `schema`: work through `docs/team/REVIEW-CHECKLIST-SECURITY.md` and say in writing which items were checked |
+| What the reviewer needs | Diff + work record + task log + the card of any interface that moved. If those are not enough to judge the change, that is a finding: ask for the card to be fixed rather than reading the module |
+
+### Review stances
+
+Use one of three, explicitly: **approve** (merge it), **approve with follow-up** (merge, and an issue
+is opened in the same breath), **request changes** (state the defect and the minimal fix, as the v0.2
+review did — quote the text, name the failure, propose the smallest correction).
+
+Disagreement that survives one round goes to a 15-minute call, and the outcome is written into an ADR
+or a card. Neither of us relitigates a decision that is already recorded.
+
+## 3. Cadence
+
+| When | What |
+|---|---|
+| Daily | `myan` rebases open branches on `main`; anything blocked ≥ 1 day goes to `gupta958` with the log link |
+| Per pull request | Reviewer responds within one working day, or says when they can |
+| Twice weekly, 20 min | Boundary sync: open BCRs, interfaces about to change, what lands this week and what it will cost to review |
+| End of phase | Gate report from `scripts/weekly_digest.py` plus the phase's evidence; both sign that the gate's exit criteria hold |
+| When a card goes stale | Fix it immediately — a stale card is a production risk for the other engineer, not a documentation nit |
+
+## 4. Definition of done (per task)
+
+1. Acceptance criterion from the story is demonstrated by an automated test at the right layer.
+2. The module's contract card is accurate, with `Verified-at` updated if the interface moved.
+3. The task log has `PLAN`, at least one `TEST` with real output, and a `HANDOFF`.
+4. Metrics and traces exist for any new path, under the content policy.
+5. Any design claim the change affects is edited in the same pull request.
+6. The reviewer's checklist is complete; required checks are green.
+
+## 5. Handling overlap
+
+Three cases, three answers:
+
+| Case | What we do |
+|---|---|
+| A task needs a module that already exists | Read its card, call its interface. No conversation needed |
+| A task needs a module that does not exist yet | BCR first; publish the contract and a fake; the consumer builds against the fake while the implementation lands on another branch |
+| One change genuinely spans two modules | Declare `Scope: a, b` in the pull request and justify it, or split the branch. Default is split |
+| The schema changes | Joint: reviewer reads the design argument, not just the migration; both cards updated in the same pull request |
+
+We do not: copy each other's code, edit each other's modules "just this once", or park a long-lived
+integration branch. Integration happens on `main`.
+
+## 6. Escalation
+
+1. **Technical disagreement** → 15-minute call → ADR. If still split, the owner of the module decides
+   and records the dissent in the ADR.
+2. **Security concern** → stop-the-line. The affected capability is disabled or denied first, then
+   investigated. Neither of us needs the other's agreement to stop something.
+3. **Schedule slip** → the §19.8 contingency order in the design, applied the same day, not absorbed by
+   working later.
+4. **Rule that is not working** → change it in a BCR labelled `agreements`. Both approve. Rules are
+   evidence-driven too.
+
+## 7. Agent hygiene
+
+- Agents run against one worktree; two agent sessions never share a working directory. Parallel
+  sessions are normal — that is what task scope protects.
+- An agent that has been idle mid-task leaves a `HANDOFF`; the next session starts from that entry, not
+  from scratch.
+- Transcripts are kept for the life of the branch and linked from the log where the tool provides a
+  link; the log itself, not the transcript, is the record of what happened.
+- If an agent produces work its operator cannot explain, that work does not get reviewed. The operator
+  either learns it or drops it.
+
+## 8. Credit and attribution
+
+Commits are authored by the accountable human with agent trailers (`AGENTS.md` §6). The digest records
+who did what by operator, not by agent. For anything public — README, portfolio, write-ups — we name
+both engineers with their actual roles (implementation and review), and state plainly that agents were
+used and how. Review is not a smaller contribution than implementation, and the record should not
+imply that it is.
