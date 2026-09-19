@@ -80,6 +80,8 @@ def main() -> int:
             then, now = blob(verified, path), blob("HEAD", path)
             if then is None:
                 stale.append(f"{card}: interface {path} did not exist at verified_at {verified[:7]}")
+                if card not in to_fix:
+                    to_fix.append(card)
             elif then != now:
                 stale.append(f"{card}: {path} changed since verified_at {verified[:7]}")
                 if card not in to_fix:

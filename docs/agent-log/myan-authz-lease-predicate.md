@@ -43,3 +43,10 @@ feat(authz): leased authorization scope, row predicate and fenced refresh
 ### 2026-09-19T00:18:05Z · COMMIT · myan · claude-code/opus-5 · parent:6d17d75
 docs(authz): verify the contract card against the landed interface
 1 file changed, 22 insertions(+), 10 deletions(-)
+
+### 2026-09-19T00:18:26Z · DECIDE · myan · claude-code/opus-5 · 71e5f5f
+Widened scope to 'agreements' for one file: scripts/check_context_freshness.py reported a stale card but never queued it for --fix when the interface did not exist at verified_at, which blocks every first-implementation PR. Fixed here rather than opening a separate branch because the bug blocks this branch's own green build; declared as Scope: authz, agreements in the PR.
+
+### 2026-09-19T00:18:26Z · COMMIT · myan · claude-code/opus-5 · parent:71e5f5f
+fix(agents): queue a card for --fix when its interface postdates verified_at
+3 files changed, 6 insertions(+), 1 deletion(-)
