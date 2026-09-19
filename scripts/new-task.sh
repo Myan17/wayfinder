@@ -24,8 +24,16 @@ WT="../wayfinder-wt/$TASK"
 LOG="$(log_path "$TASK")"
 
 git show-ref --verify --quiet "refs/heads/$BRANCH" && die "branch $BRANCH already exists"
-git fetch origin main --quiet
-git worktree add -b "$BRANCH" "$WT" origin/main
+
+# Branch from origin/main when there is a remote, from local main before the repository is pushed.
+if git remote get-url origin >/dev/null 2>&1; then
+  git fetch origin main --quiet
+  BASE="origin/main"
+else
+  BASE="main"
+  echo "note: no 'origin' remote yet — branching from local main" >&2
+fi
+git worktree add -b "$BRANCH" "$WT" "$BASE"
 
 # Create the log in the worktree so the first commit carries it.
 mkdir -p "$WT/docs/agent-log"
