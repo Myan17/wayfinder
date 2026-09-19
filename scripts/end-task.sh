@@ -15,19 +15,16 @@ MERGED=""
 
 {
   printf '\n### %s · HANDOFF · %s · %s · %s\n' "$(now_utc)" "$(operator)" "$(agent)" "$(git rev-parse --short HEAD)"
+  printf 'TASK CLOSED. '
   if [[ -n "$MERGED" ]]; then
-    printf 'Task closed; merged as %s.\n' "$MERGED"
+    printf 'Merged as %s.\n' "$MERGED"
   else
-    printf 'Task closed locally; pull request open for review.\n'
+    printf 'Pull request open for review.\n'
   fi
 } >> "$LOG"
 
-python3 - "$LOG" <<'PY'
-import pathlib, sys
-p = pathlib.Path(sys.argv[1]); t = p.read_text()
-p.write_text(t.replace("| Status | open |", "| Status | closed |", 1))
-PY
-
+# The log is append-only (AGENTS.md 5.1), so closing a task appends an entry rather than editing the
+# header. A task is closed when its last entry says so; the digest and the reviewer read entries.
 git add "$LOG"
 git commit -m "docs(agents): close task log for $TASK" --quiet || true
 

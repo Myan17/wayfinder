@@ -94,12 +94,12 @@ through a BCR labelled `ownership`, approved by both.
 
 ```yaml
 modules:
-  authz:         {owner: myan, paths: ["apps/api/wayfinder/authz/**", "docs/context/modules/authz.md"]}
-  retrieval:     {owner: myan, paths: ["apps/api/wayfinder/retrieval/**", "docs/context/modules/retrieval.md"]}
-  answer:        {owner: myan, paths: ["apps/api/wayfinder/answer/**", "docs/context/modules/answer.md"]}
-  egress:        {owner: myan, paths: ["apps/api/wayfinder/egress/**", "docs/context/modules/egress.md"]}
-  cache:         {owner: myan, paths: ["apps/api/wayfinder/cache/**", "docs/context/modules/cache.md"]}
-  http:          {owner: myan, paths: ["apps/api/wayfinder/http/**", "docs/context/modules/http.md"]}
+  authz:         {owner: myan, paths: ["apps/api/wayfinder/authz/**", "apps/api/tests/authz/**", "docs/context/modules/authz.md"]}
+  retrieval:     {owner: myan, paths: ["apps/api/wayfinder/retrieval/**", "apps/api/tests/retrieval/**", "docs/context/modules/retrieval.md"]}
+  answer:        {owner: myan, paths: ["apps/api/wayfinder/answer/**", "apps/api/tests/answer/**", "docs/context/modules/answer.md"]}
+  egress:        {owner: myan, paths: ["apps/api/wayfinder/egress/**", "apps/api/tests/egress/**", "docs/context/modules/egress.md"]}
+  cache:         {owner: myan, paths: ["apps/api/wayfinder/cache/**", "apps/api/tests/cache/**", "docs/context/modules/cache.md"]}
+  http:          {owner: myan, paths: ["apps/api/wayfinder/http/**", "apps/api/tests/http/**", "docs/context/modules/http.md"]}
   web:           {owner: myan, paths: ["apps/web/**", "docs/context/modules/web.md"]}
   eval-harness:  {owner: myan, paths: ["eval/harness/**", "eval/experiments/**", "docs/context/modules/eval-harness.md"]}
   sources:       {owner: myan, paths: ["apps/ingestd/internal/source/**", "docs/context/modules/sources.md"]}
@@ -107,7 +107,7 @@ modules:
   indexing:      {owner: myan, paths: ["apps/ingestd/internal/embed/**", "apps/ingestd/internal/generation/**", "apps/ingestd/internal/gc/**", "docs/context/modules/indexing.md"]}
   webhooks:      {owner: myan, paths: ["apps/ingestd/internal/webhook/**", "docs/context/modules/webhooks.md"]}
   eval-data:     {owner: myan, paths: ["eval/miners/**", "eval/datasets/**", "docs/context/modules/eval-data.md"]}
-  platform:      {owner: myan, paths: ["infra/**", ".github/workflows/**", "loadtest/**", "docs/context/modules/platform.md"]}
+  platform:      {owner: myan, paths: ["infra/**", ".github/workflows/**", "loadtest/**", "Makefile", "pyproject.toml", "uv.lock", ".gitignore", ".env.example", "README.md", "docs/context/modules/platform.md"]}
   observability: {owner: myan, paths: ["infra/compose/otel/**", "docs/context/modules/observability.md"]}
   schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
   agent-logs:    {owner: any,   paths: ["docs/agent-log/**"]}

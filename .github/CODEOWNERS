@@ -11,16 +11,22 @@
 # the same reviewer; once a second implementer joins, each module also requires the other one.
 
 /apps/api/wayfinder/authz/          @Gupta958            # authz — implemented by myan
+/apps/api/tests/authz/              @Gupta958            # authz — implemented by myan
 /docs/context/modules/authz.md      @Gupta958            # authz — implemented by myan
 /apps/api/wayfinder/retrieval/      @Gupta958            # retrieval — implemented by myan
+/apps/api/tests/retrieval/          @Gupta958            # retrieval — implemented by myan
 /docs/context/modules/retrieval.md  @Gupta958            # retrieval — implemented by myan
 /apps/api/wayfinder/answer/         @Gupta958            # answer — implemented by myan
+/apps/api/tests/answer/             @Gupta958            # answer — implemented by myan
 /docs/context/modules/answer.md     @Gupta958            # answer — implemented by myan
 /apps/api/wayfinder/egress/         @Gupta958            # egress — implemented by myan
+/apps/api/tests/egress/             @Gupta958            # egress — implemented by myan
 /docs/context/modules/egress.md     @Gupta958            # egress — implemented by myan
 /apps/api/wayfinder/cache/          @Gupta958            # cache — implemented by myan
+/apps/api/tests/cache/              @Gupta958            # cache — implemented by myan
 /docs/context/modules/cache.md      @Gupta958            # cache — implemented by myan
 /apps/api/wayfinder/http/           @Gupta958            # http — implemented by myan
+/apps/api/tests/http/               @Gupta958            # http — implemented by myan
 /docs/context/modules/http.md       @Gupta958            # http — implemented by myan
 /apps/web/                          @Gupta958            # web — implemented by myan
 /docs/context/modules/web.md        @Gupta958            # web — implemented by myan
@@ -43,6 +49,12 @@
 /infra/                             @Gupta958            # platform — implemented by myan
 /.github/workflows/                 @Gupta958            # platform — implemented by myan
 /loadtest/                          @Gupta958            # platform — implemented by myan
+/Makefile                           @Gupta958            # platform — implemented by myan
+/pyproject.toml                     @Gupta958            # platform — implemented by myan
+/uv.lock                            @Gupta958            # platform — implemented by myan
+/.gitignore                         @Gupta958            # platform — implemented by myan
+/.env.example                       @Gupta958            # platform — implemented by myan
+/README.md                          @Gupta958            # platform — implemented by myan
 /docs/context/modules/platform.md   @Gupta958            # platform — implemented by myan
 /infra/compose/otel/                @Gupta958            # observability — implemented by myan
 /docs/context/modules/observability.md @Gupta958            # observability — implemented by myan

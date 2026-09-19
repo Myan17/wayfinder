@@ -22,10 +22,7 @@ engineers:
     github: Gupta958
     role: reviewer                 # reviews and merges; does not author implementation pull requests
     emails:
-      # A public repository is scraped: keep personal addresses out of it. If gupta958 ever authors
-      # a commit, put their GitHub no-reply address here (Settings > Emails > "Keep my email
-      # addresses private"), not a university or personal one.
-      - <GUPTA958_GITHUB_NOREPLY>
+      - gupta958@umn.edu
     machine_account: null
     agents:
       - chatgpt                    # assists review only; review comments it drafts are marked [agent-draft]
@@ -42,8 +39,7 @@ rules:
 
 ## Notes
 
-- **Emails** must match `git config user.email` in every worktree, and must be GitHub no-reply
-  addresses: this repository is public. The GitHub no-reply address keeps a
+- **Emails** must match `git config user.email` in every worktree. The GitHub no-reply address keeps a
   personal address out of a public repository while still attributing the commit.
 - **Machine accounts** are optional. Use one only if you want agent-authored commits to appear under a
   distinct author; GitHub's terms allow one machine account per person, and creating extra personal

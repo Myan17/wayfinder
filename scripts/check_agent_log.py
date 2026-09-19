@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Guardrail: every branch has an append-only task log that matches its commits.
 
-usage: scripts/check_agent_log.py <base-ref> <head-ref>
+usage: scripts/check_agent_log.py <base-ref> <head-ref> [--branch <name>]
+
+In CI the working copy is detached at the pull request head, so the branch name cannot be read from
+HEAD; pass it with --branch or GITHUB_HEAD_REF.
 
 Checks, in order:
   1. A log exists for this branch (docs/agent-log/<operator>-<module>-<slug>.md).
@@ -13,6 +16,7 @@ Checks, in order:
      thought about and actually run.
 """
 from __future__ import annotations
+import os
 import re
 import subprocess
 import sys
@@ -34,12 +38,19 @@ def fail(msg: str) -> None:
 
 def main() -> None:
     base, head = sys.argv[1], sys.argv[2]
-    branch = git("rev-parse", "--abbrev-ref", head).strip()
-    if branch in {"HEAD", "main"}:
+    branch = ""
+    if "--branch" in sys.argv:
+        branch = sys.argv[sys.argv.index("--branch") + 1]
+    branch = branch or os.environ.get("GITHUB_HEAD_REF", "")
+    if not branch:
+        branch = git("rev-parse", "--abbrev-ref", head).strip()
+    if branch in {"HEAD", "main", ""}:
         branch = (
             subprocess.run(["git", "symbolic-ref", "--short", "HEAD"], capture_output=True, text=True).stdout.strip()
             or branch
         )
+    if branch in {"HEAD", ""}:
+        fail("cannot determine the branch name; pass --branch or set GITHUB_HEAD_REF")
 
     expected = "docs/agent-log/" + branch.replace("/", "-") + ".md"
     changed = [p for p in git("diff", "--name-only", f"{base}...{head}").splitlines() if p.startswith("docs/agent-log/")]

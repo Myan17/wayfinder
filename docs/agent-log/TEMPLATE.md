@@ -10,7 +10,7 @@
 | Agent | <AGENT> |
 | Session | <SESSION> |
 | Started | <STARTED> |
-| Status | open |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
 
 **Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
 `post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
