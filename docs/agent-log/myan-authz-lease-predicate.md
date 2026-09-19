@@ -10,7 +10,7 @@
 | Agent | claude-code/opus-5 |
 | Session | 2026-09-18T19:10Z/authz-1 |
 | Started | 2026-09-19T00:13:50Z |
-| Status | open |
+| Status | closed |
 
 **Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
 `post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
@@ -50,3 +50,16 @@ Widened scope to 'agreements' for one file: scripts/check_context_freshness.py r
 ### 2026-09-19T00:18:26Z · COMMIT · myan · claude-code/opus-5 · parent:71e5f5f
 fix(agents): queue a card for --fix when its interface postdates verified_at
 3 files changed, 6 insertions(+), 1 deletion(-)
+
+### 2026-09-19T00:18:36Z · BLOCKED · myan · claude-code/opus-5 · 0b28ab8
+scripts/check_context_freshness.py fails on docs/context/modules/platform.md: it is still a PLACEHOLDER while the bootstrap Makefile already exists. Out of this task's scope. Next task: myan/platform/bootstrap-card writes that card (and fixes the ownership globs so tests/ and root files map to a module).
+
+### 2026-09-19T00:18:49Z · HANDOFF · myan · claude-code/opus-5 · 0b28ab8
+Authorization kernel complete and green: 23 tests, ruff clean. Landed build_scope (leases, fail-closed), sql_predicate + assert_rows_authorized, fenced refresh (revision token, all-or-nothing pagination, invalidate_repo), FixtureAuthz for consumers. Card verified. Not in this branch: resolve_principal (sessions), authorized_repos (DB layer), reauthorize_manifest (evidence manifests), and the AUTH-01..AUTH-11 suite which needs Postgres. Reviewer: the interesting diffs are scope.py (expiry-denies) and refresh.py (the fencing race). PR must declare Scope: authz, agreements.
+
+### 2026-09-19T00:18:49Z · HANDOFF · myan · claude-code/opus-5 · 0b28ab8
+Task closed locally; pull request open for review.
+
+### 2026-09-19T00:18:50Z · COMMIT · myan · claude-code/opus-5 · parent:0b28ab8
+docs(agents): close task log for myan-authz-lease-predicate
+1 file changed, 10 insertions(+), 1 deletion(-)
