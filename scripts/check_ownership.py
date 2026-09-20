@@ -50,7 +50,7 @@ def matches(path: str, globs: list[str]) -> bool:
 def main() -> int:
     base, head = sys.argv[1], sys.argv[2]
     argv = sys.argv
-    branch = git("rev-parse", "--abbrev-ref", head).strip()
+    branch = os.environ.get("GITHUB_HEAD_REF", "") or git("rev-parse", "--abbrev-ref", head).strip()
     parts = branch.split("/")
     operator = argv[argv.index("--operator") + 1] if "--operator" in argv else (parts[0] if parts else "")
     task_module = argv[argv.index("--module") + 1] if "--module" in argv else (parts[1] if len(parts) > 2 else "")

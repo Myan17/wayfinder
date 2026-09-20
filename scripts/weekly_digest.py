@@ -34,7 +34,8 @@ def parse(path: pathlib.Path):
             if nxt.strip():
                 body.append(nxt.strip())
         yield {**m.groupdict(), "body": " ".join(body)[:300], "task": path.stem,
-               "module": meta.get("Module", "?"), "status": meta.get("Status", "?")}
+               "module": meta.get("Module", "?"),
+               "status": "closed" if "TASK CLOSED" in text else "open"}
 
 
 def main() -> None:
