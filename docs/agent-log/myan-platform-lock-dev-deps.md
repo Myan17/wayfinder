@@ -30,3 +30,10 @@ uv sync --extra dev then uv run pytest -q (no tests yet on this branch) -> colle
 ### 2026-09-19T23:39:26Z · COMMIT · myan · claude-code/opus-5 · parent:9fbedff
 chore(platform): lock dev dependencies
 2 files changed, 225 insertions(+)
+
+### 2026-09-20T16:15:36Z · EDIT · myan · claude-code/opus-5 · 81b489c
+Rebased this branch onto the squash merge of #2 (cc0efbd) and force-pushed it. The earlier COMMIT entry records parent 9fbedff, which was main before #2 landed; the rebased commit's parent is cc0efbd. Recorded because AGENTS.md 2.2 requires a force-push to be logged, and because a reviewer reading the log should not have to infer that the branch moved underneath them.
+
+### 2026-09-20T16:15:37Z · COMMIT · myan · claude-code/opus-5 · parent:81b489c
+docs(platform): record the rebase and force-push onto #2's squash commit
+1 file changed, 3 insertions(+)
