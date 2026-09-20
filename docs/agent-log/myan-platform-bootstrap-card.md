@@ -62,3 +62,13 @@ fix(platform): resolve the branch name in CI, where the checkout is detached
 ### 2026-09-19T00:33:13Z · COMMIT · myan · claude-code/opus-5 · parent:9fbedff
 docs(platform): platform card, module globs and CI branch resolution
 11 files changed, 175 insertions(+), 56 deletions(-)
+
+### 2026-09-20T00:09:41Z · DECIDE · myan · claude-code/opus-5 · ecdfaa7
+Reviewer was right that #2 reverts the privacy fix: merge-base is the scrub commit and the branch carried an older ROSTER.md, so the diff restores the address. My earlier reasoning - that a branch which never edited the file cannot revert it - was wrong, because this branch was rebuilt from a pre-scrub worktree snapshot. Taking main's copy of the file.
+
+### 2026-09-20T00:09:41Z · EDIT · myan · claude-code/opus-5 · ecdfaa7
+docs/team/ROSTER.md restored from origin/main; guardrails workflow now triggers on all pull requests so stacked ones get checks.
+
+### 2026-09-20T00:09:42Z · COMMIT · myan · claude-code/opus-5 · parent:ecdfaa7
+fix(platform): stop reverting the roster privacy fix, and check stacked pull requests
+3 files changed, 14 insertions(+), 3 deletions(-)

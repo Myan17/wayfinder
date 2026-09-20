@@ -5,8 +5,9 @@ name: guardrails
 # protect the product.
 
 on:
+  # Every pull request, not just those targeting main: stacked pull requests target their parent
+  # branch, and an unchecked link in a stack is an unchecked change (reviewer, 2026-09-19).
   pull_request:
-    branches: [main]
   merge_group:
 
 permissions:
