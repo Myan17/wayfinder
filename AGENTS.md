@@ -73,10 +73,18 @@ That script does all of the following, so nothing depends on memory:
 ### 2.2 While working
 
 - Rebase on `main` at least once a day: `git pull --rebase origin main`. No merge commits.
-- Keep the branch small: **≤ 3 days and ≤ 400 changed lines**. Bigger than that, split it — a review
-  that cannot be held in one sitting is not a review.
+- Keep the branch small: **≤ 3 days and ≤ 400 changed lines** (added plus deleted). Bigger than
+  that, split it — a review that cannot be held in one sitting is not a review. CI enforces this.
+  - **One exception**, agreed 2026-09-20: the task's own `docs/agent-log/<task>.md` does not count.
+    It is process output that grows with every commit, and counting it pushed authors to trim code
+    comments to make room for it — the rule pressuring the wrong thing.
+  - Source, tests, ordinary documentation, configuration and **generated files all count**. A
+    generated file large enough to matter goes in its own pull request, which is a review decision,
+    not an accounting trick.
 - Anything that crosses a phase gate in `docs/DESIGN.md` §19 ships behind a feature flag.
-- Never `git push --force` to a shared branch. Force-push only your own task branch, and log it.
+- Never `git push --force` to a shared branch. Force-push only your own task branch, and **log it**:
+  an entry naming what moved and why, so a reviewer never has to infer that the branch shifted
+  underneath their last read. A rebase onto a merged base is the common case.
 
 ### 2.3 Finish a task
 
@@ -264,6 +272,7 @@ Commit subjects follow Conventional Commits, scoped by module:
 | `branch-and-commits` | Branch name or commit subjects break the convention |
 
 | `codeowners` | `.github/CODEOWNERS` does not match `docs/team/OWNERSHIP.md` (`scripts/gen_codeowners.py --check`) |
+| `size` | More than 400 changed lines, excluding the task's own log (`scripts/check_pr_size.py`) |
 
 Keeping design claims and code in step is a **review** item, not a CI check — it needs judgement (see
 the pull request template). Plus the suites the design requires for the change class (`docs/DESIGN.md` §16.1). Branch protection on

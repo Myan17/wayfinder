@@ -67,6 +67,11 @@ jobs:
       - name: Contract card freshness
         run: python3 scripts/check_context_freshness.py
 
+      - name: Pull request size
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+        run: python3 scripts/check_pr_size.py "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}"
+
       - name: Agent log
         env:
           GITHUB_HEAD_REF: ${{ github.head_ref }}   # the checkout is detached at the head sha

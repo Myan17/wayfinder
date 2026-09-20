@@ -40,7 +40,7 @@ author's context. Everything below serves that.
 | Item | Rule |
 |---|---|
 | Who reviews | `gupta958`, every pull request. CODEOWNERS on `*` enforces it |
-| Size | ≤ 400 changed lines and ≤ 3 days of work. Larger changes are split before review |
+| Size | ≤ 400 changed lines (added + deleted) and ≤ 3 days of work; larger changes are split before review. The task's own `docs/agent-log/<task>.md` is excluded from the count (agreed 2026-09-20); everything else counts, generated files included. CI enforces it |
 | Turnaround | First response within one working day; if you cannot, say so in the pull request so the author can re-plan |
 | What a reviewer reads | The diff, the **Work record** in the pull request, the task log, and the contract card of any interface that changed. Not the whole module |
 | Approval | A human approves. ChatGPT may draft the review — paste the diff, the work record and the relevant contract card, not the whole repository — and comments it drafts are marked `[agent-draft]` so the author knows what was machine-generated |
