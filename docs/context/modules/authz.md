@@ -18,8 +18,8 @@ design_sections:
   - "DESIGN §9.1 (authorization model)"
   - "DESIGN §9.2 (data model)"
   - "DESIGN §13.2 (threat model rows for stale authorization)"
-verified_at: 0000000
-verified_on: 2026-09-18
+verified_at: 38c05cc
+verified_on: 2026-09-19
 ---
 
 # authz

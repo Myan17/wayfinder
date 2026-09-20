@@ -1,9 +1,7 @@
 """Authorized scope assembly: DESIGN §9.1.1-9.1.2, card docs/context/modules/authz.md.
 
-These tests pin the three rules the v0.2 review found missing:
-  1. `verified_public` is a lease, not a column -- an expired visibility fact denies.
-  2. Anonymous principals are principals; they simply hold no grants.
-  3. Expiry denies. A fact that cannot be refreshed leaves the scope.
+Pins the three rules the v0.2 review found missing: `verified_public` is a lease rather than a
+column, anonymous principals hold no grants, and a fact that cannot be refreshed leaves the scope.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -141,11 +139,8 @@ def test_the_anonymous_grant_defect_is_counted_as_well_as_refused():
 
 
 def test_anonymous_principal_carrying_grants_is_a_programming_error():
-    """F1: an anonymous principal has no GitHub token, so grants for one cannot be legitimate.
-
-    The kernel refuses rather than silently dropping them: a silent drop would make a broken
-    resolver look healthy, and the resolver is the easiest part of this to get wrong.
-    """
+    """F1: no GitHub token stands behind an anonymous principal, so the kernel refuses rather than
+    dropping the grants silently and letting a broken resolver look healthy."""
     with pytest.raises(AnonymousGrantsError):
         build_scope(
             anonymous(),

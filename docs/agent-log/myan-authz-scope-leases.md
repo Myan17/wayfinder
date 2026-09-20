@@ -40,3 +40,7 @@ Removed uv.lock from this branch: it belongs to #3 and double-counting it pushed
 ### 2026-09-19T23:44:21Z · COMMIT · myan · claude-code/opus-5 · parent:1aa0743
 chore(authz): drop the lockfile from this branch, it belongs to #3
 1 file changed, 3 insertions(+)
+
+### 2026-09-20T00:28:34Z · COMMIT · myan · claude-code/opus-5 · parent:38c05cc
+docs(authz): verify the card against the commit that contains the interface
+1 file changed, 2 insertions(+), 2 deletions(-)
