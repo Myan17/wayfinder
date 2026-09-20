@@ -58,8 +58,9 @@ the Terraform module and the load-test stub.
 
 - A test file placed under `apps/api/tests/<module>/` is collected by `make test` with no extra
   configuration, and imports the package as `wayfinder.<module>`.
-- `make lint` and `make test` are the same commands CI runs; a green local run means the same checks
-  passed, not merely similar ones.
+- `make lint` and `make test` are the commands CI *will* run: today CI runs the collaboration
+  guardrails only, and the product suites are wired in the pull request that lands the first suite.
+  Until then a green pull request means the guardrails passed, not that anything was tested.
 - Ruff's `RUF002` is on, so docstrings use ASCII hyphens rather than en dashes. Section references
   (`§`) are fine.
 - Guardrail scripts run on the system Python 3 with no third-party dependencies, so they work before
@@ -91,8 +92,8 @@ _None._
 
 | Test | Pins |
 |---|---|
-| `make test` on a clean clone | Collection, `pythonpath`, dev extra |
-| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, agent log, card freshness, CODEOWNERS sync |
+| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, agent log, card freshness, CODEOWNERS sync — **the only gate running today** |
+| _not yet wired_ `make lint`, `make test` | Arrive with the first product suite |
 | _planned_ `infra/policy/allowed_resources.yaml` check | Terraform never provisions a non-allow-listed resource (DESIGN §11.1) |
 
 ## Fake

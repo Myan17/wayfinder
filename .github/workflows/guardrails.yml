@@ -7,8 +7,11 @@ name: guardrails
 on:
   # Every pull request, not just those targeting main: stacked pull requests target their parent
   # branch, and an unchecked link in a stack is an unchecked change (reviewer, 2026-09-19).
+  #
+  # No merge_group: that event carries no pull_request, head_ref or base_ref, so ref resolution, the
+  # branch-name rule and the work-record check would all fail under a merge queue. Add it back with
+  # explicit handling for those fields if we ever turn a queue on (reviewer, 2026-09-19).
   pull_request:
-  merge_group:
 
 permissions:
   contents: read
@@ -100,9 +103,5 @@ jobs:
             }
           done
 
-  # Placeholder for the product suites: DESIGN §16.1 maps change classes to required suites.
-  # Engineer B owns this file; the suites land as the code does.
-  required-suites:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "wire up unit / property / contract / authorization / integration suites here (DESIGN §16.1)"
+  # The product suites (make lint, make test) are wired in the pull request that lands the first
+  # suite, so this file never claims a gate it does not run.

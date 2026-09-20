@@ -72,3 +72,13 @@ docs/team/ROSTER.md restored from origin/main; guardrails workflow now triggers 
 ### 2026-09-20T00:09:42Z · COMMIT · myan · claude-code/opus-5 · parent:ecdfaa7
 fix(platform): stop reverting the roster privacy fix, and check stacked pull requests
 3 files changed, 14 insertions(+), 3 deletions(-)
+
+### 2026-09-20T00:17:42Z · DECIDE · myan · claude-code/opus-5 · 3ae763e
+Removed the required-suites placeholder rather than making it conditional: a job that echoes and exits zero appears as a passing check while testing nothing, which is worse than an absent job. The real lint/test job lands with the first suite (#4).
+
+### 2026-09-20T00:17:42Z · TEST · myan · claude-code/opus-5 · 3ae763e
+python3 -c yaml-shape check -> merge_group removed from triggers; jobs = ['guardrails']. python3 scripts/check_context_freshness.py -> OK.
+
+### 2026-09-20T00:17:42Z · COMMIT · myan · claude-code/opus-5 · parent:3ae763e
+fix(platform): drop the placeholder CI job and the unsupported merge_group trigger
+3 files changed, 17 insertions(+), 11 deletions(-)
