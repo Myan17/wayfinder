@@ -18,8 +18,8 @@ design_sections:
   - "DESIGN §9.1 (authorization model)"
   - "DESIGN §9.2 (data model)"
   - "DESIGN §13.2 (threat model rows for stale authorization)"
-verified_at: 0000000
-verified_on: 2026-09-18
+verified_at: 38c05cc
+verified_on: 2026-09-19
 ---
 
 # authz
@@ -65,8 +65,13 @@ async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> Manifes
 
 ## Invariants a caller may rely on
 
-- `authorized_repos` never returns a repository whose connection, eligibility or visibility lease has
+- `build_scope` never returns a repository whose connection, eligibility or visibility lease has
   expired; expiry denies rather than falling back to a stale set.
+- `AuthorizedScope.repo_ids` is everything visible; `granted_repo_ids` is the granted half alone.
+  The SQL predicate binds only the granted half and lets the database decide public-ness.
+- `degraded` carries `permissions_public_only` whenever a *user's* grant lease is stale, whether or
+  not any grant is currently held. Anonymous principals are never flagged: public-only is their
+  normal state.
 - Anonymous principals are real principals with their own ID; `user_id IS NULL` is never treated as
   "everyone".
 - A negative authorization event is applied before the HTTP 202 that accepts its webhook, so a caller
