@@ -63,3 +63,13 @@ Re-verified after #11 landed: uv run pytest -> 46 passed (38 authz + 8 handoff).
 ### 2026-09-21T05:56:26Z · COMMIT · myan · claude-code/opus-5 · parent:22c6b46
 docs(platform): re-verify the testpath now that the tool is on main
 1 file changed, 3 insertions(+)
+
+### 2026-09-21T06:30:32Z · EDIT · myan · claude-code/opus-5 · 66d0d03
+verified_at pointed at a49b6a3, which the rebase onto main after #11 orphaned. It passes locally because the old commit survives as a dangling object here, and fails in CI's fresh clone - the reviewer caught exactly that. Set to the post-rebase commit carrying the new pyproject, and asserted it is an ancestor of HEAD before writing.
+
+### 2026-09-21T06:30:32Z · TEST · myan · claude-code/opus-5 · 66d0d03
+git merge-base --is-ancestor <new sha> HEAD -> 0 (reachable). check_context_freshness -> OK. uv run pytest -> 46 passed.
+
+### 2026-09-21T06:30:33Z · COMMIT · myan · claude-code/opus-5 · parent:66d0d03
+docs(platform): point verified_at at a commit this branch can still reach
+2 files changed, 7 insertions(+), 1 deletion(-)
