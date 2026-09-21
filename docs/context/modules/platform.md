@@ -17,8 +17,8 @@ design_sections:
   - "DESIGN §16.4 (load protocol)"
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
-verified_at: 91b31fd
-verified_on: 2026-09-18
+verified_at: 2f81df2
+verified_on: 2026-09-21
 ---
 
 # platform
@@ -47,7 +47,8 @@ make digest      # build this week's gate report from the task logs
 
 Plus the Python project definition:
 
-- package root `apps/api`, tests in `apps/api/tests`, `pythonpath = ["apps/api"]`
+- package root `apps/api`; tests in `apps/api/tests` **and** `scripts/tests`, so tooling under
+  `scripts/` is covered by the same `make test`; `pythonpath = ["apps/api"]`
 - `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
 
@@ -58,6 +59,8 @@ the Terraform module and the load-test stub.
 
 - A test file placed under `apps/api/tests/<module>/` is collected by `make test` with no extra
   configuration, and imports the package as `wayfinder.<module>`.
+- A test file under `scripts/tests/` is collected too. Guardrail and tooling scripts are not importable
+  as a package, so those tests load the script by path.
 - `make lint` and `make test` are the commands CI *will* run: today CI runs the collaboration
   guardrails only, and the product suites are wired in the pull request that lands the first suite.
   Until then a green pull request means the guardrails passed, not that anything was tested.
@@ -92,7 +95,7 @@ _None._
 
 | Test | Pins |
 |---|---|
-| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, agent log, card freshness, CODEOWNERS sync — **the only gate running today** |
+| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, size, agent log, card freshness, CODEOWNERS sync — **the only gate running today** |
 | _not yet wired_ `make lint`, `make test` | Arrive with the first product suite |
 | _planned_ `infra/policy/allowed_resources.yaml` check | Terraform never provisions a non-allow-listed resource (DESIGN §11.1) |
 
@@ -103,6 +106,9 @@ by CI on every pull request.
 
 ## Open questions
 
+- `make lint` and `make test` are still not wired into CI, and the suites now exist (38 + 8 tests).
+  That wiring is the next platform pull request, together with the ruff-format debt in six older
+  scripts. Until then a green pull request means the guardrails passed, not that anything was tested.
 - Whether to pin Python 3.13 exactly (design text) or keep `>=3.13` and run on the local 3.14. Today:
   `>=3.13`, and the release manifest records the interpreter actually used.
 - Where the load-test stub runs once the AMD micro instance exists (DESIGN §16.4).
