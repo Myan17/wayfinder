@@ -49,3 +49,10 @@ fix(agreements): degrade on a webhook timeout, and split out the platform change
 
 ### 2026-09-21T05:20:47Z · EDIT · myan · claude-code/opus-5 · 211d3c6
 Split again: the skill file and its ownership entry move to a follow-up. A command-line tool is usable without the skill; a skill without the tool is not, so the tool goes first.
+
+### 2026-09-21T05:39:40Z · EDIT · myan · claude-code/opus-5 · de430cb
+Rebased onto main after #10 merged and force-pushed; protection requires branches to be up to date, and the rebase dismisses any approval.
+
+### 2026-09-21T05:39:40Z · COMMIT · myan · claude-code/opus-5 · parent:de430cb
+docs(agreements): record the rebase onto main after #10
+1 file changed, 3 insertions(+)
