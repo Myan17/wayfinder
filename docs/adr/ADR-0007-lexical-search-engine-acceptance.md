@@ -40,15 +40,49 @@ the same process.
 Each rule is a single falsifiable observation. **Any FAIL sends the decision to built-in FTS**, per
 R-06's stated mitigation. There is no partial credit and no "acceptable with a workaround" column,
 because a workaround invented after a failure is the same goalpost problem in a different place.
+Every rule below obeys that sentence without exception — an earlier draft let S3-2 offer "fallback,
+**or** a documented privilege requirement", contradicting the governing rule in the one place the
+governing rule was load-bearing.
+
+Every command named here runs against the image **pinned by digest**, never by tag, so the artifact
+that was measured is the artifact that ships.
 
 | # | Claim | PASS requires | FAIL means |
 |---|---|---|---|
-| S3-1 | The image runs on this architecture | The pinned ParadeDB image starts on `linux/arm64` **natively** — `uname -m` inside the container reports an aarch64 machine, and the image is not running under emulation | Fallback. An emulated image is not evidence about the A1 target |
-| S3-2 | The extension installs with the privileges we will actually have | `CREATE EXTENSION pg_search` succeeds, and the BM25 index DDL of §9.2 is accepted verbatim against a table with `key_field = 'id'` | Fallback, **or** a documented privilege requirement that Oracle A1 can satisfy — recorded here, not assumed |
+| S3-1a | Docker selected an arm64 build | For the image **pinned by digest**: `docker image inspect --format '{{.Architecture}}/{{.Variant}}'` reports `arm64/v8`, **and** the daemon reports `arm64` (`docker version --format '{{.Server.Arch}}'`), **and** the two match | Fallback |
+| S3-1b | It runs natively on the A1 itself | The same digest runs on the provisioned Oracle A1, where `/proc/sys/fs/binfmt_misc/` registers **no** `qemu-aarch64` interpreter — the definitive emulation check, available on a real Linux host | Fallback |
+| S3-2 | The extension installs with the privileges we have declared **in advance** | Under ADR-0007 **option A** — a single Oracle VM where we provision Postgres ourselves, so the role is `SUPERUSER` — `CREATE EXTENSION pg_search` succeeds and the BM25 index DDL of §9.2 is accepted verbatim against a table with `key_field = 'id'` | Fallback. No exception. If it needs something a self-provisioned instance cannot grant, that is a failure, not a workaround |
 | S3-3 | **Snapshot visibility, quiet case** | In `REPEATABLE READ`, a BM25 query run twice in one transaction returns identical results while a concurrent session inserts and commits matching rows between the two | Fallback. This is the weakest form of the claim; failing it ends the discussion |
-| S3-4 | **Snapshot visibility, under an activation** | With a concurrent generation switch running — the workload A-5 actually names — a reader's transaction returns rows from exactly one generation, never a row whose generation differs from the one its snapshot began with | Fallback |
+| S3-4 | **Snapshot visibility, under an activation** | The four-step interleaving below, all four steps | Fallback |
 | S3-5 | Deleted rows leave the index with their row | After `DELETE` + `COMMIT`, a BM25 query in a **new** transaction never returns the deleted row; a transaction whose snapshot predates the delete still does | Fallback. Deletion closure (§9.3.6) depends on the index not outliving its rows |
 | S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
+
+### S3-2: the privilege set, declared before the experiment
+
+`SUPERUSER` on a Postgres instance we provision ourselves. That is what ADR-0007 **option A** gives
+us, and option A is the default. Declaring it in advance is the point: otherwise "it needed more
+privileges than expected, but we can arrange those" is a pass written after the fact.
+
+A PASS under these privileges says nothing about **option B** (Cloud Run + Neon), where the risk
+register already records extension support as unverified. If option B is ever taken, S3-2 is re-run
+there; this result does not transfer.
+
+### S3-4: the required interleaving
+
+A single query issued after an activation would trivially return one generation and prove nothing.
+The reader's snapshot must be established **before** the switch and must survive it:
+
+| Step | Session | Action | Required observation |
+|---|---|---|---|
+| 1 | Reader | `BEGIN ISOLATION LEVEL REPEATABLE READ`, then a statement that forces the snapshot to be taken | Snapshot is on the **old** generation |
+| 2 | Reader | BM25 query | Returns rows from **only** the old generation |
+| 3 | Writer | Activate the new generation and `COMMIT` | Activation completes |
+| 4 | Reader | **Same transaction**, BM25 query again | Returns rows from **only** the old generation — identical to step 2 |
+| 5 | New session | `BEGIN`, BM25 query | Returns rows from **only** the new generation |
+
+Step 4 is the rule. If the reader's second query sees any row from the new generation, the BM25
+index is answering from outside the caller's snapshot and `pg_search` fails A-5. Step 5 exists so a
+"nothing ever changes" implementation cannot pass by being uniformly stale.
 
 ### What is deliberately not a rule here
 
@@ -62,13 +96,24 @@ because a workaround invented after a failure is the same goalpost problem in a 
 
 ## Decision
 
-_Empty until S3 runs._ It will record, per rule, the observed result and the command that produced
-it, then one of:
+_Empty until S3 runs._ It will record, per rule, the observed result and the exact command that
+produced it, then one of:
 
-- **Accept `pg_search`** — all of S3-1 … S3-5 PASS. S3-6 recorded either way.
-- **Fall back to built-in FTS** — any of S3-1 … S3-5 FAIL, naming which, with the failing output
+- **Accept `pg_search`** — every one of S3-1a, S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS. S3-6 recorded
+  either way.
+- **Fall back to built-in FTS** — any one of them FAILs, naming which, with the failing output
   quoted. That changes §9.2's DDL and the lexical half of §9.5, and both are edited in the same pull
   request as the decision.
+
+**There is no third outcome**, and in particular no "PASS with a note". A rule that needed a note is
+a rule that failed.
+
+**S3-1b cannot be settled until the A1 exists**, so this ADR stays Proposed until then even if every
+other rule passes on a development machine. That is deliberate: a local aarch64 machine and an
+Oracle A1 are both arm64, but A-5 is a claim about the deployment target, and the same digest
+behaving here is a precondition, not the evidence. §19.2 puts A1 provisioning inside S3 for this
+reason. A partial result is recorded as *"S3-1a..S3-6 measured locally, S3-1b outstanding"* — never
+as an acceptance.
 
 ## Consequences if the fallback is taken
 

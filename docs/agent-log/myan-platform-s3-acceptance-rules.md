@@ -36,3 +36,13 @@ Ready for review. One file: docs/adr/ADR-0007-lexical-search-engine-acceptance.m
 ### 2026-09-21T23:23:35Z · COMMIT · myan · claude-code/opus-5 · parent:07154fa
 docs(platform): write S3's acceptance rules before running S3
 2 files changed, 126 insertions(+)
+
+### 2026-09-21T23:38:01Z · TEST · myan · claude-code/opus-5 · 400415d
+Checked the reviewer's S3-1 objection against Docker rather than taking it on trust, and it is worse than the wording suggested. On this arm64 host, 'docker run --platform linux/amd64 alpine:3.20 uname -m' reports x86_64, so uname does catch that direction - but uname reports what the binary sees, so an arm64 image emulated on an amd64 host reports aarch64 and my rule would have passed. That is the real false pass: a CI runner with binfmt installed would satisfy the old S3-1. What does distinguish them: 'docker image inspect --format {{.Architecture}}/{{.Variant}}' reports arm64/v8 for an arm64 pull and amd64 for an amd64 pull of the same tag, and 'docker version --format {{.Server.Arch}}' reports the daemon's architecture independently. S3-1 now requires both to read arm64 and to agree, pinned by digest, and S3-1b requires no qemu-aarch64 interpreter in /proc/sys/fs/binfmt_misc on the A1 itself, which is the definitive check and only available on a real Linux host. Re-verified after the rewrite: 12 section references cited, 0 unresolvable; rule ids consistent as S3-1a, S3-1b, S3-2..S3-6; no bare S3-1 or uname left in the file.
+
+### 2026-09-21T23:38:01Z · DECIDE · myan · claude-code/opus-5 · 400415d
+S3-1b cannot be settled until the Oracle A1 exists, so ADR-0007 stays Proposed even if every other rule passes locally. Considered marking S3-1 satisfied by a local aarch64 machine and noting the A1 as follow-up; rejected it. A-5 is a claim about the deployment target, 19.2 puts A1 provisioning inside S3 for exactly this reason, and 'passed on my laptop' recorded as acceptance is the same category of error the reviewer just caught twice. A partial result is recorded as 'measured locally, S3-1b outstanding', never as an acceptance.
+
+### 2026-09-21T23:38:14Z · COMMIT · myan · claude-code/opus-5 · parent:400415d
+docs(platform): close three ways an S3 rule could pass falsely
+2 files changed, 58 insertions(+), 7 deletions(-)
