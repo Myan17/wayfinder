@@ -17,7 +17,9 @@ design_sections:
   - "DESIGN §16.4 (load protocol)"
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
-verified_at: 2f81df2
+verified_hashes:
+  "Makefile": "b33619f48cacf8c1"
+  "pyproject.toml": "eb4921019af9e56b"
 verified_on: 2026-09-21
 ---
 
@@ -106,9 +108,10 @@ by CI on every pull request.
 
 ## Open questions
 
-- `make lint` and `make test` are still not wired into CI, and the suites now exist (38 + 8 tests).
-  That wiring is the next platform pull request, together with the ruff-format debt in six older
-  scripts. Until then a green pull request means the guardrails passed, not that anything was tested.
+- `make lint` and `make test` are still not wired into CI, and the suites now exist (38 authz tests
+  plus 12 under `scripts/tests/`). That wiring is the next platform pull request, together with the
+  ruff-format debt in six older scripts. Until then a green pull request means the guardrails passed,
+  not that anything was tested.
 - Whether to pin Python 3.13 exactly (design text) or keep `>=3.13` and run on the local 3.14. Today:
   `>=3.13`, and the release manifest records the interpreter actually used.
 - Where the load-test stub runs once the AMD micro instance exists (DESIGN §16.4).
@@ -118,3 +121,4 @@ by CI on every pull request.
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card written when the bootstrap Makefile and pyproject landed, replacing the placeholder | — |
+| 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 12, after the freshness tests landed). Card verification moved to content hashes | — |

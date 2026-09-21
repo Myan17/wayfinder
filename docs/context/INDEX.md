@@ -5,8 +5,9 @@ read in code. Implementation outside your own modules is off-limits by rule (`AG
 because it is secret, but because reading it creates coupling that nobody reviewed and that no test
 protects.
 
-`scripts/check_context_freshness.py` hashes each interface file; a pull request that changes one
-without updating the card's `Verified-at` fails CI.
+`scripts/check_context_freshness.py` hashes each interface file and compares it against the card's
+`verified_hashes` map; a pull request that changes an interface without re-reading the card and
+recording the new hash fails CI.
 
 **Card status:** ✅ written — a real contract you may build against. 🟡 placeholder — the module is
 unspecified; do not build against it, open a BCR so the card gets written first (`AGENTS.md` §3.2).

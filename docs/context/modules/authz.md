@@ -17,8 +17,9 @@ design_sections:
   - "DESIGN §9.1 (authorization model)"
   - "DESIGN §9.2 (data model)"
   - "DESIGN §13.2 (threat model rows for stale authorization)"
-verified_at: 8f9f972
-verified_on: 2026-09-19
+verified_hashes:
+  "apps/api/wayfinder/authz/interface.py": "5907b1ff0610df5c"
+verified_on: 2026-09-21
 ---
 
 # authz
@@ -38,9 +39,14 @@ leases that make those facts expire. It is the only module that answers "is this
 
 ```python
 # apps/api/wayfinder/authz/interface.py
-class Principal(Protocol):
+class PrincipalKind(StrEnum):            # USER = "user", ANONYMOUS = "anonymous"
+
+@dataclass(frozen=True, slots=True)
+class Principal:
     id: int
-    kind: Literal["user", "anonymous"]
+    kind: PrincipalKind
+    @property
+    def is_anonymous(self) -> bool: ...  # kind is ANONYMOUS; anonymous visitors have their own id
 
 async def resolve_principal(request) -> Principal: ...        # NOT YET IMPLEMENTED (needs sessions)
 
@@ -53,10 +59,14 @@ def start_refresh(state) -> RefreshToken: ...
 def apply_refresh(state, token, *, fetched, complete, now, lease) -> RefreshResult: ...
 def invalidate_repo(state, *, repo_id, now) -> AccessState: ...
 
-# AuthorizedScope carries: granted_repo_ids: list[int]
-#                          policy_revision: int
-#                          degraded: list[str]        # e.g. ["permissions_public_only"]
-#                          expires_at: datetime       # callers must not cache past this
+# AuthorizedScope (frozen dataclass) carries:
+#   principal: Principal
+#   repo_ids: frozenset[int]         # everything visible: verified-public plus granted
+#   granted_repo_ids: frozenset[int] # the granted half alone; only this half is bound into SQL
+#   expires_at: datetime             # callers must not cache past this
+#   policy_revision: int
+#   degraded: tuple[str, ...]        # e.g. ("permissions_public_only",)
+#   def allows(self, repo_id: int) -> bool   # membership in repo_ids
 
 def sql_predicate(row_alias, scope, *, eligible_alias="eligible", now=None) -> tuple[str, dict]: ...
 # LANDED. The caller joins eligible_repo as `eligible_alias`; the fragment reads:
@@ -172,3 +182,4 @@ arrives with the leak suite.
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
 | 2026-09-20 | Corrected after the stack landed: the card still opened as a pre-implementation sketch, named three test files that do not exist, and pointed at a fixture that was never created | — |
+| 2026-09-21 | Re-read against `interface.py`: the card described `Principal` as a `Protocol` with a `Literal` kind and the scope's collections as lists. They are a frozen dataclass with a `PrincipalKind` enum, frozensets and a tuple, and `allows()` was undocumented. Card verification moved to content hashes | — |

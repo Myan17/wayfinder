@@ -11,7 +11,8 @@ depends_on:               # modules this one calls; their cards are required rea
   - <module>
 design_sections:
   - "DESIGN §x.y"
-verified_at: <commit sha>
+verified_hashes:           # scripts/check_context_freshness.py --fix writes these, once you have
+  "<interface file>": "<sha256 prefix>"   # actually re-read the card against the code
 verified_on: <YYYY-MM-DD>
 ---
 
