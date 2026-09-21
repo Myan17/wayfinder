@@ -21,7 +21,9 @@ def test_fake_grants_private_access_only_with_a_grant():
 
 
 def test_fake_anonymous_sees_public_only():
-    fixture = FixtureAuthz(public={1}, private={2}, grants={9: {2}})
+    # The grant belongs to a signed-in principal; the anonymous visitor is a different principal and
+    # holds none. (Granting one to the anonymous id would now raise, which the test below covers.)
+    fixture = FixtureAuthz(public={1}, private={2}, grants={5: {2}})
 
     scope = fixture.scope_for(fixture.anonymous(9), now=NOW)
 
@@ -63,3 +65,16 @@ def test_the_kernel_not_the_fake_is_what_forbids_anonymous_grants():
             grants_valid_until=NOW,
             now=NOW,
         )
+
+
+def test_the_fake_does_not_mask_a_resolver_that_hands_an_anonymous_principal_grants():
+    """The fake used to drop those grants silently, so the kernel's guard was never reached through
+    it - which made the card's claim about the kernel true only on paper (reviewer, #10)."""
+    import pytest
+
+    from wayfinder.authz.scope import AnonymousGrantsError
+
+    fixture = FixtureAuthz(public={1}, private={2}, grants={4: {2}})
+
+    with pytest.raises(AnonymousGrantsError):
+        fixture.scope_for(fixture.anonymous(4), now=NOW)

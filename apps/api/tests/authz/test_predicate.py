@@ -107,3 +107,23 @@ def test_assertion_accepts_exactly_the_rows_the_scope_allows(allowed, rows):
             assert_rows_authorized(row_dicts, s)
     else:
         assert_rows_authorized(row_dicts, s)
+
+
+def test_an_expired_scope_matches_nothing_even_when_now_is_not_passed():
+    """Fail-open regression: `now` was optional, so omitting it skipped the expiry check entirely
+    and an expired scope produced a permissive fragment (reviewer, #10).
+
+    The lease here is in the real past, not merely past this module's frozen NOW: the default has to
+    be the wall clock, and a scope expired only relative to a test constant would not prove that.
+    """
+    stale = AuthorizedScope(
+        principal=Principal(id=1, kind=PrincipalKind.USER),
+        repo_ids=frozenset({1, 2}),
+        granted_repo_ids=frozenset({1, 2}),
+        expires_at=datetime(2020, 1, 1, tzinfo=UTC),
+    )
+
+    sql, params = sql_predicate("rep", stale)
+
+    assert sql.strip() == "false"
+    assert params == {}
