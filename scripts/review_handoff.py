@@ -58,6 +58,36 @@ silently found nothing.
 """
 
 
+def main_checkout() -> pathlib.Path | None:
+    """The primary checkout, when this script is running inside a linked worktree.
+
+    A worktree has its own root but shares `.git` with the main clone, and the author configures
+    `.env` once, beside `.env.example`, in the checkout they cloned. Every pull request here is
+    authored from a worktree, so anchoring only on the script's own root left the tool silently
+    unconfigured in the one place it is always run from. The alternative -- a copy of the same
+    secret in every worktree -- is worse than the bug.
+    """
+    try:
+        common = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, OSError):
+        return None  # not a repository, or no git; the caller falls back to REPO_ROOT alone
+    return pathlib.Path(common).parent if common else None
+
+
+def env_files() -> list[pathlib.Path]:
+    """Where `.env` may live, nearest first: this checkout, then the clone a worktree belongs to."""
+    roots = [REPO_ROOT]
+    shared = main_checkout()
+    if shared and shared != REPO_ROOT:
+        roots.append(shared)
+    return [root / ".env" for root in roots]
+
+
 def webhook_url() -> str:
     """The webhook, from the environment or from .env at the repository root.
 
@@ -68,17 +98,28 @@ def webhook_url() -> str:
     exported = os.environ.get(WEBHOOK_VAR, "").strip()
     if exported:
         return exported
-    try:
-        for line in (REPO_ROOT / ".env").read_text().splitlines():
+    for env_file in env_files():
+        try:
+            lines = env_file.read_text().splitlines()
+        except OSError:
+            continue
+        for line in lines:
             line = line.strip()
             if line.startswith("#") or "=" not in line:
                 continue
             key, _, value = line.partition("=")
             if key.strip() == WEBHOOK_VAR:
                 return value.strip().strip("\"'")
-    except OSError:
-        pass
     return ""
+
+
+USER_AGENT = "wayfinder-review-handoff/1.0 (+https://github.com/Myan17/wayfinder)"
+"""Who is posting. Discord's edge answers 403 Forbidden to urllib's default `Python-urllib/3.x`,
+so without this the tool reports a failed webhook and nothing reaches the channel; Slack accepts the
+default, which is why this survived three pull requests. The value names the tool and the repository
+rather than imitating a browser -- a channel admin looking at where this traffic comes from should
+be able to see what it actually is.
+"""
 
 
 def notify(text: str) -> str:
@@ -88,7 +129,11 @@ def notify(text: str) -> str:
         return "webhook: not configured (set WAYFINDER_REVIEW_WEBHOOK_URL to enable)"
     # Slack and Discord both accept a JSON body with a text-ish field; send both keys.
     body = json.dumps({"text": text, "content": text}).encode()
-    req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(
+        url,
+        data=body,
+        headers={"Content-Type": "application/json", "User-Agent": USER_AGENT},
+    )
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             return f"webhook: {resp.status}"

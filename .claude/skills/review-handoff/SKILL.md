@@ -36,6 +36,14 @@ scripts/review_handoff.py advance          # after a merge: what the stack needs
 `request` and `await` post to `WAYFINDER_REVIEW_WEBHOOK_URL` when it is set — a Slack or Discord
 incoming webhook. Without it they are quiet and GitHub's own review request still stands.
 
+**The webhook is outbound only.** An incoming webhook accepts POSTs; it cannot read the channel.
+Nothing here waits on a chat reply, and nothing should: `await` reads `reviewDecision`,
+`mergeStateStatus` and `mergedAt` from the GitHub API, because that is where a review decision
+actually exists. A reviewer working outside GitHub — in a chat assistant with no Discord access, say
+— is served by `packet` and `record`, not by a read path that does not exist. Building one would
+create a second source of "approved" that looks authoritative and is not; the binding approval is
+the reviewer's own action on GitHub, which branch protection requires regardless.
+
 **Payloads are metadata only**: number, title, counts, state, URL — no diff, no file contents. Slack
 and Discord are third parties, and the egress rules the design sets for the product (`DESIGN` §9.7)
 apply to tooling that talks about it. A test pins this.
