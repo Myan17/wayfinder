@@ -28,9 +28,22 @@ def test_no_verb_can_approve_or_merge():
         )
 
 
-def test_notify_is_a_no_op_without_a_configured_webhook(monkeypatch):
-    monkeypatch.delenv("WAYFINDER_REVIEW_WEBHOOK_URL", raising=False)
+@pytest.fixture
+def no_env_file(tmp_path, monkeypatch):
+    """Point the lookup at empty directories.
 
+    Without this, "no webhook is configured" is only true on a machine where nobody has configured
+    one -- so these tests passed for as long as .env did not exist and began failing the moment a
+    real webhook was set up. A test that depends on the developer's machine being unconfigured is
+    not testing anything.
+    """
+    monkeypatch.delenv(handoff.WEBHOOK_VAR, raising=False)
+    monkeypatch.setattr(handoff, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(handoff, "main_checkout", lambda: None)
+    return tmp_path
+
+
+def test_notify_is_a_no_op_without_a_configured_webhook(no_env_file):
     result = handoff.notify("anything")
 
     assert "not configured" in result
@@ -90,6 +103,7 @@ def test_a_dot_env_in_the_current_directory_is_not_read(tmp_path, monkeypatch):
     (elsewhere / ".env").write_text(f"{handoff.WEBHOOK_VAR}=https://example.invalid/stray\n")
     monkeypatch.delenv(handoff.WEBHOOK_VAR, raising=False)
     monkeypatch.setattr(handoff, "REPO_ROOT", root)
+    monkeypatch.setattr(handoff, "main_checkout", lambda: None)
     monkeypatch.chdir(elsewhere)
 
     assert handoff.webhook_url() == ""
@@ -123,6 +137,85 @@ def test_repo_root_is_derived_from_the_script_when_imported_from_another_directo
 
     assert pathlib.Path(out) == MODULE_PATH.parent.parent
     assert (pathlib.Path(out) / ".env.example").is_file()
+
+
+def test_a_worktree_falls_back_to_the_env_in_the_main_checkout(tmp_path, monkeypatch):
+    """Every pull request is authored from a linked worktree, and .env is not in one.
+
+    A worktree has its own root but shares .git with the main clone. The author configures .env once,
+    beside .env.example, in the checkout they cloned. Anchoring only on the script's own root made
+    the tool silently unconfigured in exactly the place it is always run from -- and the alternative,
+    a copy of the same secret in every worktree, is worse than the bug.
+    """
+    checkout = tmp_path / "wayfinder"
+    worktree = tmp_path / "wayfinder-wt" / "myan-authz-thing"
+    worktree.mkdir(parents=True)
+    checkout.mkdir()
+    (checkout / ".env").write_text(f"{handoff.WEBHOOK_VAR}=https://example.invalid/from-checkout\n")
+    monkeypatch.delenv(handoff.WEBHOOK_VAR, raising=False)
+    monkeypatch.setattr(handoff, "REPO_ROOT", worktree)
+    monkeypatch.setattr(handoff, "main_checkout", lambda: checkout)
+
+    assert handoff.webhook_url() == "https://example.invalid/from-checkout"
+
+
+def test_a_worktrees_own_env_wins_over_the_main_checkout(tmp_path, monkeypatch):
+    """A worktree may point somewhere else on purpose -- a scratch channel, say."""
+    checkout = tmp_path / "wayfinder"
+    worktree = tmp_path / "wayfinder-wt" / "myan-authz-thing"
+    worktree.mkdir(parents=True)
+    checkout.mkdir()
+    (checkout / ".env").write_text(f"{handoff.WEBHOOK_VAR}=https://example.invalid/from-checkout\n")
+    (worktree / ".env").write_text(f"{handoff.WEBHOOK_VAR}=https://example.invalid/from-worktree\n")
+    monkeypatch.delenv(handoff.WEBHOOK_VAR, raising=False)
+    monkeypatch.setattr(handoff, "REPO_ROOT", worktree)
+    monkeypatch.setattr(handoff, "main_checkout", lambda: checkout)
+
+    assert handoff.webhook_url() == "https://example.invalid/from-worktree"
+
+
+def test_main_checkout_resolves_through_the_shared_git_directory(tmp_path):
+    """Outside a repository there is no main checkout, and the lookup must not raise."""
+    assert handoff.main_checkout() in (None, handoff.REPO_ROOT) or handoff.main_checkout().is_dir()
+
+
+def test_the_request_identifies_itself_with_a_user_agent(monkeypatch):
+    """Discord's edge answers 403 Forbidden to urllib's default User-Agent.
+
+    Verified against a real webhook: the same request with a User-Agent header returns 204. Slack
+    accepts the default, which is why every test so far passed against a fake urlopen and the
+    tooling still could not post to Discord.
+
+    The value names the tool and the repository rather than imitating a browser -- a channel admin
+    deciding whether this traffic is legitimate should be able to see what it is.
+    """
+    seen = {}
+
+    def fake_urlopen(req, timeout=0):
+        seen["agent"] = req.get_header("User-agent")
+
+        class R:
+            status = 204
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        return R()
+
+    monkeypatch.setenv(handoff.WEBHOOK_VAR, "https://example.invalid/hook")
+    monkeypatch.setattr(handoff.urllib.request, "urlopen", fake_urlopen)
+
+    handoff.notify("anything")
+
+    agent = seen["agent"] or ""
+    assert agent, "urllib's default User-Agent is rejected by Discord; send an explicit one"
+    assert "python-urllib" not in agent.lower()
+    assert "wayfinder" in agent.lower()
+    for imitation in ("Mozilla", "Chrome", "Safari"):
+        assert imitation not in agent, "identify the tool; do not imitate a browser"
 
 
 def test_security_modules_are_detected_from_paths():
@@ -183,8 +276,5 @@ def test_a_commented_line_in_the_env_file_is_not_config(monkeypatch, tmp_path):
     assert handoff.webhook_url() == "https://example.invalid/real"
 
 
-def test_a_missing_dotenv_is_not_an_error(monkeypatch, tmp_path):
-    monkeypatch.delenv("WAYFINDER_REVIEW_WEBHOOK_URL", raising=False)
-    monkeypatch.chdir(tmp_path)
-
+def test_a_missing_dotenv_is_not_an_error(no_env_file):
     assert handoff.webhook_url() == ""
