@@ -109,7 +109,7 @@ by CI on every pull request.
 ## Open questions
 
 - `make lint` and `make test` are still not wired into CI, and the suites now exist (38 authz tests
-  plus 16 under `scripts/tests/`). That wiring is the next platform pull request, together with the
+  plus 17 under `scripts/tests/`). That wiring is the next platform pull request, together with the
   ruff-format debt in six older scripts. Until then a green pull request means the guardrails passed,
   not that anything was tested.
 - Whether to pin Python 3.13 exactly (design text) or keep `>=3.13` and run on the local 3.14. Today:
@@ -121,4 +121,4 @@ by CI on every pull request.
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card written when the bootstrap Makefile and pyproject landed, replacing the placeholder | — |
-| 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 16, after the freshness tests landed). Card verification moved to content hashes | — |
+| 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 17, after the freshness tests landed). Card verification moved to content hashes | — |

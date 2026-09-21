@@ -3,7 +3,7 @@ module: <name>
 owner: <A|B handle>
 paths:
   - <glob>
-interface_files:          # hashed by CI; changing one requires updating Verified-at below
+interface_files:          # hashed by CI; change one and this card must be re-read, below
   - <path>
 tables_owned:
   - <table>
@@ -11,8 +11,8 @@ depends_on:               # modules this one calls; their cards are required rea
   - <module>
 design_sections:
   - "DESIGN §x.y"
-verified_hashes:           # scripts/check_context_freshness.py --fix writes these, once you have
-  "<interface file>": "<sha256 prefix>"   # actually re-read the card against the code
+verified_hashes:           # scripts/check_context_freshness.py --fix <module> writes these, for this
+  "<interface file>": "<sha256 prefix>"   # card alone, once you have re-read it against the code
 verified_on: <YYYY-MM-DD>
 ---
 

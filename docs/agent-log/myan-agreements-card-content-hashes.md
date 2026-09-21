@@ -67,3 +67,13 @@ Caught a stale count I had just written: the platform card said 12 tests under s
 ### 2026-09-21T07:01:33Z · COMMIT · myan · claude-code/opus-5 · parent:c8ea896
 fix(platform): correct the tooling test count on the platform card
 2 files changed, 5 insertions(+), 2 deletions(-)
+
+### 2026-09-21T07:20:14Z · EDIT · myan · claude-code/opus-5 · a2254b1
+Reviewer's three wording corrections, plus two the same reading turned up. Corrected as asked: the stale-card error now says 'record one with --fix <module-stem>' naming the actual card, the summary error says '--fix <module>, one card at a time', and TEMPLATE-module-card.md's verified_hashes comment says '--fix <module> ... for this card alone'. Also found: the template's interface_files comment still said 'requires updating Verified-at below', pointing at a field this pull request removes, and the usage docstring had a line broken mid-sentence. Both fixed. Counted again afterwards and the platform card's tooling total moved 16 to 17 with the new test.
+
+### 2026-09-21T07:20:14Z · TEST · myan · claude-code/opus-5 · a2254b1
+Added test_no_message_tells_the_reader_to_run_a_bare_fix, which asserts every printed line mentioning --fix carries either a module name or the <module> placeholder. Confirmed it bites before trusting it: restored the old 'record one with --fix' wording and the test failed with "assert '--fix alpha' in ..."; restored the fix and it passes. Full suite 55 passed (38 authz + 17 scripts). ruff check clean; ruff format reformatted my wrapped stale.append back to one line and --check is clean now. Plain run -> 'context-freshness OK: 3 interface files checked across 16 cards'; bare --fix -> exit 2.
+
+### 2026-09-21T07:36:32Z · COMMIT · myan · claude-code/opus-5 · parent:a2254b1
+docs(agreements): every printed --fix instruction names a module
+5 files changed, 37 insertions(+), 10 deletions(-)

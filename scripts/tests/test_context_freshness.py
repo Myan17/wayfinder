@@ -7,6 +7,7 @@ problem, which is the whole reason for this shape.
 
 import importlib.util
 import pathlib
+import re
 import sys
 
 MODULE = pathlib.Path(__file__).resolve().parents[1] / "check_context_freshness.py"
@@ -90,6 +91,25 @@ def test_fix_without_a_named_card_refuses_and_changes_nothing(tmp_path, monkeypa
     assert freshness.main_with(cards_dir=cards, fix="") == 2
 
     assert {p.name: p.read_bytes() for p in cards.glob("*.md")} == before
+
+
+def test_no_message_tells_the_reader_to_run_a_bare_fix(tmp_path, monkeypatch, capsys):
+    """Every instruction the tool prints must be a command that works.
+
+    A message reading "record one with --fix" sends the reader to a command that exits 2. The
+    guardrail's whole value is that its errors say what to do next, so a stale instruction is a
+    defect in the guardrail, not a typo.
+    """
+    cards = two_stale_cards(tmp_path)
+    monkeypatch.chdir(tmp_path)
+
+    assert freshness.main_with(cards_dir=cards) == 1
+
+    printed = capsys.readouterr().out
+    assert "--fix alpha" in printed
+    for line in printed.splitlines():
+        if "--fix" in line:
+            assert "--fix <module>" in line or re.search(r"--fix [a-z]", line), line
 
 
 def test_the_command_line_cannot_express_a_bare_fix():

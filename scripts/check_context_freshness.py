@@ -13,9 +13,9 @@ fails on `main`. Rebases orphan it the same way. A hash of the file has no such 
 object from any history, only the bytes in front of it.
 
 usage: scripts/check_context_freshness.py [--fix <module>]
-       --fix records the current hashes on that one module's card, and touches no other card. Run it
-       only once you have actually re-read that card against its interface -- the hash is the
-       attestation that you did, and a reviewer reads it that way.
+       --fix <module> records the current hashes on that one module's card and touches no other
+       card. Run it only once you have actually re-read that card against its interface -- the
+       hash is the attestation that you did, and a reviewer reads it that way.
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ def main_with(cards_dir: pathlib.Path = CARDS, fix: str | None = None) -> int:
             checked += 1
             then = recorded.get(path)
             if then is None:
-                stale.append(f"{card}: no recorded hash for {path}; record one with --fix")
+                stale.append(f"{card}: no recorded hash for {path}; record one with --fix {card.stem}")
             elif then != now:
                 stale.append(f"{card}: {path} changed since the card was last verified")
 
@@ -138,7 +138,8 @@ def main_with(cards_dir: pathlib.Path = CARDS, fix: str | None = None) -> int:
             print(f"::error::{s}")
         print(
             "::error::A contract card is stale. Re-read it against the interface, update it, then "
-            "record the new hashes (scripts/check_context_freshness.py --fix) in this same pull request."
+            "record the new hashes (scripts/check_context_freshness.py --fix <module>, one card at a "
+            "time) in this same pull request."
         )
         return 1
 
