@@ -63,9 +63,9 @@ All four, in the same run, against the same digest:
 
 | # | Point | Command | Required |
 |---|---|---|---|
-| 1 | Host architecture | `uname -m` **on the host, outside any container** | `aarch64` |
+| 1 | Host architecture | `uname -m` **on the host, outside any container** | `aarch64`, or `arm64` — the same architecture under two spellings. **On the A1 (S3-1b) it must be `aarch64`**, because the A1 is Linux and Linux spells it that way; `arm64` there would mean the host is not what we think it is |
 | 2 | Docker daemon architecture | `docker version --format '{{.Server.Arch}}'` | `arm64` |
-| 3 | Selected image architecture | `docker image inspect <digest> --format '{{.Architecture}}/{{.Variant}}'` | `arm64/v8` |
+| 3 | Selected image architecture | `docker image inspect <digest> --format '{{.Architecture}}'`, and `{{.Variant}}` separately | `Architecture` is `arm64`. `Variant`, **if the image declares one**, is `v8`; an empty variant is not a failure |
 | 4 | It actually ran | The container starts and Postgres accepts a connection | Exit 0 |
 
 **Why this is sufficient, and why the check it replaces was not.** Emulation is how Docker executes
@@ -81,6 +81,23 @@ sufficient. Points 1–4 are both.
 An earlier draft before that used `uname -m` *inside* the container, which reports what the binary
 sees: an arm64 image emulated on an amd64 host reports `aarch64` and passes. Point 1 is deliberately
 outside the container for that reason.
+
+**Corrected 2026-09-22, before any S3 result was recorded.** Reconnaissance against the pinned
+digest showed this table failing a genuinely arm64 image, twice over:
+
+- Point 3 demanded `arm64/v8`. ParadeDB's manifest advertises `{"architecture": "arm64", "os":
+  "linux"}` with **no variant key**, so `{{.Variant}}` is empty and the rule failed. `alpine:3.20`
+  and `postgres:17` do set `v8` on their arm64 builds, which is what the draft was written from.
+  Variant is optional in the OCI platform object, and its absence is not evidence about
+  architecture — so the rule was asking for something that does not have to exist.
+- Point 1 demanded `aarch64`. Linux spells it that way, macOS spells it `arm64`, and S3-1a is
+  defined to run on a development machine.
+
+Both were errors in **what to observe**, not thresholds that turned out inconvenient, and both
+failed *closed* — they would have sent a working engine to the fallback. They are corrected here in
+their own change, with no S3 result recorded anywhere yet, precisely so the correction cannot be
+mistaken for adjusting a rule to fit a measurement. Choosing a different image that does set `v8`
+would have been the same error wearing a different hat: picking the artifact to suit the rule.
 
 ### S3-2: the privilege set, declared before the experiment
 
