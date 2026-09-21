@@ -37,3 +37,10 @@ Added an explicit base-ref fetch to the workflow. #6 failed with '1 COMMIT entry
 ### 2026-09-21T01:35:36Z · COMMIT · myan · claude-code/opus-5 · parent:3e2e898
 fix(platform): fetch the base ref before computing the range
 2 files changed, 8 insertions(+)
+
+### 2026-09-21T01:44:22Z · EDIT · myan · claude-code/opus-5 · fc018c3
+Rebased onto main and force-pushed: branch protection requires branches to be up to date, and main advanced when #7 merged, so GitHub reported the approved pull request as BEHIND and disabled its merge button.
+
+### 2026-09-21T01:44:22Z · COMMIT · myan · claude-code/opus-5 · parent:fc018c3
+docs(agreements): record the rebase onto main
+1 file changed, 3 insertions(+)
