@@ -60,3 +60,10 @@ Ready for re-review. Branch is one commit. The diff no longer touches AGENTS.md,
 ### 2026-09-21T07:01:11Z · COMMIT · myan · claude-code/opus-5 · parent:211e39a
 fix(agreements): verify contract cards against interface content, not a commit sha
 7 files changed, 306 insertions(+), 75 deletions(-)
+
+### 2026-09-21T07:01:33Z · TEST · myan · claude-code/opus-5 · c8ea896
+Caught a stale count I had just written: the platform card said 12 tests under scripts/tests/, but the three regression tests plus the parse_fix test bring it to 16. Verified by running the suite - 'uv run pytest scripts/tests -q' reports 16 passed, full suite 54. Corrected the card and its change-log row. This is the second count error on this card, which is an argument for the card citing the command rather than the number; recording it as an open question is out of this pull request's scope, so it goes here.
+
+### 2026-09-21T07:01:33Z · COMMIT · myan · claude-code/opus-5 · parent:c8ea896
+fix(platform): correct the tooling test count on the platform card
+2 files changed, 5 insertions(+), 2 deletions(-)
