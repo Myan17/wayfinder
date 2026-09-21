@@ -36,3 +36,10 @@ feat(authz): fenced grant refresh and the fixture authorization source
 
 ### 2026-09-21T01:27:33Z · EDIT · myan · claude-code/opus-5 · d7aaf2d
 Rebuilt on the rebased #5 after #7 merged, and force-pushed. Same reason as #5: the branch carried content that landed with #7, plus other tasks' logs.
+
+### 2026-09-21T01:54:29Z · EDIT · myan · claude-code/opus-5 · c3974c4
+Rebased onto main after #5 merged and force-pushed; branch protection requires branches to be up to date.
+
+### 2026-09-21T01:55:38Z · COMMIT · myan · claude-code/opus-5 · parent:c3974c4
+docs(authz): record the rebase onto main after #5 merged
+1 file changed, 3 insertions(+)
