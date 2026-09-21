@@ -33,3 +33,19 @@ Left 20 pre-existing ruff findings in six older scripts alone (import order, lon
 ### 2026-09-21T04:59:56Z · COMMIT · myan · claude-code/opus-5 · parent:2b75424
 feat(agreements): review handoff tooling
 7 files changed, 435 insertions(+), 2 deletions(-)
+
+### 2026-09-21T05:20:04Z · PLAN · myan · claude-code/opus-5 · 5d51909
+Four blockers. Splitting the platform changes (pyproject testpath, .env.example, platform card) into their own pull request as the reviewer suggested - this branch has four lines of headroom and the fixes need more than that. Then: catch TimeoutError, which is not a URLError subclass and so escaped the handler that promised to degrade; and run ruff format. Test first for the timeout.
+
+### 2026-09-21T05:20:20Z · TEST · myan · claude-code/opus-5 · 5d51909
+uv run pytest scripts/tests -q -> 8 passed (6 original + 2 new: a webhook timeout and a refused connection both degrade to FAILED rather than raising). ruff check and ruff format --check clean on both files.
+
+### 2026-09-21T05:20:20Z · EDIT · myan · claude-code/opus-5 · 5d51909
+Moved pyproject.toml and .env.example back to main's versions; they go in the platform pull request with the platform card and its verified_at bump. This branch is now scripts, the skill and the ownership entry.
+
+### 2026-09-21T05:20:20Z · COMMIT · myan · claude-code/opus-5 · parent:5d51909
+fix(agreements): degrade on a webhook timeout, and split out the platform changes
+5 files changed, 47 insertions(+), 10 deletions(-)
+
+### 2026-09-21T05:20:47Z · EDIT · myan · claude-code/opus-5 · 211d3c6
+Split again: the skill file and its ownership entry move to a follow-up. A command-line tool is usable without the skill; a skill without the tool is not, so the tool goes first.

@@ -57,8 +57,10 @@ def notify(text: str) -> str:
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             return f"webhook: {resp.status}"
-    except urllib.error.URLError as exc:
-        return f"webhook: FAILED ({exc.reason}) -- GitHub still has the request"
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        # TimeoutError is not a URLError subclass, so catching URLError alone let a slow webhook
+        # take down the caller. A notification is a courtesy; GitHub already holds the request.
+        return f"webhook: FAILED ({exc}) -- GitHub still has the request"
 
 
 def touches_security(files: list[str]) -> list[str]:
@@ -213,8 +215,10 @@ def cmd_advance() -> int:
         elif p["mergeStateStatus"] == "BLOCKED":
             note = "  <- waiting on review"
         print(f"  #{p['number']} {p['title'][:52]} [{p['mergeStateStatus']}]{note}")
-    print("\nRebases are mechanical; approval and merge are not. This tool does the former only when "
-          "you run the rebase yourself.")
+    print(
+        "\nRebases are mechanical; approval and merge are not. This tool does the former only when "
+        "you run the rebase yourself."
+    )
     return 0
 
 

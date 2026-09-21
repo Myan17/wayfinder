@@ -78,3 +78,32 @@ def test_packet_diff_budget_is_bounded():
 def test_record_rejects_an_unknown_verdict():
     with pytest.raises(KeyError):
         handoff.cmd_record("1", "rubber-stamp", "someone", "")
+
+
+def test_a_webhook_timeout_degrades_instead_of_raising(monkeypatch):
+    """TimeoutError is not a URLError subclass, so it escaped the handler that promised to degrade.
+
+    A notification is a courtesy; GitHub already holds the request. Failing the caller because a
+    chat webhook was slow would make the tooling less reliable than doing nothing.
+    """
+
+    def timeout(req, timeout=0):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setenv("WAYFINDER_REVIEW_WEBHOOK_URL", "https://example.invalid/hook")
+    monkeypatch.setattr(handoff.urllib.request, "urlopen", timeout)
+
+    result = handoff.notify("anything")
+
+    assert "FAILED" in result
+    assert "GitHub still has the request" in result
+
+
+def test_a_refused_connection_also_degrades(monkeypatch):
+    def refused(req, timeout=0):
+        raise OSError(61, "Connection refused")
+
+    monkeypatch.setenv("WAYFINDER_REVIEW_WEBHOOK_URL", "https://example.invalid/hook")
+    monkeypatch.setattr(handoff.urllib.request, "urlopen", refused)
+
+    assert "FAILED" in handoff.notify("anything")

@@ -21,7 +21,7 @@ build-backend = "hatchling.build"
 packages = ["apps/api/wayfinder"]
 
 [tool.pytest.ini_options]
-testpaths = ["apps/api/tests", "scripts/tests"]
+testpaths = ["apps/api/tests"]
 pythonpath = ["apps/api"]
 asyncio_mode = "auto"
 addopts = "-q --strict-markers"
