@@ -36,3 +36,10 @@ Ready for review. Two causes, one symptom: the tool could not deliver a notifica
 ### 2026-09-21T20:58:19Z · COMMIT · myan · claude-code/opus-5 · parent:85aed44
 fix(agreements): notify() could not deliver -- no User-Agent, and .env unreachable from a worktree
 3 files changed, 180 insertions(+), 11 deletions(-)
+
+### 2026-09-21T22:38:31Z · EDIT · myan · claude-code/opus-5 · b99ef46
+Engineer B observed that their environment has no Discord connector and that the webhook is outbound only, so it cannot read channel messages. Both true. The skill implied the direction but never stated it - it said 'treat a message as proof of a merge' is forbidden, without saying a reply cannot arrive at all. Added a paragraph to .claude/skills/review-handoff/SKILL.md stating the webhook is POST-only, that await reads reviewDecision, mergeStateStatus and mergedAt from the GitHub API because that is where a decision exists, and that a reviewer outside GitHub is served by packet and record. Recorded the argument against ever adding a read path: it would create a second source of 'approved' that looks authoritative and is not, while branch protection requires the real approval on GitHub anyway. No code change.
+
+### 2026-09-21T22:38:31Z · COMMIT · myan · claude-code/opus-5 · parent:b99ef46
+docs(agreements): say plainly that the review webhook is outbound only
+2 files changed, 11 insertions(+)
