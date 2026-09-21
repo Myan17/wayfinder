@@ -46,3 +46,13 @@ The first version of the expiry regression test passed a scope expired only agai
 ### 2026-09-21T05:19:30Z · COMMIT · myan · claude-code/opus-5 · parent:adb41cd
 fix(authz): close a fail-open default, stop the fake masking the kernel, correct the card
 6 files changed, 66 insertions(+), 14 deletions(-)
+
+### 2026-09-21T05:32:05Z · TEST · myan · claude-code/opus-5 · 8d73564
+Audited every count the card asserts against the tree: 'pinned by 36 tests' was stale (pytest collects 38 - 37 def test_ lines, one parametrized with two cases), and test_fake_matches_contract.py said 5 where it now has 6. Both corrected; test_metrics.py's 3 was right.
+
+### 2026-09-21T05:32:05Z · COMMIT · myan · claude-code/opus-5 · parent:8d73564
+docs(authz): correct two stale test counts on the card
+2 files changed, 5 insertions(+), 2 deletions(-)
+
+### 2026-09-21T05:33:07Z · TEST · myan · claude-code/opus-5 · e6e27c3
+Second pass on the counts: the first attempt wrote an empty number because the shell parse of pytest's output failed and nothing checked the result. Count now taken from --collect-only and asserted to be a positive integer before it is written.

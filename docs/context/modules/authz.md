@@ -23,7 +23,7 @@ verified_on: 2026-09-19
 
 # authz
 
-> **Status (2026-09-20):** the pure kernel is on `main` and pinned by 36 tests — `build_scope`,
+> **Status (2026-09-21):** the pure kernel is on `main` and pinned by 38 tests — `build_scope`,
 > `sql_predicate`, `assert_rows_authorized`, the counters, the fenced refresh and `FixtureAuthz`.
 > Three entry points are **not implemented**: `resolve_principal` (needs sessions),
 > `authorized_repos` (needs the database layer) and `reauthorize_manifest` (needs stored evidence
@@ -142,7 +142,7 @@ is wrong and that is a defect, not a rounding error.
 | `test_predicate.py::test_assert_rows_authorized_raises_and_counts_a_row_outside_the_scope` | Violations raise and count |
 | `test_refresh.py::test_refresh_is_rejected_when_the_revision_moved_while_it_was_fetching` | Revision fencing |
 | `test_refresh.py::test_partial_pagination_is_never_treated_as_success` | All-or-nothing refresh |
-| `test_fake_matches_contract.py` (5 tests) | The fake is never more permissive than the kernel |
+| `test_fake_matches_contract.py` (6 tests) | The fake is never more permissive than the kernel |
 | `test_metrics.py` (3 tests) | Counter semantics |
 
 **Not yet written**, because they need the database layer: the delivered-event revocation bound
