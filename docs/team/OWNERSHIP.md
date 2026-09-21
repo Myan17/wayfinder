@@ -112,5 +112,5 @@ modules:
   schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
   agent-logs:    {owner: any,   paths: ["docs/agent-log/**"]}
   boundary:      {owner: any,   paths: ["docs/context/boundary/**"]}
-  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**"]}
+  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**", ".claude/**"]}
 ```
