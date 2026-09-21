@@ -38,3 +38,7 @@ Rebased onto main after #10 merged and force-pushed; protection requires branche
 ### 2026-09-21T05:39:43Z · COMMIT · myan · claude-code/opus-5 · parent:66a3643
 docs(platform): record the rebase onto main after #10
 1 file changed, 3 insertions(+)
+
+### 2026-09-21T05:43:35Z · COMMIT · myan · claude-code/opus-5 · parent:6284e0f
+docs(platform): verify the card against the commit that carries the new pyproject
+1 file changed, 1 insertion(+), 1 deletion(-)
