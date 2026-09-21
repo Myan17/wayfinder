@@ -31,3 +31,10 @@ feat(platform): collect scripts/tests, document the review webhook variable
 ### 2026-09-21T05:21:24Z · COMMIT · myan · claude-code/opus-5 · parent:0566e45
 docs(platform): re-verify the card against the changed interface
 1 file changed, 2 insertions(+), 2 deletions(-)
+
+### 2026-09-21T05:39:42Z · EDIT · myan · claude-code/opus-5 · 66a3643
+Rebased onto main after #10 merged and force-pushed; protection requires branches to be up to date, and the rebase dismisses any approval.
+
+### 2026-09-21T05:39:43Z · COMMIT · myan · claude-code/opus-5 · parent:66a3643
+docs(platform): record the rebase onto main after #10
+1 file changed, 3 insertions(+)
