@@ -38,6 +38,11 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
+          # Fetch the base ref explicitly. A stacked pull request's base is a task branch, and task
+          # branches get force-pushed; without this the runner's copy can lag, the merge base lands
+          # further back, and the range picks up the parent's commits - which looks like a missing
+          # log entry rather than a stale ref.
+          git fetch --no-tags --prune origin "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
           BASE=$(git merge-base "origin/$BASE_REF" HEAD)
           echo "base=$BASE" >> "$GITHUB_OUTPUT"
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
@@ -66,6 +71,11 @@ jobs:
 
       - name: Contract card freshness
         run: python3 scripts/check_context_freshness.py
+
+      - name: Pull request size
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+        run: python3 scripts/check_pr_size.py "${{ steps.refs.outputs.base }}" "${{ steps.refs.outputs.head }}"
 
       - name: Agent log
         env:
