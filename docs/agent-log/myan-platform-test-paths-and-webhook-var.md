@@ -49,3 +49,10 @@ uv run pytest (with the new testpath) -> 38 passed in 0.20s ; scripts/tests alon
 ### 2026-09-21T05:45:21Z · COMMIT · myan · claude-code/opus-5 · parent:e3b8aa7
 docs(platform): record the testpath verification
 1 file changed, 3 insertions(+)
+
+### 2026-09-21T05:56:07Z · EDIT · myan · claude-code/opus-5 · 4513136
+Rebased onto main after #11 merged and force-pushed.
+
+### 2026-09-21T05:56:07Z · COMMIT · myan · claude-code/opus-5 · parent:4513136
+docs(platform): record the rebase onto main after #11
+1 file changed, 3 insertions(+)
