@@ -39,3 +39,10 @@ Rebuilt on main after #7 merged, and force-pushed. The branch had been carrying 
 
 ### 2026-09-21T01:27:13Z · TEST · myan · claude-code/opus-5 · 1861a10
 Caught an incomplete push: the rebuild's git show calls failed on shell expansion, so predicate.py and test_predicate.py were missing and the branch was only +51 lines. Recovered both from the previous tip; suite back to 26 tests.
+
+### 2026-09-21T01:29:53Z · DECIDE · myan · claude-code/opus-5 · d7aaf2d
+verified_at now names a commit reachable from main rather than a branch commit. A force-push makes the old sha unreachable, so a fresh CI clone cannot resolve it even though a local clone can - which is why the check passed here and failed in CI.
+
+### 2026-09-21T01:29:53Z · COMMIT · myan · claude-code/opus-5 · parent:d7aaf2d
+docs(authz): point verified_at at a commit reachable from main
+2 files changed, 4 insertions(+), 1 deletion(-)
