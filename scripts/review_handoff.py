@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import pathlib
 import subprocess
 import time
 import urllib.error
@@ -46,9 +47,43 @@ def reviewers() -> list[str]:
     return []
 
 
+WEBHOOK_VAR = "WAYFINDER_REVIEW_WEBHOOK_URL"
+REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
+"""The repository this script lives in -- the directory holding .env.example, and so .env.
+
+Derived from the script's own location, never from the caller's working directory. The tool is run
+from wherever the author happens to be, and a `Path(".env")` would have made the webhook work or not
+work depending on that -- with the common case, a subdirectory of the worktree, being the one that
+silently found nothing.
+"""
+
+
+def webhook_url() -> str:
+    """The webhook, from the environment or from .env at the repository root.
+
+    The repository ships .env.example documenting this variable, so a reader who puts it in .env is
+    doing the obvious thing; the tool honours that rather than silently ignoring it. An exported
+    value is the more deliberate act, so it wins. No dependency: the file is four lines of parsing.
+    """
+    exported = os.environ.get(WEBHOOK_VAR, "").strip()
+    if exported:
+        return exported
+    try:
+        for line in (REPO_ROOT / ".env").read_text().splitlines():
+            line = line.strip()
+            if line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            if key.strip() == WEBHOOK_VAR:
+                return value.strip().strip("\"'")
+    except OSError:
+        pass
+    return ""
+
+
 def notify(text: str) -> str:
     """Post metadata to the review webhook, if one is configured. Never content."""
-    url = os.environ.get("WAYFINDER_REVIEW_WEBHOOK_URL", "").strip()
+    url = webhook_url()
     if not url:
         return "webhook: not configured (set WAYFINDER_REVIEW_WEBHOOK_URL to enable)"
     # Slack and Discord both accept a JSON body with a text-ish field; send both keys.
