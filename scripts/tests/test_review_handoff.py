@@ -8,6 +8,7 @@
 
 import importlib.util
 import pathlib
+import shutil
 import subprocess
 import sys
 
@@ -174,9 +175,64 @@ def test_a_worktrees_own_env_wins_over_the_main_checkout(tmp_path, monkeypatch):
     assert handoff.webhook_url() == "https://example.invalid/from-worktree"
 
 
-def test_main_checkout_resolves_through_the_shared_git_directory(tmp_path):
-    """Outside a repository there is no main checkout, and the lookup must not raise."""
-    assert handoff.main_checkout() in (None, handoff.REPO_ROOT) or handoff.main_checkout().is_dir()
+def git(*args, cwd):
+    """Run git with identity supplied, so the test does not depend on the machine's git config."""
+    return subprocess.run(
+        ["git", "-c", "user.email=test@example.invalid", "-c", "user.name=test", *args],
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is required to build a worktree")
+def test_main_checkout_resolves_through_a_real_linked_worktree(tmp_path, monkeypatch):
+    """Build an actual repository and an actual linked worktree, and resolve one from the other.
+
+    The two tests above monkeypatch `main_checkout`, so they pin how `webhook_url` uses the answer,
+    not whether the answer is right. This one exercises the `git rev-parse --git-common-dir` call
+    itself against the real thing: a worktree's `.git` is a file pointing into the primary
+    checkout's `.git/worktrees/<name>`, and the whole fix depends on that indirection resolving.
+    """
+    checkout = tmp_path / "wayfinder"
+    checkout.mkdir()
+    git("init", "-b", "main", cwd=checkout)
+    (checkout / "README.md").write_text("probe\n")
+    git("add", "README.md", cwd=checkout)
+    git("commit", "-m", "initial", cwd=checkout)
+
+    worktree = tmp_path / "wayfinder-wt" / "myan-authz-thing"
+    git("worktree", "add", "-b", "myan/authz/thing", str(worktree), cwd=checkout)
+    assert (worktree / ".git").is_file(), "a linked worktree's .git is a file, not a directory"
+
+    monkeypatch.setattr(handoff, "REPO_ROOT", worktree)
+
+    resolved = handoff.main_checkout()
+
+    assert resolved is not None
+    assert resolved.resolve() == checkout.resolve()
+    assert resolved.resolve() != worktree.resolve()
+
+
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is required to build a repository")
+def test_the_primary_checkout_resolves_to_itself(tmp_path, monkeypatch):
+    """Run from the clone rather than a worktree: the answer is the clone, and env_files has one entry."""
+    checkout = tmp_path / "wayfinder"
+    checkout.mkdir()
+    git("init", "-b", "main", cwd=checkout)
+    monkeypatch.setattr(handoff, "REPO_ROOT", checkout)
+
+    assert handoff.main_checkout().resolve() == checkout.resolve()
+    assert handoff.env_files() == [checkout / ".env"]
+
+
+def test_outside_a_repository_there_is_no_main_checkout(tmp_path, monkeypatch):
+    """`git rev-parse` fails outside a repository; the lookup degrades instead of raising."""
+    monkeypatch.setattr(handoff, "REPO_ROOT", tmp_path)
+
+    assert handoff.main_checkout() is None
+    assert handoff.env_files() == [tmp_path / ".env"]
 
 
 def test_the_request_identifies_itself_with_a_user_agent(monkeypatch):

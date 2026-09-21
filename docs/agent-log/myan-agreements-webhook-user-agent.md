@@ -43,3 +43,13 @@ Engineer B observed that their environment has no Discord connector and that the
 ### 2026-09-21T22:38:31Z · COMMIT · myan · claude-code/opus-5 · parent:b99ef46
 docs(agreements): say plainly that the review webhook is outbound only
 2 files changed, 11 insertions(+)
+
+### 2026-09-21T22:52:48Z · TEST · myan · claude-code/opus-5 · 0864dc5
+Reviewer was right that test_main_checkout_resolves_through_the_shared_git_directory asserted nothing - an or-chain that any return value satisfied, and the two worktree tests monkeypatch main_checkout away, so the git rev-parse call itself was never exercised. Replaced with three tests. test_main_checkout_resolves_through_a_real_linked_worktree runs git init -b main, makes a commit, runs git worktree add, asserts the worktree's .git is a file rather than a directory (the indirection the fix depends on), points REPO_ROOT at the worktree and asserts main_checkout() returns the primary checkout and not the worktree. test_the_primary_checkout_resolves_to_itself covers running from the clone, where env_files() must have exactly one entry. test_outside_a_repository_there_is_no_main_checkout covers the degrade path. git identity is passed with -c user.email/-c user.name so the test does not depend on the machine's git config, and each is skipped if git is absent. Confirmed the main one bites: mutated main_checkout() to 'return REPO_ROOT' and it failed on the resolved-path comparison; reverted and it passes. Ran with -rs to confirm nothing is silently skipped - 20 passed, 0 skipped. Full suite 67 passed. ruff clean.
+
+### 2026-09-21T22:52:48Z · DECIDE · myan · claude-code/opus-5 · 0864dc5
+Not adding a live-webhook integration test in this pull request, on the reviewer's instruction and for the reason they gave: normal CI must not need secrets or outbound network. It stays an opt-in follow-up - a test marked so it runs only when WAYFINDER_REVIEW_WEBHOOK_URL is set and is skipped otherwise, never a required gate. Recording the gap it would close: every webhook test here fakes urlopen, and a fake cannot return 403, which is exactly how a tool that could not reach Discord kept a green suite through three pull requests.
+
+### 2026-09-21T22:52:58Z · COMMIT · myan · claude-code/opus-5 · parent:0864dc5
+test(agreements): resolve a real linked worktree instead of asserting nothing
+2 files changed, 65 insertions(+), 3 deletions(-)
