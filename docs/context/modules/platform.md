@@ -17,8 +17,8 @@ design_sections:
   - "DESIGN §16.4 (load protocol)"
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
-verified_at: 91b31fd
-verified_on: 2026-09-18
+verified_at: 0566e45
+verified_on: 2026-09-21
 ---
 
 # platform

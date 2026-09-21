@@ -27,3 +27,7 @@ The platform half of the handoff work: pyproject gains scripts/tests as a testpa
 ### 2026-09-21T05:21:23Z · COMMIT · myan · claude-code/opus-5 · parent:2b75424
 feat(platform): collect scripts/tests, document the review webhook variable
 4 files changed, 39 insertions(+), 3 deletions(-)
+
+### 2026-09-21T05:21:24Z · COMMIT · myan · claude-code/opus-5 · parent:0566e45
+docs(platform): re-verify the card against the changed interface
+1 file changed, 2 insertions(+), 2 deletions(-)
