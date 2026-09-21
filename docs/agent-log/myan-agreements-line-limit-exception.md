@@ -30,3 +30,10 @@ Check exercised both ways before asking anyone to rely on it: passes on this bra
 ### 2026-09-20T16:16:39Z · COMMIT · myan · claude-code/opus-5 · parent:cc0efbd
 docs(agreements): exclude the task log from the line limit, and enforce the limit
 5 files changed, 117 insertions(+), 4 deletions(-)
+
+### 2026-09-21T01:35:36Z · DECIDE · myan · claude-code/opus-5 · 3e2e898
+Added an explicit base-ref fetch to the workflow. #6 failed with '1 COMMIT entry for 3 commits' on a range that is one commit locally: the runner's copy of the force-pushed base branch was stale, so merge-base landed two commits too early. Fixing the ref rather than loosening the log rule, which was reporting exactly what it saw.
+
+### 2026-09-21T01:35:36Z · COMMIT · myan · claude-code/opus-5 · parent:3e2e898
+fix(platform): fetch the base ref before computing the range
+2 files changed, 8 insertions(+)
