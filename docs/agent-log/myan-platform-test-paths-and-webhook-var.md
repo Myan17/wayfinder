@@ -56,3 +56,10 @@ Rebased onto main after #11 merged and force-pushed.
 ### 2026-09-21T05:56:07Z · COMMIT · myan · claude-code/opus-5 · parent:4513136
 docs(platform): record the rebase onto main after #11
 1 file changed, 3 insertions(+)
+
+### 2026-09-21T05:56:26Z · TEST · myan · claude-code/opus-5 · 22c6b46
+Re-verified after #11 landed: uv run pytest -> 46 passed (38 authz + 8 handoff). Before this branch the same command collected 38 and the tooling's tests were invisible to make test, so the card's claim is now true rather than aspirational.
+
+### 2026-09-21T05:56:26Z · COMMIT · myan · claude-code/opus-5 · parent:22c6b46
+docs(platform): re-verify the testpath now that the tool is on main
+1 file changed, 3 insertions(+)
