@@ -49,13 +49,38 @@ that was measured is the artifact that ships.
 
 | # | Claim | PASS requires | FAIL means |
 |---|---|---|---|
-| S3-1a | Docker selected an arm64 build | For the image **pinned by digest**: `docker image inspect --format '{{.Architecture}}/{{.Variant}}'` reports `arm64/v8`, **and** the daemon reports `arm64` (`docker version --format '{{.Server.Arch}}'`), **and** the two match | Fallback |
-| S3-1b | It runs natively on the A1 itself | The same digest runs on the provisioned Oracle A1, where `/proc/sys/fs/binfmt_misc/` registers **no** `qemu-aarch64` interpreter — the definitive emulation check, available on a real Linux host | Fallback |
+| S3-1a | The architecture chain agrees on a development machine | All four points below, on any aarch64 development host. **Precondition only** — never an acceptance | Investigate before spending A1 time |
+| S3-1b | The architecture chain agrees **on the A1** | The same four points, on the provisioned Oracle A1, against the same digest | Fallback |
 | S3-2 | The extension installs with the privileges we have declared **in advance** | Under ADR-0007 **option A** — a single Oracle VM where we provision Postgres ourselves, so the role is `SUPERUSER` — `CREATE EXTENSION pg_search` succeeds and the BM25 index DDL of §9.2 is accepted verbatim against a table with `key_field = 'id'` | Fallback. No exception. If it needs something a self-provisioned instance cannot grant, that is a failure, not a workaround |
 | S3-3 | **Snapshot visibility, quiet case** | In `REPEATABLE READ`, a BM25 query run twice in one transaction returns identical results while a concurrent session inserts and commits matching rows between the two | Fallback. This is the weakest form of the claim; failing it ends the discussion |
-| S3-4 | **Snapshot visibility, under an activation** | The four-step interleaving below, all four steps | Fallback |
+| S3-4 | **Snapshot visibility, under an activation** | The five-step interleaving below, all five steps | Fallback |
 | S3-5 | Deleted rows leave the index with their row | After `DELETE` + `COMMIT`, a BM25 query in a **new** transaction never returns the deleted row; a transaction whose snapshot predates the delete still does | Fallback. Deletion closure (§9.3.6) depends on the index not outliving its rows |
 | S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
+
+### S3-1: the four points that establish native execution
+
+All four, in the same run, against the same digest:
+
+| # | Point | Command | Required |
+|---|---|---|---|
+| 1 | Host architecture | `uname -m` **on the host, outside any container** | `aarch64` |
+| 2 | Docker daemon architecture | `docker version --format '{{.Server.Arch}}'` | `arm64` |
+| 3 | Selected image architecture | `docker image inspect <digest> --format '{{.Architecture}}/{{.Variant}}'` | `arm64/v8` |
+| 4 | It actually ran | The container starts and Postgres accepts a connection | Exit 0 |
+
+**Why this is sufficient, and why the check it replaces was not.** Emulation is how Docker executes
+an image whose architecture does not match the host. If host, daemon and selected image all report
+arm64 and the container runs, there is no foreign format to emulate — the question does not arise.
+
+An earlier draft instead required that `/proc/sys/fs/binfmt_misc/` register no `qemu-aarch64`
+interpreter on the A1. That reasoning was backwards. A `qemu-aarch64` handler is what lets an
+**amd64** host run arm64 binaries; on an aarch64 host it is irrelevant, and its registration would
+not mean Docker had used it for this container. Absence of the handler was neither necessary nor
+sufficient. Points 1–4 are both.
+
+An earlier draft before that used `uname -m` *inside* the container, which reports what the binary
+sees: an arm64 image emulated on an amd64 host reports `aarch64` and passes. Point 1 is deliberately
+outside the container for that reason.
 
 ### S3-2: the privilege set, declared before the experiment
 
@@ -99,8 +124,9 @@ index is answering from outside the caller's snapshot and `pg_search` fails A-5.
 _Empty until S3 runs._ It will record, per rule, the observed result and the exact command that
 produced it, then one of:
 
-- **Accept `pg_search`** — every one of S3-1a, S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS. S3-6 recorded
-  either way.
+- **Accept `pg_search`** — every one of S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS, each measured on the
+  A1. S3-6 recorded either way. S3-1a is a precondition and carries no weight here: passing it on a
+  development machine is not evidence about the deployment target.
 - **Fall back to built-in FTS** — any one of them FAILs, naming which, with the failing output
   quoted. That changes §9.2's DDL and the lexical half of §9.5, and both are edited in the same pull
   request as the decision.

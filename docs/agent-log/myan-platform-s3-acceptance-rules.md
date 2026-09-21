@@ -46,3 +46,13 @@ S3-1b cannot be settled until the Oracle A1 exists, so ADR-0007 stays Proposed e
 ### 2026-09-21T23:38:14Z · COMMIT · myan · claude-code/opus-5 · parent:400415d
 docs(platform): close three ways an S3 rule could pass falsely
 2 files changed, 58 insertions(+), 7 deletions(-)
+
+### 2026-09-21T23:51:47Z · EDIT · myan · claude-code/opus-5 · 2af703c
+Both reviewer corrections accepted. S3-1b: my binfmt check was reasoning backwards. A qemu-aarch64 handler is what lets an amd64 host run arm64 binaries; on an aarch64 A1 it is irrelevant, and its registration would not mean Docker used it for this container - absence was neither necessary nor sufficient. Replaced with the reviewer's four points, all in one run against one digest: host uname -m outside any container is aarch64, docker version Server.Arch is arm64, docker image inspect Architecture/Variant is arm64/v8, and the container runs with Postgres accepting a connection. Emulation is how Docker executes a format the host cannot run, so three matching architectures plus a successful run means there is no foreign format and the question does not arise. S3-1a is now the same four points on a development machine, labelled precondition only, and removed from the acceptance list entirely - passing locally is not evidence about the deployment target. S3-4: the heading said four-step over a five-row table; corrected to five, and step 5 is the one that stops a uniformly stale implementation passing, which is why the count mattered. Recorded both superseded drafts inside the ADR rather than deleting them, since the reasoning errors are the useful part for anyone re-opening this.
+
+### 2026-09-21T23:51:47Z · TEST · myan · claude-code/opus-5 · 2af703c
+Re-verified after the edits: no 'four-step' or 'all four' left; the S3-4 table has exactly 5 numbered rows against a rule that says five steps; the only qemu and binfmt mentions are the explicit record of the superseded draft; 12 section references cited, 0 unresolvable. make guardrails clean apart from the known docs/adr ownership warning.
+
+### 2026-09-21T23:51:48Z · COMMIT · myan · claude-code/opus-5 · parent:2af703c
+docs(platform): prove native execution by matching architectures, not by absent QEMU
+2 files changed, 37 insertions(+), 5 deletions(-)
