@@ -46,10 +46,11 @@ class FixtureAuthz:
 
     def scope_for(self, principal: Principal, *, now: datetime) -> AuthorizedScope:
         stale = principal.id in self.grants_stale_for
-        # An anonymous principal cannot hold a grant: grants come from a GitHub user token, and
-        # there is no user. Modelling that here keeps the fake from being more permissive than
-        # production, where the join simply returns no rows (DESIGN 9.1.1 rule 2).
-        held = set() if principal.is_anonymous else self.grants.get(principal.id, set())
+        # Grants are passed through exactly as the fixture holds them, including for an anonymous
+        # principal. Dropping them here would hide the kernel's guard: a fixture that grants an
+        # anonymous principal access is a wrong resolver, and the point is that build_scope refuses
+        # it rather than the fake quietly tidying it away (reviewer, #10).
+        held = self.grants.get(principal.id, set())
         return build_scope(
             principal,
             facts=self.facts(now),

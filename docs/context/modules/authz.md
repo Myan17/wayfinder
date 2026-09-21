@@ -5,7 +5,6 @@ paths:
   - apps/api/wayfinder/authz/**
 interface_files:
   - apps/api/wayfinder/authz/interface.py
-  - db/views/eligible_repo.sql
 tables_owned:
   - principal
   - session
@@ -74,7 +73,9 @@ async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> Manifes
 ```
 
 ```sql
--- db/views/eligible_repo.sql : repository-side half of the predicate (see DESIGN §9.2)
+-- PLANNED, NOT WRITTEN: db/views/eligible_repo.sql, the repository-side half of the predicate
+-- (DESIGN §9.2). It lands with the database layer; until then sql_predicate names the alias its
+-- caller must join, and nothing in the tree provides that view.
 ```
 
 ## Invariants a caller may rely on
@@ -135,6 +136,8 @@ is wrong and that is a defect, not a rounding error.
 | `test_scope.py::test_stale_grant_lease_degrades_even_when_the_user_holds_no_grants` | Staleness drives the degraded flag |
 | `test_predicate.py::test_predicate_lets_the_database_decide_public_and_binds_only_granted_ids` | The public half is never enumerated |
 | `test_predicate.py::test_an_expired_scope_matches_nothing` | Fail closed |
+| `test_predicate.py::test_an_expired_scope_matches_nothing_even_when_now_is_not_passed` | The expiry check is not optional |
+| `test_fake_matches_contract.py::test_the_fake_does_not_mask_a_resolver_that_hands_an_anonymous_principal_grants` | The fake does not hide the kernel's guard |
 | `test_predicate.py::test_assertion_accepts_exactly_the_rows_the_scope_allows` | Property: assertion agrees with the scope |
 | `test_predicate.py::test_assert_rows_authorized_raises_and_counts_a_row_outside_the_scope` | Violations raise and count |
 | `test_refresh.py::test_refresh_is_rejected_when_the_revision_moved_while_it_was_fetching` | Revision fencing |
@@ -150,8 +153,9 @@ independent oracle (DESIGN §16.3).
 
 `apps/api/wayfinder/authz/fakes.py` — `FixtureAuthz`, constructed in code from sets of public,
 private, denied and granted repository ids. Consumers (retrieval, answer, cache, http) build against
-it. `test_fake_matches_contract.py` pins that it is never more permissive than the kernel, including
-that the kernel — not the fake — is what refuses anonymous grants.
+it. `test_fake_matches_contract.py` pins that it is never more permissive than the kernel, and that
+it passes grants through unchanged: a fixture granting an anonymous principal access reaches
+`build_scope` and raises, rather than being tidied away where no test would see it.
 
 The YAML fixture of 1,000 synthetic principals described in DESIGN §14.4 does **not** exist yet; it
 arrives with the leak suite.

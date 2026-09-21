@@ -19,7 +19,7 @@ serving the difference.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from wayfinder.authz.interface import AuthorizedScope
@@ -46,13 +46,16 @@ def sql_predicate(
         row.live AND (eligible.verified_public OR row.repo_id = ANY(%(granted_repo_ids)s))
 
     A scope past its lease yields `false`: an expired authorization is not evidence that disclosure
-    is still permitted, and turning it into a query would be exactly that.
+    is still permitted, and turning it into a query would be exactly that. `now` exists so tests can
+    pin the boundary; it defaults to the real clock, because an optional expiry check is one omitted
+    argument away from being no check at all.
     """
-    if now is not None and scope.expires_at <= now:
+    if now is None:
+        now = datetime.now(UTC)
+    if scope.expires_at <= now:
         return "false", {}
     fragment = (
-        f"({row_alias}.live AND ({eligible_alias}.verified_public "
-        f"OR {row_alias}.repo_id = ANY(%({PARAM})s)))"
+        f"({row_alias}.live AND ({eligible_alias}.verified_public OR {row_alias}.repo_id = ANY(%({PARAM})s)))"
     )
     return fragment, {PARAM: sorted(scope.granted_repo_ids)}
 

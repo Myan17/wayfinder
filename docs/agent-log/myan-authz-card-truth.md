@@ -33,3 +33,16 @@ grep of def test_ across apps/api/tests/authz -> 36 tests in 5 files; every name
 ### 2026-09-21T04:44:53Z · COMMIT · myan · claude-code/opus-5 · parent:2b75424
 docs(authz): make the card describe what actually landed
 2 files changed, 76 insertions(+), 13 deletions(-)
+
+### 2026-09-21T05:18:14Z · PLAN · myan · claude-code/opus-5 · adb41cd
+Reviewer found three false claims on the card; two are code defects, not wording. (1) sql_predicate's now is optional, so omitting it lets an expired scope emit a permissive fragment - fail-open in the authorization path. Defaulting now to the real clock. (2) FixtureAuthz drops anonymous grants silently, so the kernel guard the card credits is never reached through the fake; removing the drop so the fake behaves like a wrong resolver would and the kernel raises. (3) db/views/eligible_repo.sql is listed as an interface file and does not exist. Tests first for both code changes.
+
+### 2026-09-21T05:19:30Z · TEST · myan · claude-code/opus-5 · adb41cd
+uv run pytest apps/api/tests -q -> 38 passed. Two of the three findings were code defects and both now have regression tests: sql_predicate with now omitted on a scope expired against the REAL clock returns 'false'; FixtureAuthz passing anonymous grants through raises AnonymousGrantsError. ruff check and format clean on the files this branch touches.
+
+### 2026-09-21T05:19:30Z · DECIDE · myan · claude-code/opus-5 · adb41cd
+The first version of the expiry regression test passed a scope expired only against the module's frozen NOW (12:00 UTC) while the real clock read 09:40 UTC, so it did not exercise the default at all. Rewrote it with a lease in the real past - a test for a wall-clock default cannot use a frozen constant.
+
+### 2026-09-21T05:19:30Z · COMMIT · myan · claude-code/opus-5 · parent:adb41cd
+fix(authz): close a fail-open default, stop the fake masking the kernel, correct the card
+6 files changed, 66 insertions(+), 14 deletions(-)
