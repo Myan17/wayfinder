@@ -24,8 +24,11 @@ verified_on: 2026-09-19
 
 # authz
 
-> Worked example of a contract card. Written before the code so the shape is agreed first; the hash
-> and `verified_at` are filled in by the first pull request that lands the interface.
+> **Status (2026-09-20):** the pure kernel is on `main` and pinned by 36 tests — `build_scope`,
+> `sql_predicate`, `assert_rows_authorized`, the counters, the fenced refresh and `FixtureAuthz`.
+> Three entry points are **not implemented**: `resolve_principal` (needs sessions),
+> `authorized_repos` (needs the database layer) and `reauthorize_manifest` (needs stored evidence
+> manifests). They are marked NOT YET IMPLEMENTED below. Anything not marked LANDED is not a contract.
 
 ## Purpose
 
@@ -40,9 +43,17 @@ class Principal(Protocol):
     id: int
     kind: Literal["user", "anonymous"]
 
-async def resolve_principal(request) -> Principal: ...
+async def resolve_principal(request) -> Principal: ...        # NOT YET IMPLEMENTED (needs sessions)
 
-async def authorized_repos(principal: Principal) -> AuthorizedScope: ...
+async def authorized_repos(principal: Principal) -> AuthorizedScope: ...   # NOT YET IMPLEMENTED (needs the DB layer)
+
+# LANDED. What authorized_repos will be assembled from:
+def build_scope(principal, *, facts, grants, grants_valid_until, now, policy_revision=0) -> AuthorizedScope: ...
+# Raises AnonymousGrantsError (and counts it) if an anonymous principal is given grants.
+def start_refresh(state) -> RefreshToken: ...
+def apply_refresh(state, token, *, fetched, complete, now, lease) -> RefreshResult: ...
+def invalidate_repo(state, *, repo_id, now) -> AccessState: ...
+
 # AuthorizedScope carries: granted_repo_ids: list[int]
 #                          policy_revision: int
 #                          degraded: list[str]        # e.g. ["permissions_public_only"]
@@ -59,7 +70,7 @@ def assert_rows_authorized(rows, scope) -> None: ...
 # collector lands with the observability module; the counter is the seam, not the wiring.
 
 async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> ManifestVerdict: ...
-# For cached answers, stored traces and source expansion.
+# NOT YET IMPLEMENTED. For cached answers, stored traces and source expansion.
 ```
 
 ```sql
@@ -111,19 +122,39 @@ touching these needs a BCR.
 
 ## Tests that pin this contract
 
+All paths below are under `apps/api/tests/authz/`. Names are exact; if one does not exist, the card
+is wrong and that is a defect, not a rounding error.
+
 | Test | Pins |
 |---|---|
-| `apps/api/tests/authz/test_predicate.py::test_expired_visibility_denies` | Lease expiry denies public repositories |
-| `apps/api/tests/authz/test_events.py::test_team_event_drops_grants` | 5-second bound for team-scoped revocation |
-| `apps/api/tests/authz/test_refresh.py::test_stale_refresh_rejected` | Revision fencing |
-| `apps/api/tests/authz/test_manifest.py::test_revoked_artifact_denied` | Artifact re-authorization |
-| `apps/api/tests/authz/test_state_machine.py` | Sequence behaviour against the independent oracle |
+| `test_scope.py::test_expired_visibility_lease_denies_a_public_repository` | Lease expiry denies public repositories |
+| `test_scope.py::test_denied_serving_state_beats_a_valid_grant` | A synchronous denial outranks a grant |
+| `test_scope.py::test_scope_expires_at_the_earliest_lease_it_depends_on` | Scope lifetime |
+| `test_scope.py::test_anonymous_principal_carrying_grants_is_a_programming_error` | The kernel refuses; it does not normalise |
+| `test_scope.py::test_the_anonymous_grant_defect_is_counted_as_well_as_refused` | The defect is counted, not silent |
+| `test_scope.py::test_stale_grant_lease_degrades_even_when_the_user_holds_no_grants` | Staleness drives the degraded flag |
+| `test_predicate.py::test_predicate_lets_the_database_decide_public_and_binds_only_granted_ids` | The public half is never enumerated |
+| `test_predicate.py::test_an_expired_scope_matches_nothing` | Fail closed |
+| `test_predicate.py::test_assertion_accepts_exactly_the_rows_the_scope_allows` | Property: assertion agrees with the scope |
+| `test_predicate.py::test_assert_rows_authorized_raises_and_counts_a_row_outside_the_scope` | Violations raise and count |
+| `test_refresh.py::test_refresh_is_rejected_when_the_revision_moved_while_it_was_fetching` | Revision fencing |
+| `test_refresh.py::test_partial_pagination_is_never_treated_as_success` | All-or-nothing refresh |
+| `test_fake_matches_contract.py` (5 tests) | The fake is never more permissive than the kernel |
+| `test_metrics.py` (3 tests) | Counter semantics |
+
+**Not yet written**, because they need the database layer: the delivered-event revocation bound
+(AUTH-02), artifact re-authorization (AUTH-08), and the state-machine sequences against an
+independent oracle (DESIGN §16.3).
 
 ## Fake
 
-`apps/api/wayfinder/authz/fakes.py` — `FixtureAuthz` built from `eval/datasets/permission_fixture.yaml`.
-Consumers (retrieval, answer, cache, http) build against it; the contract tests above run against both
-the fake and the real implementation, so the fake cannot drift into being more permissive.
+`apps/api/wayfinder/authz/fakes.py` — `FixtureAuthz`, constructed in code from sets of public,
+private, denied and granted repository ids. Consumers (retrieval, answer, cache, http) build against
+it. `test_fake_matches_contract.py` pins that it is never more permissive than the kernel, including
+that the kernel — not the fake — is what refuses anonymous grants.
+
+The YAML fixture of 1,000 synthetic principals described in DESIGN §14.4 does **not** exist yet; it
+arrives with the leak suite.
 
 ## Open questions
 
@@ -136,3 +167,4 @@ the fake and the real implementation, so the fake cannot drift into being more p
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-09-20 | Corrected after the stack landed: the card still opened as a pre-implementation sketch, named three test files that do not exist, and pointed at a fixture that was never created | — |
