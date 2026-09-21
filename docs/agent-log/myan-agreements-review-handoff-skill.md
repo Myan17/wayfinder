@@ -87,3 +87,10 @@ Rebuilding this branch as a single commit, as with #14, so .github/CODEOWNERS an
 ### 2026-09-21T07:38:44Z · COMMIT · myan · claude-code/opus-5 · parent:211e39a
 feat(agreements): expose the review handoff tool as a skill, and root .env at the repository
 4 files changed, 260 insertions(+), 1 deletion(-)
+
+### 2026-09-21T18:28:58Z · TEST · myan · claude-code/opus-5 · 73f6cbc
+Rebased onto main at 83fcff1 (#14 merged). No conflicts - this branch touches scripts/review_handoff.py, its tests and .claude/, none of which #14 went near. Force-push of my own task branch, logged as AGENTS.md 2.2 requires: the single commit moves from 4af6b87 to 73f6cbc, tree unchanged. Guardrails against the new base: context-freshness OK, 3 interface files checked across 16 cards - the check that has failed on every pull request for the last four now passes, because it hashes files instead of resolving 2f81df2. identity OK, agent-log OK, CODEOWNERS OK, scope/ownership OK with one warning that .claude/ matches no module, which does not fail the build. Suite: 61 passed (the count rose from 52 because #14's freshness tests are now on main).
+
+### 2026-09-21T18:28:58Z · COMMIT · myan · claude-code/opus-5 · parent:73f6cbc
+docs(agreements): record the rebase onto main after #14
+1 file changed, 3 insertions(+)
