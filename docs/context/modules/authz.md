@@ -48,12 +48,15 @@ async def authorized_repos(principal: Principal) -> AuthorizedScope: ...
 #                          degraded: list[str]        # e.g. ["permissions_public_only"]
 #                          expires_at: datetime       # callers must not cache past this
 
-def sql_predicate(alias: str, scope: AuthorizedScope) -> tuple[str, dict]: ...
-# Returns the SQL fragment + params that every query MUST use to filter rows:
-#   (eligible.verified_public OR <alias>.repo_id = ANY(:granted_repo_ids))
+def sql_predicate(row_alias, scope, *, eligible_alias="eligible", now=None) -> tuple[str, dict]: ...
+# LANDED. The caller joins eligible_repo as `eligible_alias`; the fragment reads:
+#   row.live AND (eligible.verified_public OR row.repo_id = ANY(%(granted_repo_ids)s))
+# A scope past its lease returns "false": an expired authorization is not a query.
 
-async def assert_rows_authorized(rows, scope) -> None: ...
-# Post-retrieval defence in depth; raises AuthorizationViolation and increments the alert counter.
+def assert_rows_authorized(rows, scope) -> None: ...
+# LANDED. Post-retrieval defence in depth: increments authorization_violation_total (an unsampled
+# in-process counter in wayfinder.authz.metrics) and raises AuthorizationViolation. Export to the
+# collector lands with the observability module; the counter is the seam, not the wiring.
 
 async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> ManifestVerdict: ...
 # For cached answers, stored traces and source expansion.
@@ -76,8 +79,11 @@ async def reauthorize_manifest(principal, manifest: EvidenceManifest) -> Manifes
   "everyone".
 - A negative authorization event is applied before the HTTP 202 that accepts its webhook, so a caller
   that asks after the event never sees the old answer (bound: 5 s end to end).
-- `sql_predicate` is the only sanctioned way to filter rows; both halves of the predicate come from
-  here, so no call site can express them differently.
+- `sql_predicate` is the only sanctioned way to filter rows; both halves come from here, so no call
+  site can express them differently. The public half is decided by the database through
+  `eligible_repo`, never by enumerating public repository ids into a query parameter.
+- SQL and the post-retrieval assertion reach their answer by different routes (database view versus
+  the Python scope). A disagreement fails the request instead of serving the difference.
 - `AuthorizedScope.expires_at` is authoritative: a long-running request must re-check before each
   provider call and at least every 15 s of streaming.
 
