@@ -43,3 +43,10 @@ Rebased onto main after #5 merged and force-pushed; branch protection requires b
 ### 2026-09-21T01:55:38Z · COMMIT · myan · claude-code/opus-5 · parent:c3974c4
 docs(authz): record the rebase onto main after #5 merged
 1 file changed, 3 insertions(+)
+
+### 2026-09-21T04:39:45Z · EDIT · myan · claude-code/opus-5 · 383a441
+Rebased onto main after #8 merged and force-pushed. The branch was BEHIND, which branch protection blocks, and the rebase dismisses the approval - one re-approval per merge is the cost of keeping both protections on.
+
+### 2026-09-21T04:39:46Z · COMMIT · myan · claude-code/opus-5 · parent:383a441
+docs(authz): record the rebase onto main after #8 merged
+1 file changed, 3 insertions(+)
