@@ -46,3 +46,10 @@ Part 1 alone against the S3 digest: uv run pytest db/tests -> 8 passed (test_mig
 ### 2026-09-22T23:01:23Z · COMMIT · myan · claude-code/opus-5 · parent:a45d283
 feat(schema): v1 part 1 — sources, generations, three identities, tombstones
 7 files changed, 440 insertions(+), 1 deletion(-)
+
+### 2026-09-22T23:04:19Z · HANDOFF · myan · claude-code/opus-5 · eba70f4
+#25 open (part 1). Parts 2 (#26) and 3 (#27) are stacked on this branch. When #25 squash-merges, rebuild each onto main with git rebase --onto origin/main <this branch's head> and force-push, as #21 was. Joint module: gupta958 rules on the five deviations in the PR body.
+
+### 2026-09-22T23:04:19Z · COMMIT · myan · claude-code/opus-5 · parent:eba70f4
+docs(schema): hand off #25
+1 file changed, 3 insertions(+)
