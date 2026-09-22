@@ -36,3 +36,10 @@ No code. Cross-checked every cited value against DESIGN: 2/61 (9.6.1), 150 ms (9
 ### 2026-09-22T22:53:37Z · COMMIT · myan · claude-code/opus-5 · parent:a45d283
 docs(agreements): ADR-0013, ADR-0015, ADR-0011 — selection rules before any experiment
 4 files changed, 264 insertions(+)
+
+### 2026-09-22T22:54:03Z · HANDOFF · myan · claude-code/opus-5 · 8e8dfbf
+#24 open. gupta958 decides the six Reviewer-decides values listed in the PR body. When #23 merges, ORIENT.md item 1 is marked 'done #24' by whichever of the two merges second. Next per ORIENT: item 2, schema v1 (joint module; both owners approve).
+
+### 2026-09-22T22:54:03Z · COMMIT · myan · claude-code/opus-5 · parent:8e8dfbf
+docs(agreements): hand off #24
+1 file changed, 3 insertions(+)
