@@ -49,3 +49,10 @@ Review fixes in, harness rerun, ADR evidence updated. S3-6 is now OUTSTANDING al
 ### 2026-09-22T19:12:38Z · COMMIT · myan · claude-code/opus-5 · parent:15b7408
 fix(platform): S3-1a and S3-2 could pass without measuring their rule, and S3-6 was not S3-6
 3 files changed, 95 insertions(+), 32 deletions(-)
+
+### 2026-09-22T19:28:43Z · DECIDE · myan · claude-code/opus-5 · aa9eae8
+Force-pushed this branch (AGENTS.md 2.2): f8d41db to aa9eae8. The rebase onto 320fd85 rewrote both commits, and the second one - the commit that had reverted psycopg out of this branch for #18 - was skipped rather than replayed, because main now carries psycopg and replaying it would have removed it. Marked the pull request ready; the dependency it was drafted behind is merged.
+
+### 2026-09-22T19:28:44Z · COMMIT · myan · claude-code/opus-5 · parent:aa9eae8
+docs(platform): record the rebase and the force-push
+1 file changed, 3 insertions(+)
