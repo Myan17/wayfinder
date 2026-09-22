@@ -36,3 +36,13 @@ Ready for review, stacked on #20. This half adds the IN FLIGHT block: open workt
 ### 2026-09-22T19:45:04Z · COMMIT · myan · claude-code/opus-5 · parent:7334f16
 feat(agreements): orient, part 2 — what is open right now
 3 files changed, 212 insertions(+), 15 deletions(-)
+
+### 2026-09-22T22:12:20Z · DECIDE · myan · claude-code/opus-5 · b529436
+Rebuilt onto main as gupta958 directed. #20 merged as squash 10d1b48, so this branch's six stacked commits from #20 (93af9a9..7334f16) no longer exist on main and GitHub reported #21 DIRTY. Ran git rebase --onto origin/main 7334f16, which replays only the part-two commit b915a1c (now b529436). No conflicts: 10d1b48's tree matches 7334f16 for scripts/, and the log commit that followed touched only the orient task log. Checked the replayed diff byte-for-byte against git diff 7334f16 b915a1c: identical, 3 files, +216/-15. The branch must be force-pushed over b915a1c (AGENTS.md 2.2). The pull request's base is already main.
+
+### 2026-09-22T22:12:20Z · TEST · myan · claude-code/opus-5 · b529436
+After the rebuild: uv run pytest -q scripts/tests passes in full; ruff check scripts/orient.py scripts/tests/test_orient.py clean (ruff findings elsewhere in scripts/ predate this branch and are on main). Guardrail scripts run locally against origin/main...HEAD, results in the next entry's commit.
+
+### 2026-09-22T22:12:20Z · COMMIT · myan · claude-code/opus-5 · parent:b529436
+docs(agreements): record the rebuild onto main and the force-push
+1 file changed, 6 insertions(+)
