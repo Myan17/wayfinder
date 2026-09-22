@@ -56,3 +56,13 @@ Force-pushed this branch (AGENTS.md 2.2): f8d41db to aa9eae8. The rebase onto 32
 ### 2026-09-22T19:28:44Z · COMMIT · myan · claude-code/opus-5 · parent:aa9eae8
 docs(platform): record the rebase and the force-push
 1 file changed, 3 insertions(+)
+
+### 2026-09-22T19:40:38Z · EDIT · myan · claude-code/opus-5 · 9f6d951
+infra/spikes/s3/run.py: s3_6 no longer opens a connection, inserts rows or captures a plan - it records OUTSTANDING and nothing else, and moved up beside s3_1b since it no longer needs the database. The lexical-leg reconnaissance moves whole to the S3-6 follow-up. docs/adr/ADR-0007: the lexical plan block is gone and the S3-6 row says nothing was measured rather than describing a partial capture.
+
+### 2026-09-22T19:40:39Z · TEST · myan · claude-code/opus-5 · 9f6d951
+Reran the reduced harness: S3-1a PASS connection=accepted, S3-1b OUTSTANDING, S3-6 OUTSTANDING, S3-2 PASS is_superuser=on, S3-3 PASS, S3-4 PASS, S3-5 PASS, 'No rule failed. OUTSTANDING: S3-1b, S3-6 -- this is NOT an acceptance'. One thing a reviewer reproducing this should know: the compose healthcheck reported healthy while Postgres was still finishing first boot, and the first attempt failed S3-1a on point 4 with 'server closed the connection unexpectedly'. That is the gate working, not a flake, but the healthcheck is weaker than it looks; waiting on pg_isready instead gave the run above. Tightening it is a platform follow-up, not this pull request. ruff clean; uv run pytest -q -> 67 passed.
+
+### 2026-09-22T19:40:39Z · COMMIT · myan · claude-code/opus-5 · parent:9f6d951
+refactor(platform): move S3-6's reconnaissance out; it was measuring the wrong query
+3 files changed, 13 insertions(+), 45 deletions(-)

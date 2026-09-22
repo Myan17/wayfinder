@@ -230,44 +230,20 @@ def s3_5(r: Results, conn: psycopg.Connection, other: psycopg.Connection) -> Non
     )
 
 
-def s3_6(r: Results, conn: psycopg.Connection) -> None:
+def s3_6(r: Results) -> None:
     """OUTSTANDING: S3-6's rule is DESIGN §9.5's two-leg query, and this harness has one leg.
 
     The rule reads "EXPLAIN (ANALYZE, BUFFERS) on the two-leg hybrid query of §9.5". That query
     fuses a BM25 leg with a dense HNSW leg per embedding specification under RRF, and this spike's
-    table has no vector column, no pgvector index and no embeddings. Running the lexical leg alone
-    and recording PASS would be answering an easier question than the one the ADR asked.
-
-    The single-leg plan is still captured, because it is real evidence about the lexical half and
-    the follow-up builds on it -- but it is recorded as OUTSTANDING and labelled, so it cannot be
-    read as S3-6. The two-leg harness is its own pull request.
+    table has no vector column, no pgvector index and no embeddings. Measuring the lexical leg alone
+    would answer an easier question than the one the ADR asked, so nothing is measured here at all:
+    the reconnaissance and the two-leg harness land together in their own pull request.
     """
-    conn.rollback()
-    with conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO representation (repo_id, gen, header, body_text, live) "
-            "SELECT 1, 3, 'h', 'widget epsilon ' || g, true FROM generate_series(1, 2000) g"
-        )
-        conn.commit()
-        cur.execute("ANALYZE representation")
-        cur.execute(
-            "EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) "
-            "SELECT id FROM representation WHERE body_text @@@ 'widget' AND live ORDER BY id LIMIT 100"
-        )
-        plan = "\n".join(line[0] for line in cur.fetchall())
-
-    # "Custom Scan" only says the planner used *a* custom scan node. DESIGN §9.5 is explicit that
-    # the existence of an index is not evidence that it is used (WF-25), so the observation that
-    # carries weight is the index's own name appearing in the plan.
-    named = "Index: rep_bm25" in plan
-    seq_scan = "Seq Scan on representation" in plan
     r.record(
         "S3-6",
         "OUTSTANDING",
-        f"single-leg BM25 plan only, NOT §9.5's two-leg query; rep_bm25_named={named} "
-        f"seq_scan={seq_scan}",
+        "requires DESIGN §9.5's two-leg hybrid query; this harness has no dense leg",
     )
-    print("\n--- EXPLAIN (ANALYZE, BUFFERS), lexical leg only, not S3-6 ---\n" + plan + "\n")
 
 
 def main() -> int:
@@ -284,6 +260,7 @@ def main() -> int:
 
     s3_1a(r, connected, detail)
     s3_1b(r)
+    s3_6(r)
 
     if not connected:
         print("::error::cannot reach the spike database; S3-1a fails on point 4")
@@ -298,7 +275,6 @@ def main() -> int:
                 s3_3(r, conn, other)
                 s3_4(r, conn, other)
                 s3_5(r, conn, other)
-                s3_6(r, conn)
 
     print(json.dumps([{"rule": a, "verdict": b, "detail": c} for a, b, c in r.rows], indent=2))
     if r.failed:

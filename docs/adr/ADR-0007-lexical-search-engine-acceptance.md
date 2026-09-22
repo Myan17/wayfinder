@@ -152,7 +152,7 @@ Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), Postgr
 | S3-3 | PASS | 5 rows, then 5 rows, in one `REPEATABLE READ` snapshot across a concurrent commit |
 | S3-4 | PASS | Reader saw gen `[1]`; writer activated gen 2 and retired gen 1; **same transaction still saw `[1]`**; a new transaction saw `[2]` |
 | S3-5 | PASS | Snapshot predating the delete kept 4 rows; a new transaction saw 0 |
-| **S3-6** | **OUTSTANDING** | The rule names §9.5's **two-leg** query. The harness has one leg — no vector column, no pgvector index, no embeddings — so only the lexical plan was captured. Its own pull request |
+| **S3-6** | **OUTSTANDING** | The rule names §9.5's **two-leg** query. This harness has no dense leg — no vector column, no pgvector index, no embeddings — so nothing was measured. The two-leg harness and its plan capture are their own pull request |
 
 **Three results were mutation-checked**, because a rule that passes first time and cannot fail is
 worth nothing:
@@ -165,20 +165,6 @@ worth nothing:
 - **S3-1a point 4**. With the container stopped, S3-1a records `FAIL … failed: ['postgres accepts a
   connection']`. An earlier harness recorded PASS on points 1–3 and opened the connection
   afterwards, so S3-1a could read PASS in a run where Postgres never answered.
-
-The lexical-leg plan, recorded but **not** S3-6 — `Custom Scan` alone says only that the planner
-used *a* custom scan node, so the observation that carries weight is the index naming itself, which
-is also what §9.5 means by "the existence of an index is not evidence that it is used" (WF-25):
-
-```
-->  Parallel Custom Scan (ParadeDB Base Scan) on representation
-      Table: representation
-      Index: rep_bm25
-      Exec Method: TopKScanExecState
-      Tantivy Query: {"boolean":{"must":[{"with_index":{"query":{"parse_with_field":
-                     {"field":"body_text","query_string":"widget"}}}},
-                     {"term":{"field":"live","value":true}}]}}
-```
 
 **What this does not establish.** Everything above ran on an Apple M2 Pro, not on an Oracle A1. The
 architecture is the same and the image digest is the same, but A-5 is a claim about the deployment
