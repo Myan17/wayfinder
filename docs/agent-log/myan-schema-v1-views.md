@@ -30,3 +30,10 @@ Against the S3 digest with part 1 applied: uv run pytest db/tests -> 11 passed. 
 ### 2026-09-22T23:03:50Z · COMMIT · myan · claude-code/opus-5 · parent:eba70f4
 feat(schema): v1 part 3 — eligible_repo and retrieval_rows views
 7 files changed, 160 insertions(+), 5 deletions(-)
+
+### 2026-09-22T23:04:27Z · HANDOFF · myan · claude-code/opus-5 · 3b25a11
+#27 open, based on myan/schema/v1 (#25), independent of #26. Needs a rebuild onto main after #25 merges.
+
+### 2026-09-22T23:04:27Z · COMMIT · myan · claude-code/opus-5 · parent:3b25a11
+docs(schema): hand off #27
+1 file changed, 3 insertions(+)
