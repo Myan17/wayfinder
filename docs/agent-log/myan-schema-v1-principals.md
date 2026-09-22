@@ -1,0 +1,32 @@
+# Task log — myan-schema-v1-principals
+
+| Field | Value |
+|---|---|
+| Task | Schema v1 part 2: principals, authorization facts, serving artifacts (ORIENT item 2) |
+| Module | schema |
+| Branch | `myan/schema/v1-principals` |
+| Worktree | `../wayfinder-wt/myan-schema-v1-principals` |
+| Operator | myan |
+| Agent | claude-code/opus-5 |
+| Session | 2026-09-22T23:01Z/14893 |
+| Started | 2026-09-22T23:02:00Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-09-22T23:02:15Z · PLAN · myan · claude-code/opus-5 · eba70f4
+Part 2 of schema v1, stacked on myan/schema/v1 (#25); the pull request targets that branch so the guardrails measure only this part. Migration 20260922230100_schema_v1_principals: DESIGN 9.2's principals and authorization section (principal with platform_role folded into its CREATE, session, user_repo_access, user_access_state, connection_admin) and serving artifacts (answer, answer_trace, answer_cache, feedback, audit_event, webhook_delivery), exactly as 9.2 gives them, with a tested down. Test: test_serving.py::test_cached_from_set_null (9.3.6 step 3). The DESIGN cascades from answer to answer_trace and feedback are kept as written and named on the card.
+
+### 2026-09-22T23:02:36Z · TEST · myan · claude-code/opus-5 · eba70f4
+Against the S3 digest with part 1 applied first: uv run pytest db/tests -> 10 passed (part 1's 8, plus test_cached_from_set_null and test_answer_needs_a_principal); test_migrations now also cycles this migration's down. Mutation: cached_from made NO ACTION -> test_cached_from_set_null fails; restored. ruff clean.
+
+### 2026-09-22T23:02:36Z · COMMIT · myan · claude-code/opus-5 · parent:eba70f4
+feat(schema): v1 part 2 — principals, authorization facts, serving artifacts
+4 files changed, 150 insertions(+)
