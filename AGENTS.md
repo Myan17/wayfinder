@@ -4,12 +4,14 @@
 Cursor, Codex, an SDK script). Read it fully before your first action in a session. `CLAUDE.md` points
 here; nothing in a tool-specific file overrides this document.**
 
+**Before anything else in a session, read `ORIENT.md`. It says what the next task is (rule 6).**
+
 Humans: the companion document is `docs/team/WORKING-AGREEMENT.md`. Ownership is in
 `docs/team/OWNERSHIP.md`. The system design is `docs/DESIGN.md` (v0.3).
 
 ---
 
-## 0. The five rules
+## 0. The six rules
 
 1. **Stay inside your task's module.** Your branch is `<operator>/<module>/<slug>`; edit that module
    (§2.5), plus your task log and your module's card. Other modules are read-through-contract (§3),
@@ -24,6 +26,10 @@ Humans: the companion document is `docs/team/WORKING-AGREEMENT.md`. Ownership is
    agent, the operator and the session.
 5. **One task = one branch = one worktree = one log file** (§2). No exceptions, including "quick
    fixes".
+6. **Work the plan in order.** `ORIENT.md` lists the current phase's items in order, with their
+   status. The next task is the first open item. Work outside it needs an explicit direction from
+   `myan` or `gupta958`, quoted in a `DECIDE` entry. The pull request that finishes an item marks it
+   `done` in `ORIENT.md`.
 
 If a rule blocks you, stop and write the blocker in the log with `BLOCKED`. Do not route around it.
 
@@ -300,11 +306,13 @@ and all required checks green. The author never merges their own work.
 
 At the start of every agent session, in this order:
 
-1. Read `AGENTS.md` (this file) and `docs/team/OWNERSHIP.md`.
-2. `scripts/new-task.sh …` for new work, or `cd` into the existing worktree and read its log's last
+1. Read `ORIENT.md` and run `scripts/orient.py`. Claude Code sessions get both automatically from the
+   `SessionStart` hook in `.claude/settings.json`; other tools do it by hand. Nothing comes before this.
+2. Read `AGENTS.md` (this file) and `docs/team/OWNERSHIP.md`.
+3. `scripts/new-task.sh …` for new work, taking the task `ORIENT.md` names, or `cd` into the existing worktree and read its log's last
    `HANDOFF` entry for continuing work.
-3. Read the contract cards the script printed.
-4. Log a `PLAN` entry before the first edit.
+4. Read the contract cards the script printed.
+5. Log a `PLAN` entry before the first edit.
 
 ## 10. Session end checklist
 

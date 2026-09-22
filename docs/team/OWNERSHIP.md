@@ -50,7 +50,7 @@ tasks touch one side only.
 | `platform` | myan | `infra/**`, `.github/workflows/**`, `loadtest/**` | — | [platform](../context/modules/platform.md) |
 | `observability` | myan | `apps/*/**/telemetry*`, `infra/compose/otel/**` | `audit_event` | [observability](../context/modules/observability.md) |
 | `schema` | **joint** | `db/migrations/**` | the schema itself | [schema](../context/modules/schema.md) |
-| `agreements` | **joint** | `AGENTS.md`, `CLAUDE.md`, `docs/team/**`, `.github/CODEOWNERS`, `docs/DESIGN.md` | — | — |
+| `agreements` | **joint** | `AGENTS.md`, `CLAUDE.md`, `ORIENT.md`, `.claude/**`, `docs/team/**`, `.github/CODEOWNERS`, `docs/DESIGN.md` | — | — |
 
 **Joint** (`schema`, `agreements`) means the change is structural: it needs the reviewer's explicit
 sign-off on the *design*, not just the diff, and the review checklist for schema applies. Since
@@ -112,5 +112,5 @@ modules:
   schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
   agent-logs:    {owner: any,   paths: ["docs/agent-log/**"]}
   boundary:      {owner: any,   paths: ["docs/context/boundary/**"]}
-  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**"]}
+  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "ORIENT.md", ".claude/**", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**"]}
 ```

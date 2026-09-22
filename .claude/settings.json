@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && cat ORIENT.md && python3 scripts/orient.py",
+            "timeout": 30,
+            "statusMessage": "Loading ORIENT.md and the orientation brief"
+          }
+        ]
+      }
+    ]
+  }
+}
