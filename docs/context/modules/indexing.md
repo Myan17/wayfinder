@@ -22,8 +22,9 @@ depends_on:
 design_sections:
   - "DESIGN §9.2 (data model)"
   - "DESIGN §9.3.3–9.3.6 (generations, activation, deletion closure)"
-verified_at: 0000000
-verified_on: 2026-09-18
+verified_hashes:
+  "db/views/retrieval_rows.sql": "acf9bb56c489f0f7"
+verified_on: 2026-09-22
 ---
 
 # indexing
@@ -49,7 +50,9 @@ func CollectGarbage(ctx context.Context, db DB, repoID int64, grace time.Duratio
 ```sql
 -- db/views/retrieval_rows.sql — the ONLY shape `retrieval` may query.
 -- Columns: representation_id, repo_id, spec_id, header, body_text, path, blob_sha,
---          start_line, end_line, symbol, content_hash
+--          start_line, end_line, symbol, content_hash, live
+-- `live` is always true here. It is exposed so authz's row predicate (row.live AND ...) applies
+-- to the view unchanged.
 -- Guarantees: every row is live and belongs to its repository's active generation.
 ```
 
@@ -120,3 +123,4 @@ serving path), `tombstone` (survives restore).
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-09-22 | `retrieval_rows` created (schema v1 part 3), with `live` for the authz predicate | — |
