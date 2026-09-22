@@ -19,8 +19,8 @@ design_sections:
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
   "Makefile": "b33619f48cacf8c1"
-  "pyproject.toml": "eb4921019af9e56b"
-verified_on: 2026-09-21
+  "pyproject.toml": "3eff7b595e750bc4"
+verified_on: 2026-09-22
 ---
 
 # platform
@@ -51,7 +51,8 @@ Plus the Python project definition:
 
 - package root `apps/api`; tests in `apps/api/tests` **and** `scripts/tests`, so tooling under
   `scripts/` is covered by the same `make test`; `pythonpath = ["apps/api"]`
-- `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff
+- `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff and
+  `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
 
 Not yet part of the interface (planned): `make up`, `make load`, `make deploy`, the Compose stack,
@@ -122,3 +123,4 @@ by CI on every pull request.
 |---|---|---|
 | 2026-09-18 | Card written when the bootstrap Makefile and pyproject landed, replacing the placeholder | — |
 | 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 17, after the freshness tests landed). Card verification moved to content hashes | — |
+| 2026-09-22 | `psycopg[binary]` added to the dev extra and locked. DESIGN §12 already names psycopg 3 as the driver, so this is the project's driver arriving early rather than a spike-only dependency | — |

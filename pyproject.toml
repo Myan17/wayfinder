@@ -11,6 +11,7 @@ dev = [
   "pytest-asyncio>=0.24",
   "hypothesis>=6.112",
   "ruff>=0.7",
+  "psycopg[binary]>=3.2",   # spike S3 and, per DESIGN 12, the driver the API will use
 ]
 
 [build-system]
