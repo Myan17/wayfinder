@@ -88,3 +88,13 @@ scripts/orient.py: removed the in-flight half and the now-unused json import, sy
 ### 2026-09-22T19:43:07Z · COMMIT · myan · claude-code/opus-5 · parent:e284f6b
 refactor(agreements): split orient into its plan half
 3 files changed, 34 insertions(+), 177 deletions(-)
+
+### 2026-09-22T21:57:51Z · DECIDE · myan · claude-code/opus-5 · 442b874
+#20 was approved by gupta958 but GitHub reported it BEHIND: main requires branches to be up to date, and #19 (53ba3ac) merged first. Rebased onto origin/main 53ba3ac with no conflicts; the diff against main is unchanged (3 files, +387). Rebase rather than GitHub's update-branch button because AGENTS.md 2.2 forbids merge commits. The branch must be force-pushed over 7334f16 (AGENTS.md 2.2). main dismisses stale reviews, so the push clears the approval and #20 needs gupta958 to re-approve; nothing in the diff changed.
+
+### 2026-09-22T21:57:51Z · TEST · myan · claude-code/opus-5 · 442b874
+After the rebase: uv run pytest -q passes in full; ruff check scripts/orient.py clean.
+
+### 2026-09-22T21:57:51Z · COMMIT · myan · claude-code/opus-5 · parent:442b874
+docs(agreements): record the rebase onto #19 and the force-push
+1 file changed, 6 insertions(+)
