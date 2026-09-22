@@ -1,0 +1,23 @@
+# Spike S3 only. Not the development stack and not a deployment artifact.
+#
+# Pinned by digest, never by tag: ADR-0007 requires that the artifact measured is the artifact that
+# ships, and a tag can be repointed under us between the measurement and the decision.
+# paradedb/paradedb:0.25.9, linux/arm64.
+services:
+  paradedb:
+    image: paradedb/paradedb@sha256:c17153b8b7307734c3aede0393dfe8fa447f4a528ec028b1c3937186ab3ee242
+    environment:
+      POSTGRES_USER: wayfinder
+      POSTGRES_PASSWORD: spike_local_only_not_a_secret
+      POSTGRES_DB: s3spike
+    ports:
+      - "55432:5432"        # not 5432: a spike must not collide with a real local Postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wayfinder -d s3spike"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    tmpfs:
+      - /var/lib/postgresql   # no volume: every run starts from empty, so a result cannot depend on
+                              # state left by the previous one. Postgres 18 images want the mount
+                              # here, not at /data -- mounting /data makes the entrypoint abort.
