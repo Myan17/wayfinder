@@ -138,27 +138,37 @@ index is answering from outside the caller's snapshot and `pg_search` fails A-5.
 
 ## Decision
 
-**Still Proposed. Measured locally on 2026-09-22; S3-1b outstanding, so this is not an acceptance.**
+**Still Proposed. Measured locally on 2026-09-22; S3-1b and S3-6 outstanding, so this is not an
+acceptance.**
 
 Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), PostgreSQL 18.6,
 `pg_search` 0.25.9. Reproduce with `infra/spikes/s3/`.
 
 | Rule | Result | Observed |
 |---|---|---|
-| S3-1a | PASS | `host=arm64 daemon=arm64 image=arm64 variant=(absent)` |
+| S3-1a | PASS | All four points: `host=arm64 daemon=arm64 image=arm64 variant=(absent) connection=accepted` |
 | **S3-1b** | **OUTSTANDING** | Requires the provisioned Oracle A1. Cannot be measured from a development machine, and is not being approximated by one |
 | S3-2 | PASS | `pg_search 0.25.9`, `is_superuser=on`, §9.2's BM25 DDL accepted verbatim |
 | S3-3 | PASS | 5 rows, then 5 rows, in one `REPEATABLE READ` snapshot across a concurrent commit |
 | S3-4 | PASS | Reader saw gen `[1]`; writer activated gen 2 and retired gen 1; **same transaction still saw `[1]`**; a new transaction saw `[2]` |
 | S3-5 | PASS | Snapshot predating the delete kept 4 rows; a new transaction saw 0 |
-| S3-6 | PASS | `Custom Scan (ParadeDB Base Scan)`, `Index: rep_bm25`, no `Seq Scan` |
+| **S3-6** | **OUTSTANDING** | The rule names §9.5's **two-leg** query. The harness has one leg — no vector column, no pgvector index, no embeddings — so only the lexical plan was captured. Its own pull request |
 
-S3-4 is the result that matters, and a test that passes first time deserves suspicion, so it was
-mutation-checked: weakening the reader to `READ COMMITTED` makes step 4 return gen `[2]` and the
-rule fail. The PASS therefore reflects `pg_search` honouring the caller's snapshot rather than a
-test that cannot fail.
+**Three results were mutation-checked**, because a rule that passes first time and cannot fail is
+worth nothing:
 
-S3-6's plan, for the record:
+- **S3-4**, the load-bearing one. Weakening the reader to `READ COMMITTED` makes step 4 return gen
+  `[2]` and the rule fail. The PASS reflects `pg_search` honouring the caller's snapshot.
+- **S3-2**. Connecting as a `NOSUPERUSER` role records `S3-2 FAIL is_superuser=off`, and the §9.2
+  DDL is not attempted — a success under some other privilege set would be evidence for a rule
+  nobody wrote.
+- **S3-1a point 4**. With the container stopped, S3-1a records `FAIL … failed: ['postgres accepts a
+  connection']`. An earlier harness recorded PASS on points 1–3 and opened the connection
+  afterwards, so S3-1a could read PASS in a run where Postgres never answered.
+
+The lexical-leg plan, recorded but **not** S3-6 — `Custom Scan` alone says only that the planner
+used *a* custom scan node, so the observation that carries weight is the index naming itself, which
+is also what §9.5 means by "the existence of an index is not evidence that it is used" (WF-25):
 
 ```
 ->  Parallel Custom Scan (ParadeDB Base Scan) on representation
@@ -174,7 +184,7 @@ S3-6's plan, for the record:
 architecture is the same and the image digest is the same, but A-5 is a claim about the deployment
 target and §19.2 puts A1 provisioning inside S3. Nothing here should be cited as A-5 being settled.
 
-When S3-1b runs, this section is completed with one of:
+When S3-1b and S3-6 run, this section is completed with one of:
 
 - **Accept `pg_search`** — every one of S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS, each measured on the
   A1. S3-6 recorded either way. S3-1a is a precondition and carries no weight here: passing it on a
@@ -190,8 +200,8 @@ a rule that failed.
 other rule passes on a development machine. That is deliberate: a local aarch64 machine and an
 Oracle A1 are both arm64, but A-5 is a claim about the deployment target, and the same digest
 behaving here is a precondition, not the evidence. §19.2 puts A1 provisioning inside S3 for this
-reason. A partial result is recorded as *"S3-1a..S3-6 measured locally, S3-1b outstanding"* — never
-as an acceptance.
+reason. A partial result is recorded as *"S3-1a and S3-2..S3-5 measured locally; S3-1b and S3-6
+outstanding"* — never as an acceptance.
 
 ## Consequences if the fallback is taken
 

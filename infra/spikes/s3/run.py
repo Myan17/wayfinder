@@ -65,8 +65,14 @@ def sh(*args: str) -> str:
     return subprocess.run(args, check=True, capture_output=True, text=True).stdout.strip()
 
 
-def s3_1a(r: Results) -> None:
-    """Host, daemon and image architectures agree, and the container ran. ADR-0007 S3-1."""
+def s3_1a(r: Results, connected: bool, conn_detail: str) -> None:
+    """All four of ADR-0007 S3-1's points, including point 4 — Postgres accepts a connection.
+
+    `connected` is passed in rather than tested here because the rule is "the container starts and
+    Postgres accepts a connection", and the connection the rest of the run uses is the one that
+    settles it. An earlier version recorded PASS on points 1-3 and opened the connection afterwards,
+    so S3-1a could read PASS in a run where Postgres never answered.
+    """
     host = platform.machine()
     daemon = sh("docker", "version", "--format", "{{.Server.Arch}}")
     arch = sh("docker", "image", "inspect", DIGEST, "--format", "{{.Architecture}}")
@@ -79,8 +85,10 @@ def s3_1a(r: Results) -> None:
         # The ADR was corrected here: variant is optional in the OCI platform object, so an empty
         # one is not a failure. Only a declared, wrong variant is.
         "variant is v8 or absent": variant in {"v8", ""},
+        "postgres accepts a connection": connected,
     }
-    detail = f"host={host} daemon={daemon} image={arch} variant={variant or '(absent)'}"
+    detail = (f"host={host} daemon={daemon} image={arch} variant={variant or '(absent)'} "
+              f"connection={conn_detail}")
     failed = [name for name, ok in checks.items() if not ok]
     r.record("S3-1a", "FAIL" if failed else "PASS", detail + (f" -- failed: {failed}" if failed else ""))
 
@@ -98,6 +106,13 @@ def s3_2(r: Results, conn: psycopg.Connection) -> None:
     with conn.cursor() as cur:
         cur.execute("SELECT current_setting('is_superuser')")
         superuser = cur.fetchone()[0]
+        if superuser != "on":
+            # ADR-0007 declares SUPERUSER in advance, under option A, precisely so that "it needed
+            # more privileges than expected, but we can arrange those" cannot become a pass. The
+            # DDL below is not attempted: a success under some other privilege set would be
+            # evidence for a rule nobody wrote.
+            r.record("S3-2", "FAIL", f"is_superuser={superuser}, ADR-0007 S3-2 declares SUPERUSER")
+            return
         cur.execute("CREATE EXTENSION IF NOT EXISTS pg_search")
         cur.execute("SELECT extversion FROM pg_extension WHERE extname = 'pg_search'")
         version = cur.fetchone()[0]
@@ -216,7 +231,17 @@ def s3_5(r: Results, conn: psycopg.Connection, other: psycopg.Connection) -> Non
 
 
 def s3_6(r: Results, conn: psycopg.Connection) -> None:
-    """EXPLAIN shows the BM25 index in use, and the plan is capturable. ADR-0007 S3-6."""
+    """OUTSTANDING: S3-6's rule is DESIGN §9.5's two-leg query, and this harness has one leg.
+
+    The rule reads "EXPLAIN (ANALYZE, BUFFERS) on the two-leg hybrid query of §9.5". That query
+    fuses a BM25 leg with a dense HNSW leg per embedding specification under RRF, and this spike's
+    table has no vector column, no pgvector index and no embeddings. Running the lexical leg alone
+    and recording PASS would be answering an easier question than the one the ADR asked.
+
+    The single-leg plan is still captured, because it is real evidence about the lexical half and
+    the follow-up builds on it -- but it is recorded as OUTSTANDING and labelled, so it cannot be
+    read as S3-6. The two-leg harness is its own pull request.
+    """
     conn.rollback()
     with conn.cursor() as cur:
         cur.execute(
@@ -230,35 +255,50 @@ def s3_6(r: Results, conn: psycopg.Connection) -> None:
             "SELECT id FROM representation WHERE body_text @@@ 'widget' AND live ORDER BY id LIMIT 100"
         )
         plan = "\n".join(line[0] for line in cur.fetchall())
-    used_index = "bm25" in plan.lower() or "Custom Scan" in plan
+
+    # "Custom Scan" only says the planner used *a* custom scan node. DESIGN §9.5 is explicit that
+    # the existence of an index is not evidence that it is used (WF-25), so the observation that
+    # carries weight is the index's own name appearing in the plan.
+    named = "Index: rep_bm25" in plan
     seq_scan = "Seq Scan on representation" in plan
     r.record(
         "S3-6",
-        "PASS" if (used_index and not seq_scan) else "RECORDED",
-        f"index_in_plan={used_index} seq_scan={seq_scan}",
+        "OUTSTANDING",
+        f"single-leg BM25 plan only, NOT §9.5's two-leg query; rep_bm25_named={named} "
+        f"seq_scan={seq_scan}",
     )
-    print("\n--- EXPLAIN (ANALYZE, BUFFERS) ---\n" + plan + "\n")
+    print("\n--- EXPLAIN (ANALYZE, BUFFERS), lexical leg only, not S3-6 ---\n" + plan + "\n")
 
 
 def main() -> int:
     r = Results()
-    s3_1a(r)
-    s3_1b(r)
+    # Point 4 of S3-1 is "the container starts and Postgres accepts a connection", so the
+    # connection is attempted before S3-1a is recorded rather than after it.
+    conn = other = None
     try:
         conn = psycopg.connect(DSN, autocommit=True)
         other = psycopg.connect(DSN, autocommit=True)
+        connected, detail = True, "accepted"
     except psycopg.OperationalError as exc:
-        print(f"::error::cannot reach the spike database: {exc}")
-        print("start it with: docker compose -f infra/spikes/s3/compose.yml up -d")
-        return 1
+        connected, detail = False, f"refused ({str(exc).splitlines()[0]})"
 
-    with conn, other:
-        s3_2(r, conn)
-        seed(conn)
-        s3_3(r, conn, other)
-        s3_4(r, conn, other)
-        s3_5(r, conn, other)
-        s3_6(r, conn)
+    s3_1a(r, connected, detail)
+    s3_1b(r)
+
+    if not connected:
+        print("::error::cannot reach the spike database; S3-1a fails on point 4")
+        print("start it with: docker compose -f infra/spikes/s3/compose.yml up -d")
+    else:
+        with conn, other:
+            s3_2(r, conn)
+            if "S3-2" in r.failed:
+                print("::error::S3-2 failed; the rules below assume the extension and its index")
+            else:
+                seed(conn)
+                s3_3(r, conn, other)
+                s3_4(r, conn, other)
+                s3_5(r, conn, other)
+                s3_6(r, conn)
 
     print(json.dumps([{"rule": a, "verdict": b, "detail": c} for a, b, c in r.rows], indent=2))
     if r.failed:
@@ -266,7 +306,8 @@ def main() -> int:
             f"\n::error::FAILED: {', '.join(r.failed)} -- ADR-0007 says this is the fallback to built-in FTS"
         )
         return 1
-    print("\nNo rule failed. S3-1b remains OUTSTANDING, so this is NOT an acceptance (ADR-0007).")
+    outstanding = [rule for rule, v, _ in r.rows if v == "OUTSTANDING"]
+    print(f"\nNo rule failed. OUTSTANDING: {', '.join(outstanding)} -- this is NOT an acceptance (ADR-0007).")
     return 0
 
 
