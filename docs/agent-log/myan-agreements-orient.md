@@ -71,3 +71,10 @@ scripts/orient.py: ROOT = Path(__file__).resolve().parents[1], DESIGN and INDEX 
 ### 2026-09-22T19:04:24Z · COMMIT · myan · claude-code/opus-5 · parent:19ec37f
 fix(agreements): orient read the wrong directory and the wrong year
 3 files changed, 59 insertions(+), 6 deletions(-)
+
+### 2026-09-22T19:04:41Z · HANDOFF · myan · claude-code/opus-5 · f36f72d
+Both #20 findings fixed and pushed; 80 tests pass, ruff clean, the brief renders from scripts/. The branch is now 446 changed lines against 400 (280 orient.py, 166 tests; the task log's 73 are already exempt). Not trimming to fit, per the ruling. No honest split exists either: both fixes are corrections to a tool that is not on main yet, so splitting them out would put a knowingly broken orient.py on main and fix it in a follow-up. Requesting the narrow exception on #20 with the per-file numbers. If it is refused, the fallback I would take is to drop the two regression tests into a follow-up pull request that lands immediately after - that is 24 lines and brings this to 422, still over, so the real alternative to an exception is shipping the tool without the tests that pin the two defects you just found, which I do not think you want.
+
+### 2026-09-22T19:41:54Z · COMMIT · myan · claude-code/opus-5 · parent:f36f72d
+docs(agreements): commit the handoff entry that was written but never staged
+1 file changed, 3 insertions(+)
