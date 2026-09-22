@@ -36,3 +36,10 @@ Hook command piped exactly as settings.json holds it (echo '{}' | CLAUDE_PROJECT
 ### 2026-09-22T22:50:43Z · COMMIT · myan · claude-code/opus-5 · parent:a45d283
 feat(agreements): ORIENT.md orders the plan, and every session reads it first
 7 files changed, 130 insertions(+), 7 deletions(-)
+
+### 2026-09-22T22:51:13Z · HANDOFF · myan · claude-code/opus-5 · 98b6ef8
+Pull request #23 open against main. Joint module: gupta958 approves the order in ORIENT.md, not just the diff. Next task per ORIENT.md item 1: ADR-0013, ADR-0015, ADR-0011, which does not depend on this pull request merging.
+
+### 2026-09-22T22:51:13Z · COMMIT · myan · claude-code/opus-5 · parent:98b6ef8
+docs(agreements): hand off #23
+1 file changed, 3 insertions(+)
