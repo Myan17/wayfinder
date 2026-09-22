@@ -54,3 +54,10 @@ fix(agreements): a log that mentions TASK CLOSED is not a closed task
 ### 2026-09-22T18:51:35Z · COMMIT · myan · claude-code/opus-5 · parent:b0b14b9
 fix(agreements): a log that mentions TASK CLOSED is not a closed task
 3 files changed, 24 insertions(+), 15 deletions(-)
+
+### 2026-09-22T18:52:04Z · HANDOFF · myan · claude-code/opus-5 · 6a11ec0
+Force-pushed this branch (AGENTS.md 2.2 requires the entry): b0b14b9 to 6a11ec0. What moved is the top commit only - it was amended twice, first to carry its trailers after an amend ran without WAYFINDER_AGENT set, then to inline the handoff clip length and drop a section banner, which brought 403 changed lines back to 399. No file content changed between those amends beyond those three lines. #20 is open and review is requested. Two follow-ups are deliberately not here: the make orient target, which is the platform module and would stale the platform card's Makefile hash against #18's edit to the same card, and the CLAUDE.md change that makes this the mandatory first step, which is a decision about how every session starts rather than a diff. Worth saying to the reviewer: this branch hit the 400-line limit four times and each fix was a prose trim. That is the pattern the task-log exception was agreed against on 2026-09-20, and it is now showing up on source rather than on logs.
+
+### 2026-09-22T18:52:04Z · COMMIT · myan · claude-code/opus-5 · parent:6a11ec0
+docs(agreements): record the force-push and the follow-ups
+1 file changed, 3 insertions(+)
