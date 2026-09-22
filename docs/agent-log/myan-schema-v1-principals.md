@@ -30,3 +30,10 @@ Against the S3 digest with part 1 applied first: uv run pytest db/tests -> 10 pa
 ### 2026-09-22T23:02:36Z · COMMIT · myan · claude-code/opus-5 · parent:eba70f4
 feat(schema): v1 part 2 — principals, authorization facts, serving artifacts
 4 files changed, 150 insertions(+)
+
+### 2026-09-22T23:04:23Z · HANDOFF · myan · claude-code/opus-5 · def41f1
+#26 open, based on myan/schema/v1 (#25). Needs a rebuild onto main after #25 merges.
+
+### 2026-09-22T23:04:24Z · COMMIT · myan · claude-code/opus-5 · parent:def41f1
+docs(schema): hand off #26
+1 file changed, 3 insertions(+)
