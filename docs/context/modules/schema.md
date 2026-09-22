@@ -21,6 +21,10 @@ verified_on: 2026-09-18
 
 # schema
 
+> **Status (2026-09-22):** v1 lands in three migrations: `_index` (sources, generations, identities,
+> tombstones), `_principals` (authorization and serving tables), `_views`. Tests run against the S3
+> ParadeDB digest with `WAYFINDER_TEST_DSN` set, and skip without it.
+
 ## Purpose
 
 The shared contract every module depends on. It is joint because a unilateral change here breaks
@@ -50,6 +54,7 @@ pull request so a reviewer can read the result rather than replaying migrations.
 - **Delete modes are deliberate**: `occurrence` and `representation` references are `RESTRICT` so an
   out-of-order delete fails loudly; `base_generation_id` and `answer.cached_from` are
   `ON DELETE SET NULL` so GC and answer expiry are not blocked by their own descendants.
+- **Tombstones are retained ≥ 90 days**, enforced by a `CHECK`.
 - **Authorization facts carry leases** (`visibility_valid_until`, `user_access_state.valid_until`) and
   monotonic `authorization_revision` counters. A migration must not drop or default these away.
 - Naming: `snake_case`, singular table names, `*_at` for timestamps, `*_id` for foreign keys.
@@ -60,7 +65,10 @@ pull request so a reviewer can read the result rather than replaying migrations.
   can reach.
 - Never store secrets in plaintext (`principal.token_ciphertext` is AES-256-GCM, key outside the DB).
 - Never use `ON DELETE CASCADE` on anything reachable from an evidence manifest or an index
-  generation; cascades hide deletion-order bugs that §9.3.6 exists to prevent.
+  generation; cascades hide deletion-order bugs that §9.3.6 exists to prevent. **Exception, from
+  DESIGN §9.2:** `vector_d768` cascades from its `representation`. It is a 1:1 physical extension
+  (pgvector needs a fixed dimension), §9.3.6's GC order has no vector step, and its composite key
+  `(representation_id, repo_id)` keeps it from binding to another repository's row.
 
 ## Change protocol
 
@@ -85,6 +93,8 @@ pull request so a reviewer can read the result rather than replaying migrations.
 |---|---|
 | `db/tests/test_migrations.py::test_up_from_empty_and_from_previous_release` | Forward compatibility |
 | `db/tests/test_constraints.py::test_cross_repo_occurrence_rejected` | Composite keys |
+| `db/tests/test_constraints.py::test_cross_repo_vector_rejected` | Composite key on the vector table |
+| `db/tests/test_constraints.py::test_tombstone_retained_at_least_90_days` | Tombstone retention |
 | `db/tests/test_constraints.py::test_one_active_generation` | Partial unique index |
 | `db/tests/test_delete_modes.py::test_gc_order_and_set_null` | Delete-mode assumptions in §9.3.6 |
 | `db/tests/test_views.py::test_eligible_repo_expiry` | Lease semantics in the view |
@@ -105,3 +115,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-09-22 | v1 part 1; vector cascade exception; tombstone `CHECK` | — |
