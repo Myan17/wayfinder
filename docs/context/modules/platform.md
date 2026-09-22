@@ -109,10 +109,12 @@ by CI on every pull request.
 
 ## Open questions
 
-- `make lint` and `make test` are still not wired into CI, and the suites now exist (38 authz tests
-  plus 17 under `scripts/tests/`). That wiring is the next platform pull request, together with the
-  ruff-format debt in six older scripts. Until then a green pull request means the guardrails passed,
-  not that anything was tested.
+- `make lint` and `make test` are still not wired into CI although both suites exist. That wiring is
+  the next platform pull request, together with the ruff-format debt in six older scripts. Until
+  then a green pull request means the guardrails passed, not that anything was tested.
+  - This card no longer states a test count. It has been wrong three times: a count goes stale
+    whenever any pull request adds a test without touching an interface file, which is most of them,
+    so the freshness check never catches it. `uv run pytest -q` is the answer and cannot go stale.
 - Whether to pin Python 3.13 exactly (design text) or keep `>=3.13` and run on the local 3.14. Today:
   `>=3.13`, and the release manifest records the interpreter actually used.
 - Where the load-test stub runs once the AMD micro instance exists (DESIGN §16.4).
@@ -124,3 +126,4 @@ by CI on every pull request.
 | 2026-09-18 | Card written when the bootstrap Makefile and pyproject landed, replacing the placeholder | — |
 | 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 17, after the freshness tests landed). Card verification moved to content hashes | — |
 | 2026-09-22 | `psycopg[binary]` added to the dev extra and locked. DESIGN §12 already names psycopg 3 as the driver, so this is the project's driver arriving early rather than a spike-only dependency | — |
+| 2026-09-22 | Removed the test count rather than correcting it a third time: it had drifted to 17 against an actual 29, because a count goes stale whenever a pull request adds a test without touching an interface file | — |

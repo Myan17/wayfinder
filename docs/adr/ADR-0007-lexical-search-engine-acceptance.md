@@ -138,8 +138,43 @@ index is answering from outside the caller's snapshot and `pg_search` fails A-5.
 
 ## Decision
 
-_Empty until S3 runs._ It will record, per rule, the observed result and the exact command that
-produced it, then one of:
+**Still Proposed. Measured locally on 2026-09-22; S3-1b outstanding, so this is not an acceptance.**
+
+Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), PostgreSQL 18.6,
+`pg_search` 0.25.9. Reproduce with `infra/spikes/s3/`.
+
+| Rule | Result | Observed |
+|---|---|---|
+| S3-1a | PASS | `host=arm64 daemon=arm64 image=arm64 variant=(absent)` |
+| **S3-1b** | **OUTSTANDING** | Requires the provisioned Oracle A1. Cannot be measured from a development machine, and is not being approximated by one |
+| S3-2 | PASS | `pg_search 0.25.9`, `is_superuser=on`, §9.2's BM25 DDL accepted verbatim |
+| S3-3 | PASS | 5 rows, then 5 rows, in one `REPEATABLE READ` snapshot across a concurrent commit |
+| S3-4 | PASS | Reader saw gen `[1]`; writer activated gen 2 and retired gen 1; **same transaction still saw `[1]`**; a new transaction saw `[2]` |
+| S3-5 | PASS | Snapshot predating the delete kept 4 rows; a new transaction saw 0 |
+| S3-6 | PASS | `Custom Scan (ParadeDB Base Scan)`, `Index: rep_bm25`, no `Seq Scan` |
+
+S3-4 is the result that matters, and a test that passes first time deserves suspicion, so it was
+mutation-checked: weakening the reader to `READ COMMITTED` makes step 4 return gen `[2]` and the
+rule fail. The PASS therefore reflects `pg_search` honouring the caller's snapshot rather than a
+test that cannot fail.
+
+S3-6's plan, for the record:
+
+```
+->  Parallel Custom Scan (ParadeDB Base Scan) on representation
+      Table: representation
+      Index: rep_bm25
+      Exec Method: TopKScanExecState
+      Tantivy Query: {"boolean":{"must":[{"with_index":{"query":{"parse_with_field":
+                     {"field":"body_text","query_string":"widget"}}}},
+                     {"term":{"field":"live","value":true}}]}}
+```
+
+**What this does not establish.** Everything above ran on an Apple M2 Pro, not on an Oracle A1. The
+architecture is the same and the image digest is the same, but A-5 is a claim about the deployment
+target and §19.2 puts A1 provisioning inside S3. Nothing here should be cited as A-5 being settled.
+
+When S3-1b runs, this section is completed with one of:
 
 - **Accept `pg_search`** — every one of S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS, each measured on the
   A1. S3-6 recorded either way. S3-1a is a precondition and carries no weight here: passing it on a
