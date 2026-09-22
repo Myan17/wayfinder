@@ -6,12 +6,15 @@ instead of dying — `test_render_survives_everything_missing` pins that.
 """
 
 import datetime as dt
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import orient
+
+WINDOW = "| Planned build window | Mon 2026-09-21 \u2192 Sun 2026-11-15 (8 weeks) |\n"
 
 EN = "\u2013"  # DESIGN.md writes date spans with an en dash, so the fixture must too
 
@@ -140,3 +143,24 @@ def test_render_says_so_when_a_branch_has_no_pull_request():
                         merges=[], network=True)
     assert "[no pull request]" in out and "CLOSED" in out
     assert "none yet — read l.md" in out
+
+
+def test_the_year_comes_from_designs_build_window_not_from_today():
+    # Regression: base_year was dt.date.today().year, so every phase shifted on 1 January and the
+    # current phase silently read as past. The window is the design's own statement of when.
+    assert orient.build_window_year(WINDOW + DESIGN) == 2026
+    assert orient.build_window_year(DESIGN) is None          # no window row: no guess
+
+    phases = orient.parse_phases(DESIGN, orient.build_window_year(WINDOW + DESIGN))
+    assert phases[0]["start"] == dt.date(2026, 9, 21)        # stable whatever year it is run in
+
+
+def test_the_brief_renders_from_a_subdirectory():
+    # Regression: DESIGN/INDEX were relative to the caller's directory, so running from scripts/
+    # missed every file and reported "no phase table found" instead of the phase.
+    script = Path(orient.__file__)
+    out = subprocess.run([sys.executable, script.name, "--no-network"], cwd=script.parent,
+                         capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0, out.stderr
+    assert "no phase table found" not in out.stdout
+    assert "P0" in out.stdout and "CARDS" in out.stdout

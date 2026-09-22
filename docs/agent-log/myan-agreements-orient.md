@@ -61,3 +61,13 @@ Force-pushed this branch (AGENTS.md 2.2 requires the entry): b0b14b9 to 6a11ec0.
 ### 2026-09-22T18:52:04Z · COMMIT · myan · claude-code/opus-5 · parent:6a11ec0
 docs(agreements): record the force-push and the follow-ups
 1 file changed, 3 insertions(+)
+
+### 2026-09-22T19:04:23Z · READ · myan · claude-code/opus-5 · 19ec37f
+gupta958's review of #20, relayed off-platform: anchor files and subprocesses to the repository root; derive the schedule year from DESIGN's planned build window rather than today.year; regression tests for both; correct the PR body's 397 to 399. Verified all four before implementing. Root anchoring reproduces - cd scripts && python3 orient.py printed 'no phase table found'. The year source exists and is explicit: DESIGN line 14, 'Planned build window | Mon 2026-09-21 -> Sun 2026-11-15 (8 weeks), launch review Mon 2026-11-16'. The 397 in the PR body was written before the last two amends took the branch to 399.
+
+### 2026-09-22T19:04:23Z · EDIT · myan · claude-code/opus-5 · 19ec37f
+scripts/orient.py: ROOT = Path(__file__).resolve().parents[1], DESIGN and INDEX anchored to it, run() pinned to cwd=ROOT; LOG_DIR stays relative because it is joined onto each worktree's own path. New build_window_year() parses DESIGN's Planned build window row; main() passes it to parse_phases and, when the row is absent, prints that rather than guessing. scripts/tests/test_orient.py: two regression tests, one per finding.
+
+### 2026-09-22T19:04:24Z · COMMIT · myan · claude-code/opus-5 · parent:19ec37f
+fix(agreements): orient read the wrong directory and the wrong year
+3 files changed, 59 insertions(+), 6 deletions(-)

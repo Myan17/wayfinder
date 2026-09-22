@@ -23,21 +23,41 @@ from pathlib import Path
 MONTHS = {m: i for i, m in enumerate(
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], start=1)}
 
-DESIGN = Path("docs/DESIGN.md")
-INDEX = Path("docs/context/INDEX.md")
-LOG_DIR = Path("docs/agent-log")
+# Anchored to the repository, not to the caller's directory: run from scripts/ with relative paths
+# and every read misses, which the brief reports as "no phase table found" rather than as an error.
+ROOT = Path(__file__).resolve().parents[1]
+DESIGN = ROOT / "docs/DESIGN.md"
+INDEX = ROOT / "docs/context/INDEX.md"
+LOG_DIR = Path("docs/agent-log")  # relative: joined onto each worktree's own path
 
 
 def run(*args: str, timeout: int = 10) -> str:
-    """Run a command and return stdout, or "" if it fails. Never raises: the brief degrades."""
+    """Run a command in the repository root and return stdout, or "" if it fails.
+
+    Never raises: a missing `gh`, a timeout or a non-zero exit degrades the brief instead of
+    killing it. `cwd` is pinned for the same reason the paths above are.
+    """
     try:
-        out = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+        out = subprocess.run(args, capture_output=True, text=True, timeout=timeout,
+                             check=False, cwd=ROOT)
     except (OSError, subprocess.SubprocessError):
         return ""
     return out.stdout if out.returncode == 0 else ""
 
 
 # --- plan
+
+def build_window_year(design: str) -> int | None:
+    """The year the schedule starts, from DESIGN's `Planned build window` row.
+
+    §19.1's table writes months and days with no year. Taking the year from today's date is wrong
+    the moment the calendar rolls over: every phase shifts a year, the current phase reads as past,
+    and nothing in the output says so. The window is the design's own statement of when this is
+    built, so it is the source. No window, no phase dates — better silent than confidently wrong.
+    """
+    m = re.search(r"^\| Planned build window \|[^|]*?(\d{4})-\d{2}-\d{2}", design, re.M)
+    return int(m.group(1)) if m else None
+
 
 def parse_phases(design: str, base_year: int) -> list[dict]:
     """Rows of the §19.1 phase table, with dates resolved to real years.
@@ -236,8 +256,11 @@ def main(argv: list[str]) -> int:
     index = INDEX.read_text() if INDEX.exists() else ""
 
     today = dt.date.today()
-    phases = parse_phases(design, today.year)
+    base = build_window_year(design)
+    phases = parse_phases(design, base) if base else []
     phase, note = current_phase(phases, today)
+    if base is None:
+        note = "DESIGN has no 'Planned build window' row, so §19.1's dates carry no year"
 
     print(render(
         head=run("git", "rev-parse", "--short", "main").strip(),
