@@ -1,8 +1,8 @@
-"""Tests for the orientation brief.
+"""Tests for the orientation brief's plan half.
 
-Everything under test is pure text handling. `worktrees` and `open_prs` are thin wrappers over
-`run`, which swallows every failure by design, so what matters there is that the brief degrades
-instead of dying — `test_render_survives_everything_missing` pins that.
+Everything under test is pure text handling over DESIGN and the context index. `run` swallows every
+failure by design, so what matters at the edges is that the brief degrades instead of dying —
+`test_render_survives_everything_missing` pins that.
 """
 
 import datetime as dt
@@ -36,26 +36,6 @@ DESIGN = f"""
 
 ### 19.3 Phase 1 — kernel
 """
-
-LOG = """# Task log — myan-authz-demo
-
-| Field | Value |
-|---|---|
-| Closed when | the last entry says TASK CLOSED (the header is never edited) |
-
-## Timeline
-
-### 2026-09-22T01:00:00Z · PLAN · myan · claude-code/opus-5 · abc1234
-Chose the fenced refresh.
-
-### 2026-09-22T02:00:00Z · HANDOFF · myan · claude-code/opus-5 · abc1234
-First sentence stops here. Second sentence adds detail nobody needs at orientation time, and it
-runs on long enough to be clipped.
-
-### 2026-09-22T03:00:00Z · COMMIT · myan · claude-code/opus-5 · parent:abc1234
-feat(authz): something
-"""
-
 
 def test_phase_dates_resolve_and_roll_into_the_next_year():
     phases = orient.parse_phases(DESIGN, base_year=2026)
@@ -95,54 +75,23 @@ def test_cards_split_by_status():
     assert orient.parse_cards(index) == {"written": ["authz"], "placeholder": ["cache", "eval-data"]}
 
 
-def test_last_handoff_is_clipped_at_a_sentence():
-    text = orient.last_handoff(LOG, limit=60)
-    assert text == "First sentence stops here. […]"
-
-
-def test_last_handoff_returns_the_whole_entry_when_it_is_short():
-    assert orient.last_handoff(LOG, limit=400).startswith("First sentence stops here. Second")
-
-
-def test_a_log_with_no_handoff_yet_is_not_an_error():
-    assert orient.last_handoff("## Timeline\n\n### t · PLAN · a · b · c\nonly a plan\n") == ""
-
-
-def test_only_a_line_that_starts_with_the_marker_closes_a_task():
-    # The marker appears in every log's header, and an entry may quote it while describing a bug.
-    assert "TASK CLOSED" in LOG and not orient.is_closed(LOG)
-    assert not orient.is_closed(LOG + "\n### t · TEST · a · b · c\nread as TASK CLOSED wrongly\n")
-    assert orient.is_closed(LOG + "\n### t · HANDOFF · a · b · c\nTASK CLOSED. Merged as abc1234.\n")
-
-
 def test_render_survives_everything_missing():
     out = orient.render(head="", phase=None, note="no phase table found in DESIGN §19.1",
-                        tasks=[], cards={"written": [], "placeholder": []}, trees=[], prs={},
-                        merges=[], network=False)
+                        tasks=[], cards={"written": [], "placeholder": []}, merges=[])
     assert "(unknown)" in out
-    assert "nothing — start with scripts/new-task.sh" in out
-    assert "--no-network" in out
+    assert "no phase table found" in out
 
 
-def test_render_names_the_worktree_you_are_in_and_its_review_state():
-    tree = {"path": "/wt/myan-authz-demo", "branch": "myan/authz/demo",
-            "log": "docs/agent-log/myan-authz-demo.md", "handoff": "stopped at the lease test",
-            "closed": False, "here": True}
-    out = orient.render(head="abc1234", phase=None, note="", tasks=[],
-                        cards={"written": [], "placeholder": []}, trees=[tree],
-                        prs={"myan/authz/demo": "PR #7 APPROVED"}, merges=[], network=True)
-    assert "myan/authz/demo  [PR #7 APPROVED]  <- you are here" in out
-    assert "stopped at the lease test" in out
-
-
-def test_render_says_so_when_a_branch_has_no_pull_request():
-    tree = {"path": "/wt/x", "branch": "myan/authz/x", "log": "l.md", "handoff": "",
-            "closed": True, "here": False}
-    out = orient.render(head="abc1234", phase=None, note="", tasks=[],
-                        cards={"written": [], "placeholder": []}, trees=[tree], prs={},
-                        merges=[], network=True)
-    assert "[no pull request]" in out and "CLOSED" in out
-    assert "none yet — read l.md" in out
+def test_render_shows_the_phase_its_tasks_and_the_cards():
+    phase = {"id": "P0", "theme": "Spikes", "start": dt.date(2026, 9, 21),
+             "end": dt.date(2026, 9, 27), "gate": "**G0**: every spike answered"}
+    out = orient.render(head="abc1234", phase=phase, note="", tasks=[("S1 corpus", "4")],
+                        cards={"written": ["authz"], "placeholder": ["cache"]},
+                        merges=["abc1234 feat(authz): something"])
+    assert "P0 Spikes · 2026-09-21 to 2026-09-27" in out
+    assert "gate G0: every spike answered" in out          # the ** markers are stripped
+    assert "4h  S1 corpus" in out
+    assert "written      authz" in out and "placeholder  cache" in out
 
 
 def test_the_year_comes_from_designs_build_window_not_from_today():

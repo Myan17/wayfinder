@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 """Print the session orientation brief: where the project is, and what is in flight.
 
-Reads DESIGN §19 for the plan, `git worktree list` for what is open, each task log's last HANDOFF
-for where it stopped, docs/context/INDEX.md for card status, and GitHub for review state. **Writes
-nothing**, so the brief cannot go stale, cannot land in a diff and cannot conflict on a rebase.
+Reads DESIGN §19 for the plan and docs/context/INDEX.md for card status. **Writes nothing**, so
+the brief cannot go stale, cannot land in a diff and cannot conflict on a rebase.
+
+This is the plan half: which phase we are in, what it contains, and which contract cards are real.
+The in-flight half — open worktrees, their last HANDOFF and their review state — is its own pull
+request, and the brief is useful without it.
 
 No done column for the phase's tasks: nothing in the repository records completion, so it would be
 a guess, and a guessed "done" is worse than none. Nothing from CLAUDE.md either — a Claude Code
 session already loads it, and printing it again would be paying twice.
 
-usage: scripts/orient.py [--no-network]
+usage: scripts/orient.py
 """
 from __future__ import annotations
 
 import datetime as dt
-import json
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 MONTHS = {m: i for i, m in enumerate(
@@ -28,7 +29,6 @@ MONTHS = {m: i for i, m in enumerate(
 ROOT = Path(__file__).resolve().parents[1]
 DESIGN = ROOT / "docs/DESIGN.md"
 INDEX = ROOT / "docs/context/INDEX.md"
-LOG_DIR = Path("docs/agent-log")  # relative: joined onto each worktree's own path
 
 
 def run(*args: str, timeout: int = 10) -> str:
@@ -120,86 +120,8 @@ def parse_cards(index: str) -> dict[str, list[str]]:
     return out
 
 
-# --- what is in flight
-
-def timeline(log: str) -> str:
-    """Just the entries: the template's header explains the closing marker in prose, so a whole-file
-    search finds that sentence in every log that was never closed."""
-    _, _, rest = log.partition("\n## Timeline")
-    return rest
-
-
-def is_closed(log: str) -> bool:
-    """`end-task.sh` opens the closing entry's body with "TASK CLOSED. ", so the marker is only a
-    marker at the start of a line. Anywhere else it is an entry talking about closing a task."""
-    return re.search(r"^TASK CLOSED\b", timeline(log), re.M) is not None
-
-
-def last_handoff(log: str, limit: int = 220) -> str:
-    """The last HANDOFF entry, clipped at a sentence boundary.
-
-    Clipped because a full handoff runs to a paragraph and this is read at the top of every
-    session. The first sentences say where the work stopped; the log is one `cat` away.
-    """
-    entries = re.split(r"^### .*?· ([A-Z]+) ·.*$", timeline(log), flags=re.M)
-    # split() yields [preamble, kind, body, kind, body, ...]
-    for kind, body in reversed(list(zip(entries[1::2], entries[2::2], strict=False))):
-        if kind != "HANDOFF":
-            continue
-        text = " ".join(body.split())
-        if len(text) <= limit:
-            return text
-        cut = text.rfind(". ", 0, limit)
-        return text[: cut + 1] + " […]" if cut > 0 else text[:limit].rstrip() + " […]"
-    return ""
-
-
-def worktrees(here: Path) -> list[dict]:
-    """Every task worktree, with its branch and the state its own log was left in.
-
-    `--porcelain` puts the main worktree first; it is the checkout of `main`, not a task, so it is
-    dropped. A task log lives only on its own branch, so each is read from inside its worktree.
-    """
-    out = []
-    blocks = run("git", "worktree", "list", "--porcelain").split("\n\n")
-    for block in blocks[1:]:
-        path = re.search(r"^worktree (.+)$", block, re.M)
-        branch = re.search(r"^branch refs/heads/(.+)$", block, re.M)
-        if not path or not branch:
-            continue
-        log = LOG_DIR / f"{branch.group(1).replace('/', '-')}.md"
-        on_disk = Path(path.group(1)) / log
-        text = on_disk.read_text() if on_disk.exists() else ""
-        out.append({"path": path.group(1), "branch": branch.group(1), "log": str(log),
-                    "handoff": last_handoff(text),
-                    "closed": is_closed(text),
-                    "here": Path(path.group(1)) == here})
-    return out
-
-
-def open_prs() -> dict[str, str]:
-    """branch → review state, from GitHub. Empty when gh is missing or offline."""
-    raw = run("gh", "pr", "list", "--state", "open", "--limit", "30",
-              "--json", "number,headRefName,isDraft,reviewDecision", timeout=20)
-    if not raw:
-        return {}
-    try:
-        prs = json.loads(raw)
-    except json.JSONDecodeError:
-        return {}
-    states = {}
-    for pr in prs:
-        # REVIEW_REQUIRED is GitHub's wording for "nobody has reviewed it yet".
-        decision = (pr.get("reviewDecision") or "REVIEW_REQUIRED").replace("_", " ")
-        decision = "awaiting review" if decision == "REVIEW REQUIRED" else decision
-        states[pr["headRefName"]] = f"PR #{pr['number']} {'DRAFT' if pr.get('isDraft') else decision}"
-    return states
-
-
-
 def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]],
-           cards: dict[str, list[str]], trees: list[dict], prs: dict[str, str],
-           merges: list[str], network: bool) -> str:
+           cards: dict[str, list[str]], merges: list[str]) -> str:
     lines: list[str] = []
     add = lines.append
 
@@ -210,19 +132,6 @@ def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]
         add(f"  gate {re.sub(r'[*]', '', phase['gate'])}")
     else:
         add(f"  {note}")
-
-    add("")
-    add("IN FLIGHT" if trees else "IN FLIGHT  nothing — start with scripts/new-task.sh")
-    for t in trees:
-        state = prs.get(t["branch"], "no pull request" if network else "pull request state unknown")
-        marks = "  <- you are here" if t["here"] else ""
-        marks += "  CLOSED" if t["closed"] else ""
-        add(f"  {t['branch']}  [{state}]{marks}")
-        add(f"    worktree {t['path']}")
-        if t["handoff"]:
-            add(f"    handoff  {t['handoff']}")
-        else:
-            add(f"    handoff  none yet — read {t['log']}")
 
     if merges:
         add("")
@@ -244,14 +153,10 @@ def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]
 
     add("")
     add("Durable half of orientation is CLAUDE.md, already loaded. Rules: AGENTS.md.")
-    if not network:
-        add("Review state not fetched (--no-network).")
     return "\n".join(lines)
 
 
-def main(argv: list[str]) -> int:
-    network = "--no-network" not in argv
-    here = Path(run("git", "rev-parse", "--show-toplevel").strip() or ".")
+def main() -> int:
     design = DESIGN.read_text() if DESIGN.exists() else ""
     index = INDEX.read_text() if INDEX.exists() else ""
 
@@ -268,13 +173,10 @@ def main(argv: list[str]) -> int:
         note=note,
         tasks=phase_tasks(design, phase["id"]) if phase else [],
         cards=parse_cards(index),
-        trees=worktrees(here),
-        prs=open_prs() if network else {},
         merges=[m for m in run("git", "log", "main", "--oneline", "-5").splitlines() if m],
-        network=network,
     ))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    raise SystemExit(main())

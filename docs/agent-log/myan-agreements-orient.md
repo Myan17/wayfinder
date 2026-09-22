@@ -78,3 +78,13 @@ Both #20 findings fixed and pushed; 80 tests pass, ruff clean, the brief renders
 ### 2026-09-22T19:41:54Z · COMMIT · myan · claude-code/opus-5 · parent:f36f72d
 docs(agreements): commit the handoff entry that was written but never staged
 1 file changed, 3 insertions(+)
+
+### 2026-09-22T19:43:07Z · DECIDE · myan · claude-code/opus-5 · e284f6b
+gupta958 declined the 446-line exception and directed the functional split I had offered. This branch becomes the plan half: build_window_year, parse_phases, current_phase, phase_tasks, parse_cards, render and main, plus their tests. The in-flight half - timeline, is_closed, last_handoff, worktrees, open_prs and render's IN FLIGHT block - moves to myan/agreements/orient-flight, which is stacked on this branch and whose pull request targets it as base, so each pull request's guardrails measure only its own diff. Stacked rather than both cut from main because the second half edits the same file the first creates; two independent branches off main would conflict on every hunk. Checked the requirement that each half stands alone: this one prints the phase, its gate, the phase's task table, the recent merges and the card status, which is a useful brief with no mention of the missing half.
+
+### 2026-09-22T19:43:07Z · EDIT · myan · claude-code/opus-5 · e284f6b
+scripts/orient.py: removed the in-flight half and the now-unused json import, sys import and LOG_DIR constant; render() and main() lost their trees/prs/network parameters. scripts/tests/test_orient.py: removed the six in-flight tests and the task-log fixture, updated the render tests to the new signature, added one asserting the plan half renders phase, gate, tasks and cards.
+
+### 2026-09-22T19:43:07Z · COMMIT · myan · claude-code/opus-5 · parent:e284f6b
+refactor(agreements): split orient into its plan half
+3 files changed, 34 insertions(+), 177 deletions(-)
