@@ -105,10 +105,11 @@ def test_a_log_with_no_handoff_yet_is_not_an_error():
     assert orient.last_handoff("## Timeline\n\n### t · PLAN · a · b · c\nonly a plan\n") == ""
 
 
-def test_the_templates_closing_sentence_is_not_a_closed_task():
-    # "TASK CLOSED" appears in every log's header, explaining the marker. Only the timeline counts.
-    assert "TASK CLOSED" in LOG
-    assert "TASK CLOSED" not in orient.timeline(LOG)
+def test_only_a_line_that_starts_with_the_marker_closes_a_task():
+    # The marker appears in every log's header, and an entry may quote it while describing a bug.
+    assert "TASK CLOSED" in LOG and not orient.is_closed(LOG)
+    assert not orient.is_closed(LOG + "\n### t · TEST · a · b · c\nread as TASK CLOSED wrongly\n")
+    assert orient.is_closed(LOG + "\n### t · HANDOFF · a · b · c\nTASK CLOSED. Merged as abc1234.\n")
 
 
 def test_render_survives_everything_missing():

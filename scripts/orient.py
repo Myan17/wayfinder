@@ -102,9 +102,6 @@ def parse_cards(index: str) -> dict[str, list[str]]:
 
 # --- what is in flight
 
-HANDOFF_CHARS = 220
-
-
 def timeline(log: str) -> str:
     """Just the entries: the template's header explains the closing marker in prose, so a whole-file
     search finds that sentence in every log that was never closed."""
@@ -112,7 +109,13 @@ def timeline(log: str) -> str:
     return rest
 
 
-def last_handoff(log: str, limit: int = HANDOFF_CHARS) -> str:
+def is_closed(log: str) -> bool:
+    """`end-task.sh` opens the closing entry's body with "TASK CLOSED. ", so the marker is only a
+    marker at the start of a line. Anywhere else it is an entry talking about closing a task."""
+    return re.search(r"^TASK CLOSED\b", timeline(log), re.M) is not None
+
+
+def last_handoff(log: str, limit: int = 220) -> str:
     """The last HANDOFF entry, clipped at a sentence boundary.
 
     Clipped because a full handoff runs to a paragraph and this is read at the top of every
@@ -149,7 +152,7 @@ def worktrees(here: Path) -> list[dict]:
         text = on_disk.read_text() if on_disk.exists() else ""
         out.append({"path": path.group(1), "branch": branch.group(1), "log": str(log),
                     "handoff": last_handoff(text),
-                    "closed": "TASK CLOSED" in timeline(text),
+                    "closed": is_closed(text),
                     "here": Path(path.group(1)) == here})
     return out
 
@@ -166,15 +169,13 @@ def open_prs() -> dict[str, str]:
         return {}
     states = {}
     for pr in prs:
-        decision = {"": "awaiting review", "REVIEW_REQUIRED": "awaiting review",
-                    "APPROVED": "APPROVED", "CHANGES_REQUESTED": "CHANGES REQUESTED"}.get(
-            pr.get("reviewDecision") or "", (pr.get("reviewDecision") or "").lower())
-        flag = "DRAFT" if pr.get("isDraft") else decision
-        states[pr["headRefName"]] = f"PR #{pr['number']} {flag}"
+        # REVIEW_REQUIRED is GitHub's wording for "nobody has reviewed it yet".
+        decision = (pr.get("reviewDecision") or "REVIEW_REQUIRED").replace("_", " ")
+        decision = "awaiting review" if decision == "REVIEW REQUIRED" else decision
+        states[pr["headRefName"]] = f"PR #{pr['number']} {'DRAFT' if pr.get('isDraft') else decision}"
     return states
 
 
-# --- render
 
 def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]],
            cards: dict[str, list[str]], trees: list[dict], prs: dict[str, str],

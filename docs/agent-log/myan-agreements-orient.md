@@ -43,3 +43,14 @@ Correction to the EDIT and HANDOFF entries above: the Makefile target and the CL
 ### 2026-09-22T18:49:02Z · COMMIT · myan · claude-code/opus-5 · parent:d4a5535
 feat(agreements): scripts/orient.py, so a session stops reconstructing its own context
 3 files changed, 438 insertions(+)
+
+### 2026-09-22T18:50:44Z · TEST · myan · claude-code/opus-5 · b0b14b9
+This log caught its own bug. The TEST entry above quotes 'TASK CLOSED' while describing the earlier fix, and orient then reported this very task as closed, because the check was a substring search over the timeline. end-task.sh writes the marker at the start of the closing entry's body, so is_closed() now anchors to a line start. Extended the existing test rather than adding one - the branch is at 397 of 400 lines. uv run pytest -q -> 78 passed; ruff clean on both files; the brief no longer shows CLOSED.
+
+### 2026-09-22T18:50:45Z · COMMIT · myan · claude-code/opus-5 · parent:b0b14b9
+fix(agreements): a log that mentions TASK CLOSED is not a closed task
+3 files changed, 15 insertions(+), 5 deletions(-)
+
+### 2026-09-22T18:51:35Z · COMMIT · myan · claude-code/opus-5 · parent:b0b14b9
+fix(agreements): a log that mentions TASK CLOSED is not a closed task
+3 files changed, 24 insertions(+), 15 deletions(-)
