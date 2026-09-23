@@ -70,3 +70,10 @@ fix(schema): vector spec_id bound to its representation; schema.sql commitment; 
 ### 2026-09-23T02:33:56Z · COMMIT · myan · claude-code/opus-5 · parent:7ac0795
 fix(schema): vector spec_id bound to its representation; schema.sql commitment; deletion tables to part 4
 5 files changed, 51 insertions(+), 45 deletions(-)
+
+### 2026-09-23T02:36:00Z · HANDOFF · myan · claude-code/opus-5 · 208f710
+#25 revised per review (400 lines); deletion tables moved to #28. Re-review requested. After merge, rebuild #26, #27, #28 onto main.
+
+### 2026-09-23T02:36:00Z · COMMIT · myan · claude-code/opus-5 · parent:208f710
+docs(schema): hand off after review
+1 file changed, 3 insertions(+)
