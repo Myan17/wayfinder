@@ -70,3 +70,13 @@ Against main with parts 1-3 merged, S3 digest: before the fix db/tests 14 passed
 ### 2026-09-23T05:07:26Z · COMMIT · myan · claude-code/opus-5 · parent:fbcfa02
 fix(schema): the view-file test finds its defining migration, not the newest
 2 files changed, 14 insertions(+), 1 deletion(-)
+
+### 2026-09-23T05:15:37Z · DECIDE · myan · claude-code/opus-5 · e3cb56a
+gupta958 (relayed by Myan, recorded on #28): item 2 is not done until the db/schema.sql snapshot the schema card commits to exists. ORIENT item 2 now reads 'in review #25-#28; db/schema.sql pending'; this pull request no longer claims to complete the item. After #28 merges, the generated snapshot pull request opens immediately and marks item 2 done #25-#29.
+
+### 2026-09-23T05:15:37Z · EDIT · myan · claude-code/opus-5 · e3cb56a
+ORIENT.md item 2 status: done #25-#28 -> in review #25-#28; db/schema.sql pending. Scope: schema, agreements still applies to this one line.
+
+### 2026-09-23T05:15:37Z · COMMIT · myan · claude-code/opus-5 · parent:e3cb56a
+docs(schema): item 2 stays open until db/schema.sql lands, per review
+2 files changed, 7 insertions(+), 1 deletion(-)
