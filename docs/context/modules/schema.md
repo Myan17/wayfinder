@@ -57,6 +57,8 @@ item 3's CI adds a drift check against a fresh dump.
 - **Delete modes are deliberate**: `occurrence` and `representation` references are `RESTRICT` so an
   out-of-order delete fails loudly; `base_generation_id` and `answer.cached_from` are
   `ON DELETE SET NULL` so GC and answer expiry are not blocked by their own descendants.
+- **Tombstones are retained ≥ 90 days**, and `embedding_cache.data_class` is closed to
+  `public`/`private`; both are `CHECK`s, not conventions.
 - **Authorization facts carry leases** (`visibility_valid_until`, `user_access_state.valid_until`) and
   monotonic `authorization_revision` counters. A migration must not drop or default these away.
 - Naming: `snake_case`, singular table names, `*_at` for timestamps, `*_id` for foreign keys.
@@ -100,6 +102,8 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_constraints.py::test_cross_repo_occurrence_rejected` | Composite keys |
 | `db/tests/test_constraints.py::test_cross_repo_vector_rejected` | Composite key on the vector table |
 | `db/tests/test_constraints.py::test_vector_spec_must_match_representation` | Vector `spec_id` equals its representation's |
+| `db/tests/test_deletion.py::test_tombstone_retained_at_least_90_days` | Tombstone retention |
+| `db/tests/test_deletion.py::test_embedding_cache_data_class_is_closed` | GC step 6 cannot miss an entry |
 | `db/tests/test_constraints.py::test_one_active_generation` | Partial unique index |
 | `db/tests/test_delete_modes.py::test_gc_order_and_set_null` | Delete-mode assumptions in §9.3.6 |
 | `db/tests/test_serving.py::test_cached_from_set_null` | `answer.cached_from` is `SET NULL` |
@@ -124,3 +128,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-09-22 | v1 part 1; vector cascade exception; three-column vector key | — |
 | 2026-09-22 | v1 part 2: principals and serving tables; answer cascades named | — |
 | 2026-09-22 | v1 part 3: `eligible_repo` and `retrieval_rows` created | — |
+| 2026-09-22 | v1 part 4: `embedding_cache`, `tombstone` | — |

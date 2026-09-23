@@ -15,8 +15,12 @@ def _block(text: str, name: str) -> str:
 
 
 def test_view_files_match_migration():
-    migration = MIGRATIONS[-1].read_text()
+    # Find the migration that defines each view, not the newest one: any later migration would
+    # otherwise break this test without touching a view.
     for name in ("eligible_repo", "retrieval_rows"):
+        defining = [m.read_text() for m in MIGRATIONS if f"-- view:{name}:begin" in m.read_text()]
+        assert len(defining) == 1, f"expected one migration defining {name}, found {len(defining)}"
+        migration = defining[0]
         body = "".join(
             line for line in (ROOT / "db" / "views" / f"{name}.sql").read_text().splitlines(keepends=True)
             if not line.startswith("-- ")
