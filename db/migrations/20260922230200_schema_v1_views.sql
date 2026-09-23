@@ -1,4 +1,4 @@
--- Schema v1, part 3 of 3: the interface views other modules may depend on (schema card).
+-- Schema v1, part 3 of 4: the interface views other modules may depend on (schema card).
 -- Immutable once merged (DESIGN §18.3): fixes are new migrations.
 
 -- migrate:up

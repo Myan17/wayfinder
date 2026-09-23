@@ -47,3 +47,10 @@ Rebuilt branch alone against main, S3 digest: db/tests 11 passed; full suite 81 
 ### 2026-09-23T04:29:54Z · COMMIT · myan · claude-code/opus-5 · parent:a567690
 docs(schema): record the rebuild onto main
 1 file changed, 6 insertions(+)
+
+### 2026-09-23T04:44:38Z · EDIT · myan · claude-code/opus-5 · ca62ef3
+Same stale count as gupta958 found on #26, fixed here before review: migration header part 3 of 4; PR title and description name all four parts.
+
+### 2026-09-23T04:44:40Z · COMMIT · myan · claude-code/opus-5 · parent:ca62ef3
+docs(schema): part 3 of 4
+2 files changed, 4 insertions(+), 1 deletion(-)
