@@ -63,3 +63,13 @@ docs(agreements): tie-breaking, cost, tau's two bars and the split algorithm, pe
 ### 2026-09-23T02:35:58Z · COMMIT · myan · claude-code/opus-5 · parent:c2b3da6
 docs(agreements): hand off after review
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T02:38:48Z · DECIDE · myan · claude-code/opus-5 · 6f0a23f
+gupta958's #24 notes relayed again by Myan: define 'tie within the interval'; define 'cheaper' deterministically for E5 and E6; keep 0.90 with Wilson lower bound >= 0.70 and zero accepted cannot qualify; specify exactly how temporal groups are assigned to 50/30/20. Points 3 and 4 were already met by 7f-series commit; points 1 and 2 were only partly met: the phrase itself was not defined, and E5/E6 still leaned on noisy timing (E6's p95 tie-break).
+
+### 2026-09-23T02:38:48Z · EDIT · myan · claude-code/opus-5 · 6f0a23f
+ADR-0013 step 4: 'tied within the interval' defined verbatim (paired-bootstrap 95% interval of the difference contains zero). 'Cheaper': one measurement protocol (same host, pinned digests, one thread, 3 warm-up + 5 timed passes, median of per-pass means), measured once and recorded; decisions computed from recorded values and never reopened by a re-run. E5 tie-breaks: smaller dimension, then parameter count (static). E6: pg_total_relation_size after build + VACUUM, tie-break bits per dimension (binary < halfvec < vector); no timing. D-5: worked example, N = 10, groups 3,2,1,3,1 -> 5/4/1, showing whole-group rounding.
+
+### 2026-09-23T02:38:48Z · COMMIT · myan · claude-code/opus-5 · parent:6f0a23f
+docs(agreements): define the tie, make E5/E6 cost deterministic, show the split, per review
+2 files changed, 33 insertions(+), 9 deletions(-)

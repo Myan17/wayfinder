@@ -52,6 +52,20 @@ Deterministic, run once by the S1 miner, and recorded in the dataset manifest.
 7. The manifest records, per pair: `group_id`, `t(g)` and split. Per repository, it records the
    two boundary times.
 
+**Worked example.** A repository with `N = 10` pairs in groups, already sorted, of sizes
+3, 2, 1, 3, 1:
+
+| Group | Size | `c` before | Test | Split |
+|---|---|---|---|---|
+| g1 | 3 | 0 | 0 < 5 | dev |
+| g2 | 2 | 3 | 3 < 5 | dev |
+| g3 | 1 | 5 | 5 < 8 | test |
+| g4 | 3 | 6 | 6 < 8 | test |
+| g5 | 1 | 9 | 9 ≥ 8 | held-out |
+
+The achieved split is 5/4/1, not 5/3/2, because g4 cannot be divided. That is the intended cost of
+keeping groups whole, and the manifest reports it.
+
 **Size.** The target is at least 300 surviving pairs. Fewer does not lower any bar. The achieved
 intervals are published at whatever size S1 delivers.
 
@@ -78,8 +92,9 @@ For each experiment, on dev, with the primary metric §15.4 names for it:
    (challenger − incumbent) on the primary metric excludes zero in the challenger's favour. Use
    10,000 resamples, cluster-resampled by issue/PR group (§15.2).
 4. **If more than one challenger qualifies**, let `b` be the one with the highest point estimate.
-   The **statistical tie set** is `b`, plus every other qualifying challenger `c` whose paired
-   95% interval of (`b − c`) includes zero. Use the same resamples and clustering as step 3. From
+   Two arms are **tied within the interval** when the paired-bootstrap 95% interval of their
+   difference on the primary metric contains zero. The **statistical tie set** is `b`, plus every
+   other qualifying challenger tied within the interval with `b`. Use the same resamples and clustering as step 3. From
    the tie set, take the **cheaper** arm (defined below). If no arm is cheaper, take the higher
    point estimate. If still tied, take the arm listed first in the experiment's pre-registered arm
    list.
@@ -91,19 +106,22 @@ For each experiment, on dev, with the primary metric §15.4 names for it:
 6. Multiple comparisons across experiments are labelled exploratory (§15.2). No experiment's rule is
    re-run with a different metric after its result is known.
 
-**"Cheaper", defined.** Every arm's cost is measured on the same host. That is the A1 once it
-exists, and the host is recorded in the manifest. Each cost is the **median of five runs** over the
-dev query set. Arm A is cheaper than arm B only if A's cost is **at least 5% lower**. A smaller
-difference is a cost tie, because single-digit percentages are inside run-to-run noise on a shared
-VM.
+**"Cheaper", defined.** Arm A is cheaper than arm B only if A's cost is **at least 5% lower**. A
+smaller difference is a cost tie, which falls through to the next criterion in the table. Measured
+costs follow one protocol: the same host for every arm (the A1 once it exists, recorded in the
+manifest); pinned image and model digests; one thread; three warm-up passes, then five timed passes
+over the full dev query set; the cost is the median of the five per-pass means. Each cost is
+**measured once, recorded in the experiment manifest, and the decision is computed from the
+recorded values**. Re-running a measurement never reopens a decision. That makes the comparison
+deterministic given the manifest, even though the timing itself is not.
 
 | Experiment | Cost measure |
 |---|---|
 | E2 fusion | Retrieval-path CPU per query, from the S2 per-stage method |
 | E3 rerank | ADR-0015 governs; its cost is rerank CPU per call |
 | E4 chunking | Bytes of `representation`, the vector tables and their indexes for the dev manifest |
-| E5 embedding | Query-embedding CPU per query (core-ms), across the real query-length distribution |
-| E6 precision | Bytes of the vector table plus its HNSW index; on a byte tie, p95 dense-leg latency |
+| E5 embedding | Recorded query-embedding CPU per query (core-ms). On a cost tie, the smaller embedding `dimension`, then the smaller parameter count from the model manifest. Both are static properties of the pinned model |
+| E6 precision | `pg_total_relation_size` of the vector table plus its HNSW index, after building the dev manifest and a `VACUUM`. On a size tie, fewer bits per stored dimension: binary < `halfvec` < `vector`. No timing enters E6's cost |
 | E7 filtered ANN | Among arms meeting the 0.95 bar at every visibility level, the worst of the three p95 dense-leg latencies |
 
 **E1 is special.** It decides the headline locate claim (§3.3): hybrid must beat **both**
