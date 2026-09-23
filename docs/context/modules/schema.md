@@ -15,8 +15,10 @@ design_sections:
   - "DESIGN §9.2 (data model)"
   - "DESIGN §9.3.5–9.3.6 (activation, deletion closure)"
   - "DESIGN §18.3 (immutable migrations)"
-verified_at: 0000000
-verified_on: 2026-09-18
+verified_hashes:
+  "db/views/eligible_repo.sql": "4c23a29fabcc67cc"
+  "db/views/retrieval_rows.sql": "acf9bb56c489f0f7"
+verified_on: 2026-09-22
 ---
 
 # schema
@@ -102,6 +104,8 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_delete_modes.py::test_gc_order_and_set_null` | Delete-mode assumptions in §9.3.6 |
 | `db/tests/test_serving.py::test_cached_from_set_null` | `answer.cached_from` is `SET NULL` |
 | `db/tests/test_views.py::test_eligible_repo_expiry` | Lease semantics in the view |
+| `db/tests/test_views.py::test_retrieval_rows_active_generation_only_and_predicate_applies` | Only live rows of the active generation; authz's row predicate applies to the view unchanged |
+| `db/tests/test_views.py::test_view_files_match_migration` | `db/views/*.sql` match what the migration creates |
 
 ## Fake
 
@@ -119,3 +123,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
 | 2026-09-22 | v1 part 1; vector cascade exception; three-column vector key | — |
 | 2026-09-22 | v1 part 2: principals and serving tables; answer cascades named | — |
+| 2026-09-22 | v1 part 3: `eligible_repo` and `retrieval_rows` created | — |
