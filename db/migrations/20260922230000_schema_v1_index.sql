@@ -1,5 +1,5 @@
--- Schema v1, part 1 of 3 (DESIGN §9.2): sources, generations, the three identities, tombstones.
--- Part 2 adds principals and serving artifacts; part 3 adds the interface views.
+-- Schema v1, part 1 of 4 (DESIGN §9.2): sources, generations, the three identities.
+-- Part 2: principals and serving artifacts. Part 3: the interface views. Part 4: deletion support.
 -- Immutable once merged (DESIGN §18.3): fixes are new migrations.
 
 -- migrate:up
@@ -98,19 +98,22 @@ CREATE TABLE representation (
   body_text     text   NOT NULL,
   live          boolean NOT NULL DEFAULT false,
   UNIQUE (repo_id, spec_id, input_hash),
-  UNIQUE (id, repo_id)
+  UNIQUE (id, repo_id),
+  UNIQUE (id, repo_id, spec_id)          -- lets a vector row bind repository AND specification
 );
 
 -- One table per dimension. The vector row is a 1:1 physical extension of its representation, and
 -- §9.3.6's GC order deletes representations with no separate vector step, so the cascade here is
--- deliberate. The composite key makes a cross-repository vector binding unrepresentable.
+-- deliberate. The three-column key makes a vector row bound to another repository's
+-- representation, or labelled with a specification other than its representation's, unrepresentable.
 CREATE TABLE vector_d768 (
   representation_id bigint PRIMARY KEY,
   repo_id  bigint NOT NULL,
   spec_id  bigint NOT NULL,
   live     boolean NOT NULL DEFAULT false,
   embedding halfvec(768) NOT NULL,
-  FOREIGN KEY (representation_id, repo_id) REFERENCES representation (id, repo_id) ON DELETE CASCADE
+  FOREIGN KEY (representation_id, repo_id, spec_id)
+    REFERENCES representation (id, repo_id, spec_id) ON DELETE CASCADE
 );
 
 CREATE TABLE occurrence (
@@ -127,23 +130,6 @@ CREATE TABLE occurrence (
   PRIMARY KEY (generation_id, representation_id, path, start_line)
 );
 
-CREATE TABLE embedding_cache (
-  input_hash bytea NOT NULL,
-  spec_id    bigint NOT NULL REFERENCES embedding_spec(id),
-  embedding  halfvec NOT NULL,
-  data_class text NOT NULL CHECK (data_class IN ('public','private')),
-  PRIMARY KEY (input_hash, spec_id)
-);
-
-CREATE TABLE tombstone (
-  id           bigserial PRIMARY KEY,
-  scope        text NOT NULL CHECK (scope IN ('repository','representation','connection')),
-  ref          text NOT NULL,
-  created_at   timestamptz NOT NULL DEFAULT now(),
-  expires_at   timestamptz NOT NULL,
-  CHECK (expires_at >= created_at + interval '90 days')
-);
-
 -- ─── Indexes that matter (§9.2) ─────────────────────────────────────────────
 CREATE INDEX vec768_hnsw ON vector_d768 USING hnsw (embedding halfvec_cosine_ops) WHERE live;
 CREATE INDEX vec768_repo ON vector_d768 (repo_id, spec_id) WHERE live;
@@ -154,6 +140,6 @@ ALTER TABLE representation SET (autovacuum_vacuum_scale_factor = 0.02);
 
 -- migrate:down
 
-DROP TABLE tombstone, embedding_cache, occurrence, vector_d768, representation, content;
+DROP TABLE occurrence, vector_d768, representation, content;
 ALTER TABLE repository DROP CONSTRAINT repository_active_generation_fk;
 DROP TABLE generation, embedding_spec, repository, connection;

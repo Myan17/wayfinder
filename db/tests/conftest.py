@@ -73,11 +73,11 @@ def seed_repo(conn, connection_id: int, *, visibility="public", valid="1 hour",
                 "public" if visibility == "public" else "private"))
 
 
-def seed_spec(conn) -> int:
+def seed_spec(conn, *, digest: str = "sha256:x") -> int:
     return one(conn, "INSERT INTO embedding_spec (model_ref, model_digest, runtime, doc_template,"
                " query_template, pooling, normalize, dimension, truncation, tokenizer_ref)"
-               " VALUES ('m', 'sha256:x', 'ollama/0', 'd: {body}', 'q: {query}', 'mean', true, 768,"
-               " 'end', 't') RETURNING id")
+               " VALUES ('m', %s, 'ollama/0', 'd: {body}', 'q: {query}', 'mean', true, 768,"
+               " 'end', 't') RETURNING id", (digest,))
 
 
 def seed_generation(conn, repo_id: int, spec_id: int, *, status: str, n: int = 1, base=None) -> int:

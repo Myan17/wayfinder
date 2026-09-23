@@ -33,6 +33,21 @@ def test_cross_repo_vector_rejected(db):
         )
 
 
+def test_vector_spec_must_match_representation(db):
+    """The dense leg filters on vector_d768.spec_id; a mislabelled row would be searched in the
+    wrong embedding space."""
+    c = seed_connection(db)
+    r = seed_repo(db, c)
+    s1, s2 = seed_spec(db), seed_spec(db, digest="sha256:y")
+    rep = seed_representation(db, r, s1, "x")
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        db.execute(
+            "INSERT INTO vector_d768 (representation_id, repo_id, spec_id, embedding) "
+            "VALUES (%s, %s, %s, array_fill(0.1, ARRAY[768])::halfvec(768))",
+            (rep, r, s2),
+        )
+
+
 def test_one_active_generation(db):
     c = seed_connection(db)
     r = seed_repo(db, c)
@@ -49,10 +64,3 @@ def test_active_pointer_cannot_name_another_repos_generation(db):
     gen_b = seed_generation(db, b, s, status="active")
     with pytest.raises(psycopg.errors.ForeignKeyViolation):
         db.execute("UPDATE repository SET active_generation_id = %s WHERE id = %s", (gen_b, a))
-
-
-def test_tombstone_retained_at_least_90_days(db):
-    ins = "INSERT INTO tombstone (scope, ref, expires_at) VALUES ('repository', '1', now() + %s::interval)"
-    with pytest.raises(psycopg.errors.CheckViolation):
-        db.execute(ins, ("89 days",))
-    db.execute(ins, ("90 days",))

@@ -53,3 +53,20 @@ feat(schema): v1 part 1 — sources, generations, three identities, tombstones
 ### 2026-09-22T23:04:19Z · COMMIT · myan · claude-code/opus-5 · parent:eba70f4
 docs(schema): hand off #25
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T02:33:56Z · DECIDE · myan · claude-code/opus-5 · 7ac0795
+gupta958 requested changes (relayed by Myan, recorded on #25): make vector_d768.spec_id match its representation through a three-column composite FK, with a regression test; resolve the missing db/schema.sql snapshot commitment. Accepted as declared: the five DESIGN departures. With the fix the diff measured 429 lines. CI has no exception path and the #20 ruling was to split functionally, so embedding_cache and tombstone (GC steps 6 and 9, the deletion-support tables) and their test move to a new part 4 (_deletion), stacked on this branch like #26 and #27.
+
+### 2026-09-23T02:33:56Z · EDIT · myan · claude-code/opus-5 · 7ac0795
+Migration: representation gains UNIQUE (id, repo_id, spec_id); vector_d768's FK becomes (representation_id, repo_id, spec_id) -> representation (id, repo_id, spec_id) ON DELETE CASCADE; embedding_cache and tombstone removed (to part 4), down section adjusted; header says part 1 of 4. conftest: seed_spec takes a digest so a test can make two specs. test_constraints: test_vector_spec_must_match_representation added; the tombstone test moves to part 4. Schema card: db/schema.sql commitment rewritten - a pg_dump --schema-only snapshot from the pinned image, landing in its own pull request as soon as each migration pull request merges, with ORIENT item 3's CI adding a drift check; change protocol step 3 and the open question updated to match (the question is resolved: generated, diffed); status names four migrations; vector exception names the three-column key. Removed one trailing blank line and shortened my own new card prose to fit; no correctness comment was cut.
+
+### 2026-09-23T02:33:56Z · TEST · myan · claude-code/opus-5 · 7ac0795
+Against the S3 digest: uv run pytest db/tests -> 8 passed. Mutation: vector FK back to two columns -> test_vector_spec_must_match_representation fails; restored. ruff clean.
+
+### 2026-09-23T02:33:56Z · COMMIT · myan · claude-code/opus-5 · parent:7ac0795
+fix(schema): vector spec_id bound to its representation; schema.sql commitment; deletion tables to part 4
+5 files changed, 47 insertions(+), 45 deletions(-)
+
+### 2026-09-23T02:33:56Z · COMMIT · myan · claude-code/opus-5 · parent:7ac0795
+fix(schema): vector spec_id bound to its representation; schema.sql commitment; deletion tables to part 4
+5 files changed, 51 insertions(+), 45 deletions(-)
