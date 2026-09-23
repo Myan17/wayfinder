@@ -6,6 +6,12 @@ at startup.
 
 ## Before your first action
 
+**Hard requirement: read `ORIENT.md` first, every session.** The `SessionStart` hook in
+`.claude/settings.json` prints it and the `scripts/orient.py` brief into your context. If that output
+is missing, run `cat ORIENT.md && python3 scripts/orient.py` yourself before doing anything else. The
+next task is the first open item in `ORIENT.md`. Do not offer the user a menu of next steps; the plan
+has already made that choice.
+
 ```bash
 git config core.hooksPath .githooks          # once per clone or worktree
 git config wayfinder.operator myan           # the implementer handle from docs/team/ROSTER.md
@@ -26,6 +32,8 @@ existing worktree and read the last `HANDOFF` entry in its task log.
 | "The interface change is small, the card can wait" | CI fails the build. Update the card in the same pull request |
 | "I'll fix that other module while I'm here" | Out of task scope (AGENTS.md §2.5). Revert it, or declare `Scope:` in the pull request and justify it |
 | "I'll approve/merge this since it's obviously fine" | Agents never approve and never merge |
+| "Here are some options for what to do next" | `ORIENT.md` already says. Take its first open item |
+| "This tooling would help, I'll build it first" | Not in `ORIENT.md` means not now, unless an owner directs it (AGENTS.md rule 6) |
 
 ## Project facts worth loading early
 
