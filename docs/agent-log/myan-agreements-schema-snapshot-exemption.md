@@ -40,3 +40,13 @@ feat(agreements): exempt exactly db/schema.sql from the size limit, per ruling
 ### 2026-09-23T19:47:49Z · COMMIT · myan · claude-code/opus-5 · parent:11a71ce
 docs(agreements): hand off #29
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T20:24:08Z · DECIDE · myan · claude-code/opus-5 · 3583478
+#28 merged as 71415ef, putting this branch BEHIND. Rebased onto origin/main, no conflicts. Force-push over c81a43d required (AGENTS.md 2.2); main dismisses stale approvals.
+
+### 2026-09-23T20:24:08Z · TEST · myan · claude-code/opus-5 · 3583478
+After the rebase: uv run pytest -> 98 passed; identity, ownership, size (177), agent-log, CODEOWNERS, context-freshness OK.
+
+### 2026-09-23T20:24:09Z · COMMIT · myan · claude-code/opus-5 · parent:3583478
+docs(agreements): record the rebase onto #28
+1 file changed, 6 insertions(+)
