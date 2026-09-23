@@ -56,3 +56,10 @@ Wilson 95% lower bounds recomputed (z = 1.95996): 9/9 = 0.701, 8/8 = 0.676, 19/2
 ### 2026-09-23T02:31:48Z · COMMIT · myan · claude-code/opus-5 · parent:efdb727
 docs(agreements): tie-breaking, cost, tau's two bars and the split algorithm, per review
 4 files changed, 79 insertions(+), 13 deletions(-)
+
+### 2026-09-23T02:35:58Z · HANDOFF · myan · claude-code/opus-5 · c2b3da6
+#24 revised per review; re-review requested and gupta958 briefed on Discord with line references.
+
+### 2026-09-23T02:35:58Z · COMMIT · myan · claude-code/opus-5 · parent:c2b3da6
+docs(agreements): hand off after review
+1 file changed, 3 insertions(+)
