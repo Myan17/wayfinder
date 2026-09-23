@@ -50,3 +50,10 @@ Rebuilt branch alone against main, S3 digest: db/tests 10 passed; full suite 81 
 ### 2026-09-23T04:29:56Z · COMMIT · myan · claude-code/opus-5 · parent:b4ca447
 docs(schema): record the rebuild onto main
 2 files changed, 10 insertions(+), 1 deletion(-)
+
+### 2026-09-23T04:31:18Z · TEST · myan · claude-code/opus-5 · 6337246
+CI guardrails failed on 6337246: 'ORIENT.md - module agreements, not this task's scope (schema)'. The push ran before the 'Scope: schema, agreements' line was added to the PR body; guardrails runs on opened/synchronize/reopened only, and a rerun reuses the original event's body, so the rerun failed identically. This commit is the new synchronize event that makes CI read the current body. Locally, check_ownership with the current body: OK, 5 files.
+
+### 2026-09-23T04:31:18Z · COMMIT · myan · claude-code/opus-5 · parent:6337246
+docs(schema): record why guardrails needed a fresh run
+1 file changed, 3 insertions(+)
