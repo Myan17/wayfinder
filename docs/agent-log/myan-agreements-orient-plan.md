@@ -60,3 +60,13 @@ docs(agreements): scaffold before any evidence-producing spike, per review
 ### 2026-09-23T02:35:56Z · COMMIT · myan · claude-code/opus-5 · parent:dab6cab
 docs(agreements): hand off after review
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T02:47:29Z · DECIDE · myan · claude-code/opus-5 · c0b75dc
+gupta958 (relayed by Myan, recorded on #23): change the schema row from #25-#27 to #25-#28; assign docs/adr/** to agreements in OWNERSHIP.md and regenerate CODEOWNERS.
+
+### 2026-09-23T02:47:29Z · EDIT · myan · claude-code/opus-5 · c0b75dc
+ORIENT.md item 2 status: in review #25-#28. OWNERSHIP.md: docs/adr/** added to agreements in both the table and the YAML (ADRs were unmapped, so every ADR pull request drew an unowned-path warning). CODEOWNERS regenerated.
+
+### 2026-09-23T02:47:29Z · COMMIT · myan · claude-code/opus-5 · parent:c0b75dc
+docs(agreements): schema row names #28; docs/adr owned by agreements, per review
+4 files changed, 10 insertions(+), 3 deletions(-)
