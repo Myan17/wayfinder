@@ -77,3 +77,13 @@ fix(schema): vector spec_id bound to its representation; schema.sql commitment; 
 ### 2026-09-23T02:36:00Z · COMMIT · myan · claude-code/opus-5 · parent:208f710
 docs(schema): hand off after review
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T03:05:04Z · DECIDE · myan · claude-code/opus-5 · 1a81e3d
+#24 merged as 14c635f. Per gupta958: rebased onto origin/main, no conflicts; force-push over 0f657b4 required (AGENTS.md 2.2). ORIENT item 2 stays 'in review #25-#28': it is done only when the last of the four parts merges, and that pull request marks it.
+
+### 2026-09-23T03:05:04Z · TEST · myan · claude-code/opus-5 · 1a81e3d
+After the rebase, against the S3 digest: uv run pytest db/tests -> 8 passed; uv run pytest (default testpaths) -> 81 passed; ruff clean; identity, ownership, size (400), agent-log, CODEOWNERS and context-freshness all OK.
+
+### 2026-09-23T03:05:04Z · COMMIT · myan · claude-code/opus-5 · parent:1a81e3d
+docs(schema): record the rebase onto #24
+1 file changed, 6 insertions(+)
