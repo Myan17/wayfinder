@@ -37,3 +37,13 @@ feat(schema): v1 part 2 — principals, authorization facts, serving artifacts
 ### 2026-09-22T23:04:24Z · COMMIT · myan · claude-code/opus-5 · parent:def41f1
 docs(schema): hand off #26
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T04:29:52Z · DECIDE · myan · claude-code/opus-5 · d1e570a
+#25 merged as 1b33b29 and GitHub retargeted #26 to main. Rebuilt with git rebase --onto origin/main eba70f4, which drops part 1's pre-merge commits and replays only this part's. Resolved one conflict in the schema card: main's part-1 lines (three-column vector key, its change-log row) were kept, and only this part's own lines were re-added; the stale two-column sentence and the moved tombstone change-log row were dropped. Force-push over 064ff7d required (AGENTS.md 2.2).
+
+### 2026-09-23T04:29:52Z · TEST · myan · claude-code/opus-5 · d1e570a
+Rebuilt branch alone against main, S3 digest: db/tests 10 passed; full suite 81 passed; ruff clean; identity, ownership, size, agent-log, context-freshness and CODEOWNERS OK.
+
+### 2026-09-23T04:29:52Z · COMMIT · myan · claude-code/opus-5 · parent:d1e570a
+docs(schema): record the rebuild onto main
+1 file changed, 6 insertions(+)
