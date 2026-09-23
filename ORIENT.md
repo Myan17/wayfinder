@@ -31,7 +31,7 @@ experiment. 32 h planned, 3 h of contingency.
 | # | Item | h | Why it is here in the order | Status |
 |---|---|---|---|---|
 | 1 | ADR-0013 (evaluation protocol), ADR-0015 (rerank selection rule), ADR-0011 (answerability) | 1 | G0 requires them written before any experiment, and ADR-0013 decides how S1 selects its corpus | done #24 |
-| 2 | Schema v1: authorization facts, three identities, generations, tombstones | 3 | The most expensive thing to change later; `gupta958`'s first P0 review focus | in review #25–#28 |
+| 2 | Schema v1: authorization facts, three identities, generations, tombstones | 3 | The most expensive thing to change later; `gupta958`'s first P0 review focus | done #25–#28 |
 | 3 | Repo scaffold, CI skeleton, release-manifest format | 3 | Before anything that produces evidence. A spike result is only citable if the commit, image digests, schema version and dataset hashes it ran against are pinned (DESIGN §16.9), and only repeatable if CI can re-run it. Evidence produced before the manifest format exists would have to be re-run or cited without provenance. It also gives the schema tests a database in CI | open |
 | 4 | S5 River scheduling proof at every crash boundary | 5 | Evidence for DESIGN §9.3.3, which P1 builds on | open |
 | 5 | S1 corpus: linkable pairs, base-commit resolvability, licenses, acquisition mode | 4 | Needs ADR-0013; feeds the P2 evaluation dataset | open |

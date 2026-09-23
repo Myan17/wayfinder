@@ -37,3 +37,16 @@ feat(schema): v1 part 4 — embedding_cache and tombstone
 ### 2026-09-23T02:36:02Z · COMMIT · myan · claude-code/opus-5 · parent:c9740da
 docs(schema): hand off after review
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T04:29:56Z · DECIDE · myan · claude-code/opus-5 · b4ca447
+#25 merged as 1b33b29 and GitHub retargeted #28 to main. Rebuilt with git rebase --onto origin/main 208f710, which drops part 1's pre-merge commits and replays only this part's. Force-push over c1b6b99 required (AGENTS.md 2.2).
+
+### 2026-09-23T04:29:56Z · EDIT · myan · claude-code/opus-5 · b4ca447
+ORIENT.md item 2: done #25-#28. This is the last of the four parts in the merge order given to gupta958 (#26, #27, #28), so it marks the item (ORIENT rule 3). If the order changes, the mark moves to whichever merges last.
+
+### 2026-09-23T04:29:56Z · TEST · myan · claude-code/opus-5 · b4ca447
+Rebuilt branch alone against main, S3 digest: db/tests 10 passed; full suite 81 passed; ruff clean; identity, ownership, size, agent-log, context-freshness and CODEOWNERS OK.
+
+### 2026-09-23T04:29:56Z · COMMIT · myan · claude-code/opus-5 · parent:b4ca447
+docs(schema): record the rebuild onto main
+2 files changed, 10 insertions(+), 1 deletion(-)
