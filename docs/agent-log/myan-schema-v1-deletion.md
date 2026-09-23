@@ -57,3 +57,16 @@ CI guardrails failed on 6337246: 'ORIENT.md - module agreements, not this task's
 ### 2026-09-23T04:31:18Z · COMMIT · myan · claude-code/opus-5 · parent:6337246
 docs(schema): record why guardrails needed a fresh run
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T05:07:26Z · DECIDE · myan · claude-code/opus-5 · fbcfa02
+#27 merged as a6cae0e, putting this branch BEHIND. Rebased onto origin/main; one conflict in the schema card's change log (parts 2 and 3 rows on main, this part's row), resolved by keeping all three. Force-push over 7e144a7 required (AGENTS.md 2.2).
+
+### 2026-09-23T05:07:26Z · EDIT · myan · claude-code/opus-5 · fbcfa02
+db/tests/test_views.py::test_view_files_match_migration, merged in #27, compared db/views/*.sql against MIGRATIONS[-1] - the newest migration - which was the views migration only until this part added a later one; with all four parts it failed with IndexError. It now locates the one migration that defines each view (and asserts there is exactly one), so a later migration cannot break it without touching a view. Same module (schema), so no scope widening.
+
+### 2026-09-23T05:07:26Z · TEST · myan · claude-code/opus-5 · fbcfa02
+Against main with parts 1-3 merged, S3 digest: before the fix db/tests 14 passed, 1 failed (test_view_files_match_migration, IndexError); after the fix 15 passed (8 + 2 + 3 + this part's 2). Mutation: eligible_repo.sql edited to drift from its migration -> test_view_files_match_migration fails; restored. Full suite 81; ruff clean; identity, ownership (Scope: schema, agreements), size, agent-log, context-freshness, CODEOWNERS OK.
+
+### 2026-09-23T05:07:26Z · COMMIT · myan · claude-code/opus-5 · parent:fbcfa02
+fix(schema): the view-file test finds its defining migration, not the newest
+2 files changed, 14 insertions(+), 1 deletion(-)
