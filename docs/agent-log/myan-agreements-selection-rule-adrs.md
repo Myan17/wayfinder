@@ -73,3 +73,13 @@ ADR-0013 step 4: 'tied within the interval' defined verbatim (paired-bootstrap 9
 ### 2026-09-23T02:38:48Z · COMMIT · myan · claude-code/opus-5 · parent:6f0a23f
 docs(agreements): define the tie, make E5/E6 cost deterministic, show the split, per review
 2 files changed, 33 insertions(+), 9 deletions(-)
+
+### 2026-09-23T02:55:53Z · DECIDE · myan · claude-code/opus-5 · f54d3c0
+#23 merged as e1c4021. Per gupta958: rebased this branch onto origin/main (not the Update branch button), no conflicts; force-push over 8b22bbc required (AGENTS.md 2.2). ORIENT.md is now on main, so this pull request marks item 1 'done #24' (ORIENT rule 3: the completing pull request marks its item).
+
+### 2026-09-23T02:55:53Z · EDIT · myan · claude-code/opus-5 · f54d3c0
+ORIENT.md item 1 status: in review #24 -> done #24.
+
+### 2026-09-23T02:55:53Z · COMMIT · myan · claude-code/opus-5 · parent:f54d3c0
+docs(agreements): mark ORIENT item 1 done #24
+2 files changed, 7 insertions(+), 1 deletion(-)
