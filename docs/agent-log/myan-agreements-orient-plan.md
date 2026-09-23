@@ -53,3 +53,10 @@ ORIENT.md: scaffold is now item 3, after the two non-evidence items (ADRs, schem
 ### 2026-09-23T02:30:31Z · COMMIT · myan · claude-code/opus-5 · parent:8fe8693
 docs(agreements): scaffold before any evidence-producing spike, per review
 2 files changed, 16 insertions(+), 10 deletions(-)
+
+### 2026-09-23T02:35:56Z · HANDOFF · myan · claude-code/opus-5 · dab6cab
+#23 revised per review; re-review requested and gupta958 briefed on Discord with line references.
+
+### 2026-09-23T02:35:56Z · COMMIT · myan · claude-code/opus-5 · parent:dab6cab
+docs(agreements): hand off after review
+1 file changed, 3 insertions(+)
