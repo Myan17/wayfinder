@@ -37,3 +37,13 @@ feat(schema): v1 part 3 — eligible_repo and retrieval_rows views
 ### 2026-09-22T23:04:27Z · COMMIT · myan · claude-code/opus-5 · parent:3b25a11
 docs(schema): hand off #27
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T04:29:54Z · DECIDE · myan · claude-code/opus-5 · a567690
+#25 merged as 1b33b29 and GitHub retargeted #27 to main. Rebuilt with git rebase --onto origin/main eba70f4, which drops part 1's pre-merge commits and replays only this part's. Resolved one conflict in the schema card: main's part-1 lines (three-column vector key, its change-log row) were kept, and only this part's own lines were re-added; the stale two-column sentence and the moved tombstone change-log row were dropped. Force-push over eef3846 required (AGENTS.md 2.2).
+
+### 2026-09-23T04:29:54Z · TEST · myan · claude-code/opus-5 · a567690
+Rebuilt branch alone against main, S3 digest: db/tests 11 passed; full suite 81 passed; ruff clean; identity, ownership, size, agent-log, context-freshness and CODEOWNERS OK.
+
+### 2026-09-23T04:29:54Z · COMMIT · myan · claude-code/opus-5 · parent:a567690
+docs(schema): record the rebuild onto main
+1 file changed, 6 insertions(+)
