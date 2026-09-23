@@ -33,3 +33,10 @@ uv run pytest -> 98 passed (81 + 17 new). New: exact db/schema.sql exempt; task 
 ### 2026-09-23T19:47:07Z · COMMIT · myan · claude-code/opus-5 · parent:a6cae0e
 feat(agreements): exempt exactly db/schema.sql from the size limit, per ruling
 5 files changed, 177 insertions(+), 31 deletions(-)
+
+### 2026-09-23T19:47:49Z · HANDOFF · myan · claude-code/opus-5 · 11a71ce
+#29 open, CI green. After it merges: #30 (db/dump-schema.sh + full db/schema.sql, ORIENT item 2 done #25-#30), which needs #28 merged first.
+
+### 2026-09-23T19:47:49Z · COMMIT · myan · claude-code/opus-5 · parent:11a71ce
+docs(agreements): hand off #29
+1 file changed, 3 insertions(+)
