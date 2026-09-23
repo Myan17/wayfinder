@@ -70,6 +70,8 @@ item 3's CI adds a drift check against a fresh dump.
   (pgvector needs a fixed dimension), §9.3.6's GC order has no vector step, and its composite key
   `(representation_id, repo_id, spec_id)` keeps it from binding to another repository's row or
   carrying another specification's label.
+  `answer_trace` and `feedback` cascade from `answer`, as §9.2 wrote them: they are the answer's own
+  derivatives, and §9.3.6 step 7 redacts or deletes all three together.
 
 ## Change protocol
 
@@ -98,6 +100,7 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_constraints.py::test_vector_spec_must_match_representation` | Vector `spec_id` equals its representation's |
 | `db/tests/test_constraints.py::test_one_active_generation` | Partial unique index |
 | `db/tests/test_delete_modes.py::test_gc_order_and_set_null` | Delete-mode assumptions in §9.3.6 |
+| `db/tests/test_serving.py::test_cached_from_set_null` | `answer.cached_from` is `SET NULL` |
 | `db/tests/test_views.py::test_eligible_repo_expiry` | Lease semantics in the view |
 
 ## Fake
@@ -115,3 +118,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
 | 2026-09-22 | v1 part 1; vector cascade exception; three-column vector key | — |
+| 2026-09-22 | v1 part 2: principals and serving tables; answer cascades named | — |
