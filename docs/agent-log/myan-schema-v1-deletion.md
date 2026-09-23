@@ -30,3 +30,10 @@ Against the S3 digest with part 1 applied: uv run pytest db/tests -> 10 passed (
 ### 2026-09-23T02:34:35Z · COMMIT · myan · claude-code/opus-5 · parent:208f710
 feat(schema): v1 part 4 — embedding_cache and tombstone
 4 files changed, 78 insertions(+)
+
+### 2026-09-23T02:36:02Z · HANDOFF · myan · claude-code/opus-5 · c9740da
+#28 open, stacked on #25, independent of #26/#27. Rebuild onto main after #25 merges.
+
+### 2026-09-23T02:36:02Z · COMMIT · myan · claude-code/opus-5 · parent:c9740da
+docs(schema): hand off after review
+1 file changed, 3 insertions(+)
