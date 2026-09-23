@@ -54,3 +54,13 @@ Same stale count as gupta958 found on #26, fixed here before review: migration h
 ### 2026-09-23T04:44:40Z · COMMIT · myan · claude-code/opus-5 · parent:ca62ef3
 docs(schema): part 3 of 4
 2 files changed, 4 insertions(+), 1 deletion(-)
+
+### 2026-09-23T04:50:50Z · DECIDE · myan · claude-code/opus-5 · 080d12b
+#26 merged as 0bd2545, putting this branch BEHIND. Rebased onto origin/main; one conflict in the schema card's change log (both parts append a row), resolved by keeping both rows. Force-push over c2a22a2 required (AGENTS.md 2.2); main dismisses stale approvals.
+
+### 2026-09-23T04:50:50Z · TEST · myan · claude-code/opus-5 · 080d12b
+Against main with parts 1 and 2 merged, S3 digest: db/tests 13 passed (8 + 2 + this part's 3); full suite 81; ruff clean; identity, ownership (Scope: schema, indexing), size 137, agent-log, context-freshness (6 interface files), CODEOWNERS OK.
+
+### 2026-09-23T04:50:50Z · COMMIT · myan · claude-code/opus-5 · parent:080d12b
+docs(schema): record the rebase onto #26
+1 file changed, 6 insertions(+)
