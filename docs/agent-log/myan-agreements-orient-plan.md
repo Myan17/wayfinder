@@ -43,3 +43,13 @@ Pull request #23 open against main. Joint module: gupta958 approves the order in
 ### 2026-09-22T22:51:13Z · COMMIT · myan · claude-code/opus-5 · parent:98b6ef8
 docs(agreements): hand off #23
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T02:30:31Z · DECIDE · myan · claude-code/opus-5 · 8fe8693
+gupta958 requested changes (relayed by Myan, recorded on #23): move 'Repo scaffold, CI skeleton, release-manifest format' ahead of the evidence-producing spikes and experiments, with its rationale.
+
+### 2026-09-23T02:30:31Z · EDIT · myan · claude-code/opus-5 · 8fe8693
+ORIENT.md: scaffold is now item 3, after the two non-evidence items (ADRs, schema) and before S5, S1, S6, S2, S4, which renumber to 4-8. Rationale in its row: evidence is citable only with its inputs pinned (DESIGN 16.9) and repeatable only if CI can re-run it; it also gives the schema tests a CI database. Items 1 and 2 marked 'in review' with their pull requests. Row 9a notes it ran before item 3 existed and is ADR-0007's local evidence, not release evidence; 9c runs under item 3's manifest.
+
+### 2026-09-23T02:30:31Z · COMMIT · myan · claude-code/opus-5 · parent:8fe8693
+docs(agreements): scaffold before any evidence-producing spike, per review
+2 files changed, 16 insertions(+), 10 deletions(-)

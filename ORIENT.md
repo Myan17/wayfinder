@@ -30,17 +30,17 @@ experiment. 32 h planned, 3 h of contingency.
 
 | # | Item | h | Why it is here in the order | Status |
 |---|---|---|---|---|
-| 1 | ADR-0013 (evaluation protocol), ADR-0015 (rerank selection rule), ADR-0011 (answerability) | 1 | G0 requires them written before any experiment, and ADR-0013 decides how S1 selects its corpus | open |
-| 2 | Schema v1: authorization facts, three identities, generations, tombstones | 3 | The most expensive thing to change later; `gupta958`'s first P0 review focus | open |
-| 3 | S5 River scheduling proof at every crash boundary | 5 | Evidence for DESIGN §9.3.3, which P1 builds on | open |
-| 4 | S1 corpus: linkable pairs, base-commit resolvability, licenses, acquisition mode | 4 | Needs ADR-0013; feeds the P2 evaluation dataset | open |
-| 5 | S6 embedding identity: two specifications over identical text | 3 | Evidence for DESIGN §9.2 | open |
-| 6 | S2 whole-system CPU | 6 | Replaces every estimate in DESIGN §10.3 | open |
-| 7 | S4 provider and account ledger | 3 | Appendix B refresh; not needed until P3 | open |
-| 8 | Repo scaffold, CI skeleton, release-manifest format | 3 | | open |
-| 9a | S3 rules S3-1a, S3-2 to S3-5 | — | | done #19 |
+| 1 | ADR-0013 (evaluation protocol), ADR-0015 (rerank selection rule), ADR-0011 (answerability) | 1 | G0 requires them written before any experiment, and ADR-0013 decides how S1 selects its corpus | in review #24 |
+| 2 | Schema v1: authorization facts, three identities, generations, tombstones | 3 | The most expensive thing to change later; `gupta958`'s first P0 review focus | in review #25–#27 |
+| 3 | Repo scaffold, CI skeleton, release-manifest format | 3 | Before anything that produces evidence. A spike result is only citable if the commit, image digests, schema version and dataset hashes it ran against are pinned (DESIGN §16.9), and only repeatable if CI can re-run it. Evidence produced before the manifest format exists would have to be re-run or cited without provenance. It also gives the schema tests a database in CI | open |
+| 4 | S5 River scheduling proof at every crash boundary | 5 | Evidence for DESIGN §9.3.3, which P1 builds on | open |
+| 5 | S1 corpus: linkable pairs, base-commit resolvability, licenses, acquisition mode | 4 | Needs ADR-0013; feeds the P2 evaluation dataset | open |
+| 6 | S6 embedding identity: two specifications over identical text | 3 | Evidence for DESIGN §9.2 | open |
+| 7 | S2 whole-system CPU | 6 | Replaces every estimate in DESIGN §10.3 | open |
+| 8 | S4 provider and account ledger | 3 | Appendix B refresh; not needed until P3 | open |
+| 9a | S3 rules S3-1a, S3-2 to S3-5 | — | Ran before item 3 existed; its evidence is ADR-0007's local run, not release evidence | done #19 |
 | 9b | S3-1b: provision the A1 and run S3 on it | — | | blocked: Myan provisions the A1 |
-| 9c | S3-6: two-leg hybrid query of DESIGN §9.5 (vector column, HNSW index, stand-in embeddings) | — | Follow-up to #19 | open |
+| 9c | S3-6: two-leg hybrid query of DESIGN §9.5 (vector column, HNSW index, stand-in embeddings) | — | Follow-up to #19; runs under item 3's manifest | open |
 
 ### Done outside the order during P0 (for the record, not a precedent)
 
