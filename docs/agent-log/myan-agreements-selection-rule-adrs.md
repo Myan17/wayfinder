@@ -43,3 +43,16 @@ docs(agreements): ADR-0013, ADR-0015, ADR-0011 — selection rules before any ex
 ### 2026-09-22T22:54:03Z · COMMIT · myan · claude-code/opus-5 · parent:8e8dfbf
 docs(agreements): hand off #24
 1 file changed, 3 insertions(+)
+
+### 2026-09-23T02:31:48Z · DECIDE · myan · claude-code/opus-5 · efdb727
+gupta958 requested changes (relayed by Myan, recorded on #24): define statistical tie-breaking and 'cheaper' for E5/E6; require dev precision >= 0.90 plus Wilson lower bound >= 0.70; zero accepted questions must fail; specify the temporal group-splitting algorithm.
+
+### 2026-09-23T02:31:48Z · EDIT · myan · claude-code/opus-5 · efdb727
+ADR-0013: D-5 now points to a seven-step deterministic split (issue-PR connected components including weak pairs; group time = latest merge; per-repository split, group assigned to its majority repository; sort by (t, smallest PR); cumulative 0.5N / 0.8N assignment of whole groups; weak pairs keep their group's split; manifest fields). Step 4 defines the statistical tie set (b plus qualifying challengers whose paired interval of b - c includes zero), then cheaper, then point estimate, then pre-registered arm order. Step 5 (E5/E6) requires cheaper AND lower bound above -0.02. 'Cheaper' defined: same host, median of five runs on dev, at least 5% lower, with a per-experiment cost measure table. ADR-0011: tau candidates are observed dev scores; qualify only with |A| >= 1, precision >= 0.90 and Wilson lower bound >= 0.70; worked consequences (>= 9 accepted; 19/20 not 18/20). ADR-0015 step 3 uses ADR-0013's tie-break with rerank CPU per call.
+
+### 2026-09-23T02:31:48Z · TEST · myan · claude-code/opus-5 · efdb727
+Wilson 95% lower bounds recomputed (z = 1.95996): 9/9 = 0.701, 8/8 = 0.676, 19/20 = 0.764, 18/20 = 0.699 - the minimum-accepted and 18/20 claims in ADR-0011 hold.
+
+### 2026-09-23T02:31:48Z · COMMIT · myan · claude-code/opus-5 · parent:efdb727
+docs(agreements): tie-breaking, cost, tau's two bars and the split algorithm, per review
+4 files changed, 79 insertions(+), 13 deletions(-)

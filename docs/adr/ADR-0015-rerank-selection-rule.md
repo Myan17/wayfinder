@@ -35,7 +35,9 @@ The endpoints are the configurations §10.3 already names. **Reviewer decides** 
    (1.05 core-seconds per second), assuming **no answer-cache hits**. The cache hit rate is measured
    and reported, never credited (§10.3 decision 3).
 3. **Selection.** Production runs the qualifying arm with the **highest dev nDCG@10** among those
-   that pass the CPU bar. Ties within the interval go to the cheaper arm.
+   that pass the CPU bar. Ties are broken by ADR-0013 step 4: the statistical tie set, then the
+   cheaper arm by measured rerank CPU per call (at least 5% lower, median of five runs), then the
+   higher point estimate.
 4. **Reranking runs on asks only.** §10.3 shows reranking every search is out of reach at nominal
    load. At peak, search returns fused order. E3 reports that fallback's nDCG cost, and every
    capacity report states what fraction of requests ran in the quality configuration.

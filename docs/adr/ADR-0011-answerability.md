@@ -46,12 +46,23 @@ answer or the least irrelevant document in the corpus. RRF encodes rank agreemen
 
 - **Data:** the dev halves of the explain set (20 answerable) and the unanswerable set (20)
   (§14.3). Nothing from test is seen.
-- **Target:** answer precision of at least **0.90** on dev. Answer precision is the fraction of
-  questions the gate lets through that are answerable. **Reviewer decides** the 0.90, which mirrors
-  §3.3's answer-support point target.
-- **Rule:** τ is the **lowest** threshold that meets the target on dev. That maximises coverage
-  subject to precision. If no threshold meets it, there is no τ, the signal version is not
-  permitted to generate, and the release ships locate plus extractive (§19.8 step 3).
+- **Accepted set.** For a candidate threshold `t`, `A(t)` is the dev questions whose best-passage
+  score is at least `t`. `k(t)` is how many of them are answerable. Candidates are the distinct
+  scores observed on dev.
+- **Target (set in review, gupta958, 2026-09-22).** A candidate qualifies only if **all three**
+  hold:
+  1. `|A(t)| ≥ 1`. **Zero accepted questions fail.** Precision over an empty set is undefined, not
+     perfect, and a gate that lets nothing through has shown nothing.
+  2. Dev answer precision `k/|A| ≥ 0.90`.
+  3. The Wilson 95% lower bound of `k/|A|` is at least **0.70**. That is §3.3's release bar,
+     applied at calibration so τ cannot be set on a point estimate the release would reject.
+- **What that implies at this size**, worked out now so nobody is surprised later. At least **9**
+  questions must be accepted (9/9 has a lower bound of 0.701). With 20 accepted, 19 must be
+  answerable: 18/20 has a lower bound of 0.699 and fails. So the gate can pass only by being
+  selective, and that is intended.
+- **Rule:** τ is the **lowest** qualifying candidate, which maximises coverage subject to both
+  bars. If none qualifies, there is no τ, the signal version is not permitted to generate, and the
+  release ships locate plus extractive (§19.8 step 3).
 - **Reporting:** on the **test** halves, a risk-coverage curve per mode, the answerable/unanswerable
   confusion matrix, and Wilson 95% intervals. At n = 20, 18/20 spans 0.699–0.972. The release
   quotes the interval, never the point estimate alone (§3.3, WF-28).
