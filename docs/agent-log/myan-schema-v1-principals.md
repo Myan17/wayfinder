@@ -47,3 +47,13 @@ Rebuilt branch alone against main, S3 digest: db/tests 10 passed; full suite 81 
 ### 2026-09-23T04:29:52Z · COMMIT · myan · claude-code/opus-5 · parent:d1e570a
 docs(schema): record the rebuild onto main
 1 file changed, 6 insertions(+)
+
+### 2026-09-23T04:44:34Z · DECIDE · myan · claude-code/opus-5 · 0ab788f
+gupta958 (relayed by Myan, recorded on #26): implementation passes and the answer_trace/feedback cascade exception is accepted; fix two stale references - migration line 1 'part 2 of 3', and the PR description's 'part 2 of 3' and 'Closes ... with #25 and part 3'.
+
+### 2026-09-23T04:44:34Z · EDIT · myan · claude-code/opus-5 · 0ab788f
+Migration header: part 2 of 4. The migration is unmerged, so editing it does not break immutability (DESIGN 18.3 applies once merged). PR title and description updated to four parts, closing with #25, #27 and #28.
+
+### 2026-09-23T04:44:36Z · COMMIT · myan · claude-code/opus-5 · parent:0ab788f
+docs(schema): part 2 of 4, per review
+2 files changed, 7 insertions(+), 1 deletion(-)

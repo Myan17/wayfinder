@@ -1,4 +1,4 @@
--- Schema v1, part 2 of 3 (DESIGN §9.2): principals, authorization facts, serving artifacts.
+-- Schema v1, part 2 of 4 (DESIGN §9.2): principals, authorization facts, serving artifacts.
 -- Immutable once merged (DESIGN §18.3): fixes are new migrations.
 
 -- migrate:up
