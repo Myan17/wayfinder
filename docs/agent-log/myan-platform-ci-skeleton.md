@@ -36,3 +36,13 @@ make db-up -> healthy and queryable; make db-test -> 15 passed, exit 0; with WAY
 ### 2026-09-24T17:06:00Z · COMMIT · myan · claude-code/opus-5 · parent:2d3aa08
 feat(platform): CI skeleton — unit, pinned-extension DB with schema drift, dispatcher
 4 files changed, 150 insertions(+), 11 deletions(-)
+
+### 2026-09-24T17:07:52Z · TEST · myan · claude-code/opus-5 · 11383d8
+The pull request's own ci run 36031987066: unit success (13 s); pinned-extension integration success (28 s) on the ubuntu24-arm64 runner - paradedb Healthy, db/tests '15 passed in 2.15s', 'db/schema.sql is current'; dispatcher success (unit: success, db: success).
+
+### 2026-09-24T17:07:52Z · HANDOFF · myan · claude-code/opus-5 · 11383d8
+#31 open and green end to end. Owner action after merge: add 'dispatcher' as a required status check on main. Next: item 3 part b, the release-manifest format and cache-key derivation (DESIGN 16.9).
+
+### 2026-09-24T17:07:53Z · COMMIT · myan · claude-code/opus-5 · parent:11383d8
+docs(platform): CI evidence and handoff
+1 file changed, 6 insertions(+)
