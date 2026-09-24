@@ -36,3 +36,10 @@ make test -> 130 passed (98 + 32). make manifest-check -> valid; wf-index-v1-e61
 ### 2026-09-24T17:37:57Z · COMMIT · myan · claude-code/opus-5 · parent:3926ec7
 feat(platform): release-manifest format, validator and manifest-derived cache keys
 7 files changed, 411 insertions(+), 6 deletions(-)
+
+### 2026-09-24T17:41:16Z · HANDOFF · myan · claude-code/opus-5 · afad8fa
+#32 open; CI unit, guardrails, pinned-extension integration and dispatcher all success. Next: item 3 part c, the Go ingestd scaffold (Appendix C).
+
+### 2026-09-24T17:41:16Z · COMMIT · myan · claude-code/opus-5 · parent:afad8fa
+docs(platform): hand off #32
+1 file changed, 3 insertions(+)
