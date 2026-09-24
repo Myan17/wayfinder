@@ -33,3 +33,13 @@ db/dump-schema.sh -> wrote db/schema.sql (1104 lines); run twice, sha256 302e84b
 ### 2026-09-23T20:25:35Z · COMMIT · myan · claude-code/opus-5 · parent:71415ef
 feat(schema): db/schema.sql snapshot and its generator; ORIENT item 2 done
 5 files changed, 1177 insertions(+), 4 deletions(-)
+
+### 2026-09-24T16:58:42Z · TEST · myan · claude-code/opus-5 · 98b31eb
+#29 merged as abcff00; rebased onto it (never pushed, so no force-push). db/dump-schema.sh --check -> current; regenerated -> no diff, sha256 302e84b53272e328 unchanged. db/tests 15 passed; full suite 98; identity, ownership (Scope: schema, agreements), size 46 counted with 1139 exempt (db/schema.sql + this log), agent-log, CODEOWNERS, context-freshness (7 interface files) OK.
+
+### 2026-09-24T16:58:42Z · HANDOFF · myan · claude-code/opus-5 · 98b31eb
+Opening #30. On merge ORIENT item 2 is done; the next item is 3 (scaffold, CI skeleton, release manifest), which adds db/dump-schema.sh --check to CI.
+
+### 2026-09-24T16:58:42Z · COMMIT · myan · claude-code/opus-5 · parent:98b31eb
+docs(schema): regeneration evidence and handoff
+1 file changed, 6 insertions(+)
