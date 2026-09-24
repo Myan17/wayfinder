@@ -41,12 +41,24 @@ jobs:
       - name: schema snapshot drift (db/schema.sql equals a fresh dump)
         run: make schema-check
 
+  go:
+    name: go
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version-file: apps/ingestd/go.mod
+      - run: make go-test
+      - name: arm64 build (DESIGN 16.1)
+        run: make go-build
+
   dispatcher:
     # DESIGN 16.1: a skipped or cancelled suite must never count as a pass. This job always runs and
     # fails unless every required job reports success. Branch protection requires this job only.
     name: dispatcher
     if: always()
-    needs: [unit, db]
+    needs: [unit, db, go]
     runs-on: ubuntu-24.04
     steps:
       - env:

@@ -18,7 +18,7 @@ design_sections:
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
-  "Makefile": "a9dfe3e5f86cd835"
+  "Makefile": "b05391f52d55e72d"
   "pyproject.toml": "9d94aa70a0730215"
 verified_on: 2026-09-24
 ---
@@ -50,12 +50,15 @@ make db-test     # db/tests against it; any skipped test fails the target
 make db-down     # stop it
 make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dump
 make manifest-check  # validate the example release manifest and print its cache keys
+make go-test     # gofmt, go vet and go test for apps/ingestd
+make go-build    # ingestd for linux/arm64, versioned with the commit
 ```
 
 The release-manifest format (DESIGN §16.9): `infra/manifest/release_manifest.py` (`validate`, `cache-key`;
 its docstring is the spec) and `infra/manifest/example.json`, where `unpinned-until-…` marks values not yet chosen.
 
-And `.github/workflows/ci.yml` (jobs `unit`, `db`, `dispatcher`). Branch protection requires
+And `.github/workflows/ci.yml` (jobs `unit`, `db`, `go`, `dispatcher`). The Go module is
+`apps/ingestd` (`go.mod`, `cmd/ingestd`); its `internal/` packages belong to their own modules. Branch protection requires
 `dispatcher` only; it passes only when every job in its `needs` reports `success`.
 
 Plus the Python project definition:
@@ -118,6 +121,7 @@ _None._
 | `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, size, agent log, card freshness, CODEOWNERS sync |
 | `ci.yml` job `unit` | `make test` passes on every pull request and on `main` |
 | `ci.yml` job `db` | Schema tests on the pinned image, and `db/schema.sql` drift |
+| `ci.yml` job `go` | `make go-test` (gofmt clean, vet, tests) and `make go-build` (linux/arm64) |
 | `ci.yml` job `dispatcher` | No required suite was skipped, cancelled or failed |
 | `infra/manifest/tests/test_release_manifest.py` | Strict validation; each input moves exactly its own keys; commit and platform move none |
 | _not yet wired_ `make lint` | After the cross-module lint cleanup |
@@ -153,3 +157,4 @@ by CI on every pull request.
 | 2026-09-22 | Removed the test count rather than correcting it a third time: it had drifted to 17 against an actual 29, because a count goes stale whenever a pull request adds a test without touching an interface file | — |
 | 2026-09-24 | CI skeleton: `ci.yml` (`unit`, `db`, `dispatcher`); `make db-up`, `db-test`, `db-down`, `schema-check` | — |
 | 2026-09-24 | Release-manifest format and cache keys; `make manifest-check`; `infra/manifest/tests` collected | — |
+| 2026-09-24 | Go `ingestd` scaffold: module, `cmd/ingestd`, `make go-test`/`go-build`, CI job `go` in the dispatcher | — |

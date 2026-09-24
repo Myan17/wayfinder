@@ -47,6 +47,9 @@
 /eval/datasets/                     @Gupta958            # eval-data — implemented by myan
 /docs/context/modules/eval-data.md  @Gupta958            # eval-data — implemented by myan
 /infra/                             @Gupta958            # platform — implemented by myan
+/apps/ingestd/go.mod                @Gupta958            # platform — implemented by myan
+/apps/ingestd/go.sum                @Gupta958            # platform — implemented by myan
+/apps/ingestd/cmd/                  @Gupta958            # platform — implemented by myan
 /.github/workflows/                 @Gupta958            # platform — implemented by myan
 /loadtest/                          @Gupta958            # platform — implemented by myan
 /Makefile                           @Gupta958            # platform — implemented by myan

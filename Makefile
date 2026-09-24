@@ -1,4 +1,4 @@
-.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test schema-check manifest-check
+.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test schema-check manifest-check go-test go-build
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | expand -t22
 
@@ -59,3 +59,10 @@ schema-check:    ## fail if db/schema.sql differs from a fresh dump of the migra
 manifest-check:  ## validate the example release manifest and print its cache keys (DESIGN 16.9)
 	python3 infra/manifest/release_manifest.py validate infra/manifest/example.json
 	@for s in index eval; do python3 infra/manifest/release_manifest.py cache-key infra/manifest/example.json --scope $$s; done
+
+go-test:         ## vet and test the Go write path (apps/ingestd)
+	cd apps/ingestd && test -z "$$(gofmt -l .)" && go vet ./... && go test ./...
+
+go-build:        ## build ingestd for linux/arm64, the A1's architecture, with the commit as its version
+	cd apps/ingestd && GOOS=linux GOARCH=arm64 go build \
+	  -ldflags "-X main.version=$$(git rev-parse --short HEAD)" -o ../../bin/ingestd-linux-arm64 ./cmd/ingestd
