@@ -18,8 +18,8 @@ design_sections:
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
-  "Makefile": "a9c8b35e53b4f457"
-  "pyproject.toml": "3eff7b595e750bc4"
+  "Makefile": "a9dfe3e5f86cd835"
+  "pyproject.toml": "9d94aa70a0730215"
 verified_on: 2026-09-24
 ---
 
@@ -49,15 +49,22 @@ make db-up       # start the pinned ParadeDB (S3 digest) and wait for a real que
 make db-test     # db/tests against it; any skipped test fails the target
 make db-down     # stop it
 make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dump
+make manifest-check  # validate the example release manifest and print its cache keys
 ```
+
+The release-manifest format (DESIGN §16.9) is `infra/manifest/release_manifest.py`:
+`validate FILE` rejects unknown and missing fields and non-digest images, and reports every error;
+`cache-key FILE --scope index|eval` hashes exactly the fields a scope depends on.
+`infra/manifest/example.json` shows the shape. Values marked `unpinned-until-…` are not chosen yet
+(the chunker and grammars in P1, the embedding model by E5).
 
 And `.github/workflows/ci.yml` (jobs `unit`, `db`, `dispatcher`). Branch protection requires
 `dispatcher` only; it passes only when every job in its `needs` reports `success`.
 
 Plus the Python project definition:
 
-- package root `apps/api`; tests in `apps/api/tests` **and** `scripts/tests`, so tooling under
-  `scripts/` is covered by the same `make test`; `pythonpath = ["apps/api"]`
+- package root `apps/api`; tests in `apps/api/tests`, `scripts/tests` **and** `infra/manifest/tests`,
+  so tooling is covered by the same `make test`; `pythonpath = ["apps/api"]`
 - `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff and
   `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
@@ -77,6 +84,11 @@ the Terraform module and the load-test stub.
 - A suite counts only once it is in `dispatcher`'s `needs`; a job outside that list can go red
   without blocking a merge.
 - Every action in `ci.yml` is pinned by commit SHA (DESIGN §18.2).
+- Cache keys: the `index` key moves when the schema, Postgres image, extensions, grammars, chunker
+  or any embedding-spec field moves (§15.5). The `eval` key moves with those plus retrieval
+  parameters, answerability version, prompts, providers and datasets. **Neither moves with
+  `code_commit` or `platform`**, so an unrelated commit reuses the cache. A new manifest field must
+  be put in a scope deliberately; a test fails otherwise.
 - Ruff's `RUF002` is on, so docstrings use ASCII hyphens rather than en dashes. Section references
   (`§`) are fine.
 - Guardrail scripts run on the system Python 3 with no third-party dependencies, so they work before
@@ -112,6 +124,7 @@ _None._
 | `ci.yml` job `unit` | `make test` passes on every pull request and on `main` |
 | `ci.yml` job `db` | Schema tests on the pinned image, and `db/schema.sql` drift |
 | `ci.yml` job `dispatcher` | No required suite was skipped, cancelled or failed |
+| `infra/manifest/tests/test_release_manifest.py` | Strict validation; each input moves exactly its own keys; commit and platform move none |
 | _not yet wired_ `make lint` | After the cross-module lint cleanup |
 | _planned_ `infra/policy/allowed_resources.yaml` check | Terraform never provisions a non-allow-listed resource (DESIGN §11.1) |
 
@@ -144,3 +157,4 @@ by CI on every pull request.
 | 2026-09-22 | `psycopg[binary]` added to the dev extra and locked. DESIGN §12 already names psycopg 3 as the driver, so this is the project's driver arriving early rather than a spike-only dependency | — |
 | 2026-09-22 | Removed the test count rather than correcting it a third time: it had drifted to 17 against an actual 29, because a count goes stale whenever a pull request adds a test without touching an interface file | — |
 | 2026-09-24 | CI skeleton: `ci.yml` (`unit`, `db`, `dispatcher`); `make db-up`, `db-test`, `db-down`, `schema-check` | — |
+| 2026-09-24 | Release-manifest format and cache keys; `make manifest-check`; `infra/manifest/tests` collected | — |

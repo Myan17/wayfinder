@@ -1,0 +1,27 @@
+{
+  "manifest_version": 1,
+  "code_commit": "3926ec79b860103dfd299ad2cc70a2d5ff2d2f8d",
+  "platform": {"os": "linux", "arch": "arm64", "python": "3.13"},
+  "schema_version": "20260922230300",
+  "images": {"postgres": "paradedb/paradedb@sha256:c17153b8b7307734c3aede0393dfe8fa447f4a528ec028b1c3937186ab3ee242"},
+  "extensions": {"pg_search": "0.25.9", "vector": "0.8.4"},
+  "grammars": {"python": "unpinned-until-P1-chunker", "go": "unpinned-until-P1-chunker"},
+  "chunker_version": "unpinned-until-P1-chunker",
+  "embedding_spec": {
+    "model_ref": "unpinned-until-E5",
+    "model_digest": "unpinned-until-E5",
+    "runtime": "ollama",
+    "doc_template": "search_document: {header}\n{body}",
+    "query_template": "search_query: {query}",
+    "pooling": "mean",
+    "normalize": true,
+    "dimension": 768,
+    "truncation": "end",
+    "tokenizer_ref": "unpinned-until-E5"
+  },
+  "retrieval": {"rrf_k": 60, "per_file_cap": 3, "lexical_top_n": 100, "dense_top_n": 100, "rerank": null},
+  "answerability_version": null,
+  "prompts": {},
+  "providers": {},
+  "datasets": {}
+}

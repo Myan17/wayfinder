@@ -1,4 +1,4 @@
-.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test schema-check
+.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test schema-check manifest-check
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | expand -t22
 
@@ -55,3 +55,7 @@ db-test:         ## schema tests against the pinned database (needs db-up); a sk
 
 schema-check:    ## fail if db/schema.sql differs from a fresh dump of the migrations
 	db/dump-schema.sh --check
+
+manifest-check:  ## validate the example release manifest and print its cache keys (DESIGN 16.9)
+	python3 infra/manifest/release_manifest.py validate infra/manifest/example.json
+	@for s in index eval; do python3 infra/manifest/release_manifest.py cache-key infra/manifest/example.json --scope $$s; done
