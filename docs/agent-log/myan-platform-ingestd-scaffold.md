@@ -33,3 +33,13 @@ make go-test -> ok (3 tests); go vet clean; cross-builds linux/arm64 and linux/a
 ### 2026-09-24T17:42:49Z · COMMIT · myan · claude-code/opus-5 · parent:3926ec7
 feat(platform): Go ingestd scaffold and a CI go job with an arm64 build
 10 files changed, 139 insertions(+), 6 deletions(-)
+
+### 2026-09-24T17:44:35Z · TEST · myan · claude-code/opus-5 · 1bef278
+PR CI run 36036267648: unit, guardrails, pinned-extension integration, go and dispatcher all success; go job printed 'ok github.com/Myan17/wayfinder/apps/ingestd/cmd/ingestd' and ran the arm64 build; dispatcher listed unit, db, go success.
+
+### 2026-09-24T17:44:35Z · HANDOFF · myan · claude-code/opus-5 · 1bef278
+#33 open and green. Rebase needed after whichever of #32/#33 merges first (Makefile targets and platform card rows, keep both). Item 3 complete when #32 and #33 merge; next is item 4, S5.
+
+### 2026-09-24T17:44:35Z · COMMIT · myan · claude-code/opus-5 · parent:1bef278
+docs(platform): CI evidence and handoff
+1 file changed, 6 insertions(+)
