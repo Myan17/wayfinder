@@ -18,9 +18,9 @@ design_sections:
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
-  "Makefile": "b33619f48cacf8c1"
+  "Makefile": "a9c8b35e53b4f457"
   "pyproject.toml": "3eff7b595e750bc4"
-verified_on: 2026-09-22
+verified_on: 2026-09-24
 ---
 
 # platform
@@ -45,7 +45,14 @@ make lint        # ruff check + format --check
 make fmt         # ruff format
 make guardrails  # identity, scope, agent-log, card freshness, CODEOWNERS
 make digest      # build this week's gate report from the task logs
+make db-up       # start the pinned ParadeDB (S3 digest) and wait for a real query, not just health
+make db-test     # db/tests against it; any skipped test fails the target
+make db-down     # stop it
+make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dump
 ```
+
+And `.github/workflows/ci.yml` (jobs `unit`, `db`, `dispatcher`). Branch protection requires
+`dispatcher` only; it passes only when every job in its `needs` reports `success`.
 
 Plus the Python project definition:
 
@@ -64,9 +71,12 @@ the Terraform module and the load-test stub.
   configuration, and imports the package as `wayfinder.<module>`.
 - A test file under `scripts/tests/` is collected too. Guardrail and tooling scripts are not importable
   as a package, so those tests load the script by path.
-- `make lint` and `make test` are the commands CI *will* run: today CI runs the collaboration
-  guardrails only, and the product suites are wired in the pull request that lands the first suite.
-  Until then a green pull request means the guardrails passed, not that anything was tested.
+- CI runs `make test` (job `unit`), and `make db-up db-test schema-check` (job `db`, on
+  `ubuntu-24.04-arm` because the pinned image is arm64). A skipped, cancelled or failed job fails
+  `dispatcher` (DESIGN §16.1). `make lint` is **not** gated yet: `main` is not lint-clean.
+- A suite counts only once it is in `dispatcher`'s `needs`; a job outside that list can go red
+  without blocking a merge.
+- Every action in `ci.yml` is pinned by commit SHA (DESIGN §18.2).
 - Ruff's `RUF002` is on, so docstrings use ASCII hyphens rather than en dashes. Section references
   (`§`) are fine.
 - Guardrail scripts run on the system Python 3 with no third-party dependencies, so they work before
@@ -98,8 +108,11 @@ _None._
 
 | Test | Pins |
 |---|---|
-| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, size, agent log, card freshness, CODEOWNERS sync — **the only gate running today** |
-| _not yet wired_ `make lint`, `make test` | Arrive with the first product suite |
+| `make guardrails` in CI (`.github/workflows/guardrails.yml`) | Identity, scope, size, agent log, card freshness, CODEOWNERS sync |
+| `ci.yml` job `unit` | `make test` passes on every pull request and on `main` |
+| `ci.yml` job `db` | Schema tests on the pinned image, and `db/schema.sql` drift |
+| `ci.yml` job `dispatcher` | No required suite was skipped, cancelled or failed |
+| _not yet wired_ `make lint` | After the cross-module lint cleanup |
 | _planned_ `infra/policy/allowed_resources.yaml` check | Terraform never provisions a non-allow-listed resource (DESIGN §11.1) |
 
 ## Fake
@@ -109,9 +122,12 @@ by CI on every pull request.
 
 ## Open questions
 
-- `make lint` and `make test` are still not wired into CI although both suites exist. That wiring is
-  the next platform pull request, together with the ruff-format debt in six older scripts. Until
-  then a green pull request means the guardrails passed, not that anything was tested.
+- `make lint` is not gated. `main` has 6 ruff errors in `scripts/` and 19 unformatted files across
+  modules; the gate arrives after a cleanup, which touches several modules.
+- `guardrails.yml` still pins actions by tag (`@v4`, `@v5`), unlike `ci.yml`. Repinning it is a
+  platform follow-up.
+- The pinned database comes from the S3 spike's compose file. A development compose stack in
+  `infra/compose/` replaces it with `make up`.
   - This card no longer states a test count. It has been wrong three times: a count goes stale
     whenever any pull request adds a test without touching an interface file, which is most of them,
     so the freshness check never catches it. `uv run pytest -q` is the answer and cannot go stale.
@@ -127,3 +143,4 @@ by CI on every pull request.
 | 2026-09-21 | Re-read against `Makefile` and `pyproject.toml`; corrected the tooling test count (8 to 17, after the freshness tests landed). Card verification moved to content hashes | — |
 | 2026-09-22 | `psycopg[binary]` added to the dev extra and locked. DESIGN §12 already names psycopg 3 as the driver, so this is the project's driver arriving early rather than a spike-only dependency | — |
 | 2026-09-22 | Removed the test count rather than correcting it a third time: it had drifted to 17 against an actual 29, because a count goes stale whenever a pull request adds a test without touching an interface file | — |
+| 2026-09-24 | CI skeleton: `ci.yml` (`unit`, `db`, `dispatcher`); `make db-up`, `db-test`, `db-down`, `schema-check` | — |
