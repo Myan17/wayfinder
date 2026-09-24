@@ -1,0 +1,64 @@
+# CI skeleton (ORIENT item 3a, DESIGN 16.1 and 18.2). Suites land here as the modules that need them
+# land; the dispatcher is what branch protection requires, so a new job only counts once it is listed
+# in the dispatcher's `needs`.
+#
+# Every action is pinned by commit SHA, never by tag (DESIGN 18.2): a tag can be moved under us.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: unit
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - run: uv sync --extra dev --locked
+      - run: uv run pytest
+
+  db:
+    name: pinned-extension integration
+    # The pinned ParadeDB digest (infra/spikes/s3/compose.yml) is linux/arm64, the A1's architecture.
+    # A native arm64 runner runs it without emulation, so what CI measures is what ships.
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - run: uv sync --extra dev --locked
+      - run: make db-up
+      - run: make db-test
+      - name: schema snapshot drift (db/schema.sql equals a fresh dump)
+        run: make schema-check
+
+  dispatcher:
+    # DESIGN 16.1: a skipped or cancelled suite must never count as a pass. This job always runs and
+    # fails unless every required job reports success. Branch protection requires this job only.
+    name: dispatcher
+    if: always()
+    needs: [unit, db]
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          needs = json.loads(os.environ["RESULTS"])
+          for name, job in needs.items():
+              print(f"{name}: {job['result']}")
+          bad = {name: job["result"] for name, job in needs.items() if job["result"] != "success"}
+          if bad:
+              print(f"::error::required suites did not pass: {bad}")
+              sys.exit(1)
+          PY
