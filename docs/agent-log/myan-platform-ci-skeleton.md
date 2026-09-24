@@ -46,3 +46,13 @@ The pull request's own ci run 36031987066: unit success (13 s); pinned-extension
 ### 2026-09-24T17:07:53Z · COMMIT · myan · claude-code/opus-5 · parent:11383d8
 docs(platform): CI evidence and handoff
 1 file changed, 6 insertions(+)
+
+### 2026-09-24T17:31:21Z · DECIDE · myan · claude-code/opus-5 · 98a3824
+gupta958 (relayed by Myan, recorded on #31): ci.yml line 28 ran 'uv run pytest', but the platform card promises CI uses the public command surface. Changed to 'run: make test' so CI and the documented local command cannot diverge. The setup steps keep 'uv sync --extra dev --locked': make setup omits --locked on purpose (a developer adding a dependency re-locks), while CI must fail on a stale lock; raised with the reviewer rather than changed.
+
+### 2026-09-24T17:31:21Z · TEST · myan · claude-code/opus-5 · 98a3824
+make test locally -> 98 passed. Every test command in ci.yml is now a make target (make test, make db-test, make schema-check).
+
+### 2026-09-24T17:31:21Z · COMMIT · myan · claude-code/opus-5 · parent:98a3824
+fix(platform): CI runs make test, the public command, per review
+2 files changed, 7 insertions(+), 1 deletion(-)
