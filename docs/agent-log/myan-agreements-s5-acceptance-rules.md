@@ -43,3 +43,13 @@ docs(agreements): ADR-0004, S5's acceptance rules before the harness
 ### 2026-09-25T00:42:36Z · COMMIT · myan · claude-code/opus-5 · parent:cb0df5c
 docs(agreements): hand off #34
 1 file changed, 3 insertions(+)
+
+### 2026-09-25T01:49:33Z · DECIDE · myan · claude-code/opus-5 · 312dc22
+gupta958 (relayed by Myan, recorded on #34): accepted 17 x 20, River v0.47.0, and paused coverage at B2; the paused B4 barrier moves to immediately before the activation transaction takes the row lock. Paused inside the transaction, the worker holds SELECT ... FOR UPDATE, so no other worker can take over and S5-4 would test nothing. Kill-at-B4 still covers failure inside the transaction.
+
+### 2026-09-25T01:49:33Z · EDIT · myan · claude-code/opus-5 · 312dc22
+ADR-0004: paused scenarios now at B2 and B4' (immediately before the 9.3.5 row lock), with the reason; S5-4 names B2 and B4' and requires the takeover to have happened; new 'Review rulings' section records the three rulings.
+
+### 2026-09-25T01:49:33Z · COMMIT · myan · claude-code/opus-5 · parent:312dc22
+docs(agreements): paused B4 barrier moves before the row lock, per review
+2 files changed, 25 insertions(+), 4 deletions(-)

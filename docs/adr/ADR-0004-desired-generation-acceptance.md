@@ -48,9 +48,17 @@ At each boundary there are three injections:
 - **kill**: the worker process gets `SIGKILL`.
 - **push then kill**.
 
-That makes 15 scenarios. Two more cover a **paused** worker: `SIGSTOP` at B2 and at B4, held past
-`claim_expires_at` while another worker takes over, then `SIGCONT`. That's **17 scenarios, each run
-20 times.**
+That makes 15 scenarios. Two more cover a **paused** worker: `SIGSTOP`, held past
+`claim_expires_at` while another worker takes over, then `SIGCONT`. They pause at:
+
+- **B2** (mid-build), and
+- **B4′**: immediately **before** the activation transaction takes the repository row lock (§9.3.5's
+  `SELECT … FOR UPDATE`). This is not inside the transaction. A worker paused while holding that lock
+  would block the takeover it is supposed to lose to, and nothing would be tested. Pausing just
+  before the lock lets the claim expire and another worker activate, so the resumed worker's refusal
+  is real. Failure *inside* the transaction is still covered by the kill-at-B4 scenario.
+
+That's **17 scenarios, each run 20 times.**
 
 ## Acceptance rules
 
@@ -62,13 +70,20 @@ rule.** There is no pass rate.
 | S5-1 | **No lost push** | After the scenario quiesces (workers drained, one reconciler pass, claim expiry elapsed), the active generation's `desired_generation` equals `repository.desired_generation` |
 | S5-2 | **No regression** | Across the run, each activation's `desired_generation` is ≥ the one it replaced. A slow worker never moves a repository backwards |
 | S5-3 | **One active generation** | Never more than one `active` generation per repository at any observation, and `repository.active_generation_id` always names it |
-| S5-4 | **An expired claim never activates** | In both paused-worker scenarios, the resumed worker's activation is refused (§9.3.5's `UPDATE … WHERE active_generation_id IS NOT DISTINCT FROM $base` touches 0 rows, or its claim check fails). Its generation ends `failed`, and nothing it built is `live` |
+| S5-4 | **An expired claim never activates** | In both paused-worker scenarios (B2 and B4′), after another worker has taken over, the resumed worker's activation is refused (§9.3.5's `UPDATE … WHERE active_generation_id IS NOT DISTINCT FROM $base` touches 0 rows, or its claim check fails). Its generation ends `failed`, and nothing it built is `live` |
 | S5-5 | **Uniqueness is not load-bearing** | S5-1 to S5-4 hold with every `IndexRepo` insert made **without** River unique-job options. The design must not depend on which states River deduplicates (§9.3.3, WF-07) |
 
 **What a FAIL means.** R-11's mitigation is that correctness lives in `desired_generation`, not in the
 queue. So a failure is a defect in **our** protocol (§9.3.3–9.3.5), not in River's documentation. The
 protocol is fixed, and its §9.3 text edited, before Phase 1 builds on it. There is no third outcome,
 and no "PASS with a note".
+
+## Review rulings (gupta958, 2026-09-24)
+
+- 17 scenarios × 20 runs: **accepted**.
+- River v0.47.0: **accepted**.
+- Paused-worker coverage: **accepted at B2**. At B4 the barrier moves to B4′, before the row lock
+  (above), so the takeover can happen and the refusal is meaningful.
 
 ## What is deliberately not a rule
 
