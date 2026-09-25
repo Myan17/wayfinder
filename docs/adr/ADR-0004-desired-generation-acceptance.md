@@ -32,6 +32,27 @@ scheduling, not indexing. Every transaction around it is the real one: claim, fi
 §9.3.5's fenced activation. Injections happen at **deterministic barriers** in the worker, never on
 timers, so a scenario that passes is reproducible.
 
+### Starting state (pinned, so the harness cannot choose it after seeing results)
+
+Every run of every scenario starts in a **freshly created database** (all migrations applied, nothing
+carried over from an earlier run), with one repository in this **quiescent** state:
+
+1. **Exactly one active baseline generation** exists for the repository. It has status `active`,
+   `desired_generation = 1`, and a baseline `commit_sha`, and no other generation exists.
+2. `repository.active_generation_id` **points to that generation**.
+3. `repository.desired_generation = 1`, **equal** to the baseline generation's `desired_generation`.
+4. **No live claim:** `claim_token` and `claim_expires_at` are `NULL`.
+5. **No outstanding River job:** the River job table holds no `IndexRepo` in any non-finalized
+   state for this repository.
+
+Then **the initial push is accepted**: `desired_generation` goes 1 → 2, and `IndexRepo` is enqueued,
+in one transaction. At that moment the scenario begins, and its injections happen after it. The
+harness asserts all five preconditions before the initial push. A run whose preconditions fail is
+an **error**, not a pass or a fail, and it is reported as such.
+
+This is what makes S5-2 and S5-3 meaningful. A baseline of 1 gives every activation a predecessor to
+be compared with (S5-2), and there is an active generation from the first observation onward (S5-3).
+
 The five boundaries are §9.3.3's own list:
 
 | # | Boundary |

@@ -53,3 +53,13 @@ ADR-0004: paused scenarios now at B2 and B4' (immediately before the 9.3.5 row l
 ### 2026-09-25T01:49:33Z · COMMIT · myan · claude-code/opus-5 · parent:312dc22
 docs(agreements): paused B4 barrier moves before the row lock, per review
 2 files changed, 25 insertions(+), 4 deletions(-)
+
+### 2026-09-25T01:56:22Z · DECIDE · myan · claude-code/opus-5 · 50ee68a
+gupta958 (relayed by Myan, recorded on #34): the starting database state was undefined, which lets S5-2 go vacuous and S5-3 contradict a repository with no active generation. Pinned it.
+
+### 2026-09-25T01:56:22Z · EDIT · myan · claude-code/opus-5 · 50ee68a
+ADR-0004: new 'Starting state' subsection - a fresh database per run; one active baseline generation (desired_generation 1), active_generation_id pointing to it, repository desired_generation 1, no claim, no non-finalized IndexRepo job; then the initial push (1 -> 2, enqueue, one transaction) starts the scenario. The harness asserts the five preconditions first; a precondition failure is an error, reported as neither pass nor fail.
+
+### 2026-09-25T01:56:22Z · COMMIT · myan · claude-code/opus-5 · parent:50ee68a
+docs(agreements): pin S5's starting state, per review
+2 files changed, 27 insertions(+)
