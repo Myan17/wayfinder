@@ -47,7 +47,7 @@ tasks touch one side only.
 | `indexing` | myan | `apps/ingestd/internal/{embed,generation,gc}/**` | `generation`, `representation`, `vector_d*`, `occurrence`, `embedding_cache`, `tombstone` | [indexing](../context/modules/indexing.md) |
 | `webhooks` | myan | `apps/ingestd/internal/webhook/**` | `connection`, `repository`, `webhook_delivery` | [webhooks](../context/modules/webhooks.md) |
 | `eval-data` | myan | `eval/miners/**`, `eval/datasets/**` | — | [eval-data](../context/modules/eval-data.md) |
-| `platform` | myan | `infra/**`, `.github/workflows/**`, `loadtest/**` | — | [platform](../context/modules/platform.md) |
+| `platform` | myan | `infra/**`, `.github/workflows/**`, `loadtest/**`, `apps/ingestd/{go.mod,go.sum,cmd/**}` | — | [platform](../context/modules/platform.md) |
 | `observability` | myan | `apps/*/**/telemetry*`, `infra/compose/otel/**` | `audit_event` | [observability](../context/modules/observability.md) |
 | `schema` | **joint** | `db/migrations/**` | the schema itself | [schema](../context/modules/schema.md) |
 | `agreements` | **joint** | `AGENTS.md`, `CLAUDE.md`, `ORIENT.md`, `.claude/**`, `docs/adr/**`, `docs/team/**`, `.github/CODEOWNERS`, `docs/DESIGN.md` | — | — |
@@ -107,7 +107,7 @@ modules:
   indexing:      {owner: myan, paths: ["apps/ingestd/internal/embed/**", "apps/ingestd/internal/generation/**", "apps/ingestd/internal/gc/**", "docs/context/modules/indexing.md"]}
   webhooks:      {owner: myan, paths: ["apps/ingestd/internal/webhook/**", "docs/context/modules/webhooks.md"]}
   eval-data:     {owner: myan, paths: ["eval/miners/**", "eval/datasets/**", "docs/context/modules/eval-data.md"]}
-  platform:      {owner: myan, paths: ["infra/**", ".github/workflows/**", "loadtest/**", "Makefile", "pyproject.toml", "uv.lock", ".gitignore", ".env.example", "README.md", "docs/context/modules/platform.md"]}
+  platform:      {owner: myan, paths: ["infra/**", "apps/ingestd/go.mod", "apps/ingestd/go.sum", "apps/ingestd/cmd/**", ".github/workflows/**", "loadtest/**", "Makefile", "pyproject.toml", "uv.lock", ".gitignore", ".env.example", "README.md", "docs/context/modules/platform.md"]}
   observability: {owner: myan, paths: ["infra/compose/otel/**", "docs/context/modules/observability.md"]}
   schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
   agent-logs:    {owner: any,   paths: ["docs/agent-log/**"]}
