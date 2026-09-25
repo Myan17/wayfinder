@@ -36,3 +36,13 @@ make test -> 137 passed (132 + 5). ruff check and format clean on both files (bo
 ### 2026-09-25T00:47:42Z · COMMIT · myan · claude-code/opus-5 · parent:cc77be3
 feat(agreements): review_handoff brief posts the reviewer's action brief on the PR
 4 files changed, 128 insertions(+), 1 deletion(-)
+
+### 2026-09-25T00:49:23Z · TEST · myan · claude-code/opus-5 · dfeaa92
+Live: review_handoff.py brief 35 --file ... posted https://github.com/Myan17/wayfinder/pull/35#issuecomment-5824772825 beginning '@Gupta958 — what this pull request needs from you'; webhook 204 with the link only. CI on the PR: unit, guardrails, db, go, dispatcher all success.
+
+### 2026-09-25T00:49:23Z · HANDOFF · myan · claude-code/opus-5 · dfeaa92
+#35 open and green; its brief is on the PR. Waiting on gupta958 for #34 and #35.
+
+### 2026-09-25T00:49:23Z · COMMIT · myan · claude-code/opus-5 · parent:dfeaa92
+docs(agreements): live brief evidence and handoff
+1 file changed, 6 insertions(+)
