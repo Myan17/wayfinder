@@ -163,7 +163,10 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
 
     m = json.loads(a.file.read_text())
-    errors = validate(m) or check_schema_version(m)
+    # Report field errors and the schema-version mismatch together; one must never hide the other.
+    errors = validate(m)
+    if isinstance(m, dict):
+        errors += check_schema_version(m)
     if errors:
         for e in errors:
             print(f"::error::{a.file}: {e}")

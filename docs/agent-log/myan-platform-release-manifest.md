@@ -43,3 +43,16 @@ feat(platform): release-manifest format, validator and manifest-derived cache ke
 ### 2026-09-24T17:41:16Z · COMMIT · myan · claude-code/opus-5 · parent:afad8fa
 docs(platform): hand off #32
 1 file changed, 3 insertions(+)
+
+### 2026-09-25T00:05:02Z · DECIDE · myan · claude-code/opus-5 · 0d4628d
+gupta958 (relayed by Myan, recorded on #32): main() used 'validate(m) or check_schema_version(m)', so the schema-version mismatch was hidden whenever any field error existed. Aggregate both, add a regression test covering both errors at once, rerun CI.
+
+### 2026-09-25T00:05:02Z · EDIT · myan · claude-code/opus-5 · 0d4628d
+release_manifest.main: errors = validate(m), plus check_schema_version(m) whenever m is a JSON object (the guard keeps a non-object manifest from crashing .get). Tests: test_cli_reports_field_and_schema_errors_together (unknown field and a stale schema_version in one file; both messages printed, exit 1) and test_cli_rejects_a_non_object_without_crashing.
+
+### 2026-09-25T00:05:02Z · TEST · myan · claude-code/opus-5 · 0d4628d
+make test -> 132 passed. Mutation: the old 'validate(m) or check_schema_version(m)' restored -> test_cli_reports_field_and_schema_errors_together fails; restored. ruff check and format clean.
+
+### 2026-09-25T00:05:03Z · COMMIT · myan · claude-code/opus-5 · parent:0d4628d
+fix(platform): report field and schema-version errors together, per review
+3 files changed, 33 insertions(+), 1 deletion(-)

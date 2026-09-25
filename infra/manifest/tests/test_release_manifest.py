@@ -148,3 +148,23 @@ def test_cli_validate_and_cache_key(capsys):
     assert rm.main(["validate", str(HERE.parent / "example.json")]) == 0
     assert rm.main(["cache-key", str(HERE.parent / "example.json"), "--scope", "index"]) == 0
     assert capsys.readouterr().out.strip().splitlines()[-1].startswith("wf-index-v1-")
+
+
+def test_cli_reports_field_and_schema_errors_together(m, tmp_path, capsys):
+    """Regression (review of #32): `validate(m) or check_schema_version(m)` hid the schema-version
+    error whenever a field error existed. Both must be reported in one run."""
+    m["bogus"] = 1
+    m["schema_version"] = "20000101000000"  # older than every migration in the tree
+    f = tmp_path / "m.json"
+    f.write_text(json.dumps(m))
+    assert rm.main(["validate", str(f)]) == 1
+    out = capsys.readouterr().out
+    assert "unknown field: bogus" in out
+    assert "is not the newest migration" in out
+
+
+def test_cli_rejects_a_non_object_without_crashing(tmp_path, capsys):
+    f = tmp_path / "m.json"
+    f.write_text("[]")
+    assert rm.main(["validate", str(f)]) == 1
+    assert "manifest is not a JSON object" in capsys.readouterr().out
