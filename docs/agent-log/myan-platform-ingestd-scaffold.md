@@ -43,3 +43,13 @@ PR CI run 36036267648: unit, guardrails, pinned-extension integration, go and di
 ### 2026-09-24T17:44:35Z · COMMIT · myan · claude-code/opus-5 · parent:1bef278
 docs(platform): CI evidence and handoff
 1 file changed, 6 insertions(+)
+
+### 2026-09-25T00:28:22Z · DECIDE · myan · claude-code/opus-5 · 681189a
+#32 merged as 9f0e62f. Rebased onto origin/main: conflicts in the Makefile (.PHONY line and appended targets) and the platform card (hashes, interface block, change log), all resolved keep-both - manifest-check and go-test/go-build both present, card lists both, card hashes re-recorded. Force-push over 84b9bf0 required (AGENTS.md 2.2); main dismisses the stale approval.
+
+### 2026-09-25T00:28:22Z · TEST · myan · claude-code/opus-5 · 681189a
+After the rebase: make test 132 passed; make go-test ok; make manifest-check valid; make go-build ok.
+
+### 2026-09-25T00:28:22Z · COMMIT · myan · claude-code/opus-5 · parent:681189a
+docs(platform): record the rebase onto #32
+1 file changed, 6 insertions(+)
