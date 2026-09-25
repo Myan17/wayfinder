@@ -53,3 +53,13 @@ After the rebase: make test 132 passed; make go-test ok; make manifest-check val
 ### 2026-09-25T00:28:22Z · COMMIT · myan · claude-code/opus-5 · parent:681189a
 docs(platform): record the rebase onto #32
 1 file changed, 6 insertions(+)
+
+### 2026-09-25T00:34:38Z · DECIDE · myan · claude-code/opus-5 · db0acd8
+gupta958 (relayed by Myan, recorded on #33): mark ORIENT item 3 'done #31-#33' here; the pull request already declares Scope: platform, agreements, so the ORIENT line is inside it. This is the last of the item's three parts (#31 and #32 merged).
+
+### 2026-09-25T00:34:38Z · EDIT · myan · claude-code/opus-5 · db0acd8
+ORIENT.md item 3 status: open -> done #31-#33.
+
+### 2026-09-25T00:34:38Z · COMMIT · myan · claude-code/opus-5 · parent:db0acd8
+docs(platform): mark ORIENT item 3 done #31–#33, per review
+2 files changed, 7 insertions(+), 1 deletion(-)
