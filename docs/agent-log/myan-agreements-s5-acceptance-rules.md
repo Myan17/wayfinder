@@ -36,3 +36,10 @@ Documentation only; no measurement exists and none is quoted. River v0.47.0 conf
 ### 2026-09-25T00:41:10Z · COMMIT · myan · claude-code/opus-5 · parent:cc77be3
 docs(agreements): ADR-0004, S5's acceptance rules before the harness
 2 files changed, 120 insertions(+)
+
+### 2026-09-25T00:42:36Z · HANDOFF · myan · claude-code/opus-5 · cb0df5c
+#34 open, CI all green. Once merged, the S5 harness (platform/indexing) runs against these rules; ORIENT item 4 closes with it.
+
+### 2026-09-25T00:42:36Z · COMMIT · myan · claude-code/opus-5 · parent:cb0df5c
+docs(agreements): hand off #34
+1 file changed, 3 insertions(+)
