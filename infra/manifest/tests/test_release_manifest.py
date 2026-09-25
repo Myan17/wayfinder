@@ -164,7 +164,6 @@ def test_cli_reports_field_and_schema_errors_together(m, tmp_path, capsys):
 
 
 def test_cli_rejects_a_non_object_without_crashing(tmp_path, capsys):
-    f = tmp_path / "m.json"
-    f.write_text("[]")
+    (f := tmp_path / "m.json").write_text("[]")
     assert rm.main(["validate", str(f)]) == 1
     assert "manifest is not a JSON object" in capsys.readouterr().out

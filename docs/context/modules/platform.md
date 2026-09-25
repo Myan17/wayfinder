@@ -52,11 +52,8 @@ make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dum
 make manifest-check  # validate the example release manifest and print its cache keys
 ```
 
-The release-manifest format (DESIGN §16.9) is `infra/manifest/release_manifest.py`:
-`validate FILE` rejects unknown and missing fields and non-digest images, and reports every error;
-`cache-key FILE --scope index|eval` hashes exactly the fields a scope depends on.
-`infra/manifest/example.json` shows the shape. Values marked `unpinned-until-…` are not chosen yet
-(the chunker and grammars in P1, the embedding model by E5).
+The release-manifest format (DESIGN §16.9): `infra/manifest/release_manifest.py` (`validate`, `cache-key`;
+its docstring is the spec) and `infra/manifest/example.json`, where `unpinned-until-…` marks values not yet chosen.
 
 And `.github/workflows/ci.yml` (jobs `unit`, `db`, `dispatcher`). Branch protection requires
 `dispatcher` only; it passes only when every job in its `needs` reports `success`.
@@ -84,11 +81,9 @@ the Terraform module and the load-test stub.
 - A suite counts only once it is in `dispatcher`'s `needs`; a job outside that list can go red
   without blocking a merge.
 - Every action in `ci.yml` is pinned by commit SHA (DESIGN §18.2).
-- Cache keys: the `index` key moves when the schema, Postgres image, extensions, grammars, chunker
-  or any embedding-spec field moves (§15.5). The `eval` key moves with those plus retrieval
-  parameters, answerability version, prompts, providers and datasets. **Neither moves with
-  `code_commit` or `platform`**, so an unrelated commit reuses the cache. A new manifest field must
-  be put in a scope deliberately; a test fails otherwise.
+- Cache keys: `index` moves with schema, image, extensions, grammars, chunker or any embedding-spec
+  field (§15.5); `eval` also with retrieval, answerability, prompts, providers and datasets. **Neither
+  moves with `code_commit` or `platform`.** A new manifest field must be scoped deliberately (tested).
 - Ruff's `RUF002` is on, so docstrings use ASCII hyphens rather than en dashes. Section references
   (`§`) are fine.
 - Guardrail scripts run on the system Python 3 with no third-party dependencies, so they work before
