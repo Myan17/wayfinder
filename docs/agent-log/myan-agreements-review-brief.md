@@ -46,3 +46,13 @@ Live: review_handoff.py brief 35 --file ... posted https://github.com/Myan17/way
 ### 2026-09-25T00:49:23Z · COMMIT · myan · claude-code/opus-5 · parent:dfeaa92
 docs(agreements): live brief evidence and handoff
 1 file changed, 6 insertions(+)
+
+### 2026-09-25T02:48:26Z · DECIDE · myan · claude-code/opus-5 · 6b3a0d4
+#34 merged as 2bddc30, putting this branch BEHIND. Rebased onto origin/main, no conflicts. Force-push over 0796fec required (AGENTS.md 2.2).
+
+### 2026-09-25T02:48:26Z · TEST · myan · claude-code/opus-5 · 6b3a0d4
+After the rebase: make test 137 passed.
+
+### 2026-09-25T02:48:26Z · COMMIT · myan · claude-code/opus-5 · parent:6b3a0d4
+docs(agreements): record the rebase onto #34
+1 file changed, 6 insertions(+)
