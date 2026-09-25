@@ -15,6 +15,7 @@ already rebased once against a merge that had not happened.
 
 ```bash
 scripts/review_handoff.py request <pr>     # structured request + checklist + notify
+scripts/review_handoff.py brief   <pr> --file BRIEF.md   # the reviewer's action brief, posted ON the PR
 scripts/review_handoff.py packet  <pr>     # paste-ready bundle for an off-platform reviewer
 scripts/review_handoff.py await   <pr>     # poll until decision or merge; verifies mergedAt
 scripts/review_handoff.py record  <pr> --verdict approve|changes|comment --by <handle> --notes "..."
@@ -26,10 +27,17 @@ scripts/review_handoff.py advance          # after a merge: what the stack needs
 | Situation | Verb | Notes |
 |---|---|---|
 | A pull request is ready | `request` | Adds the security checklist automatically when the diff touches `authz`, `egress`, `webhooks` or `schema` |
+| The reviewer needs to act: what to look at, what to decide, what not to do | `brief` | **After every open, rebase, force-push or dismissed approval.** Posts a PR comment that @-mentions the reviewers, so GitHub notifies them; the webhook gets only the link |
 | The reviewer works outside GitHub (a chat assistant, say) | `packet` | Prints description, file list, cards touched and a bounded diff. Local output only — nothing is sent anywhere |
 | Waiting | `await` | Exit 0 merged, 2 changes requested, 1 timed out. Reports every state change as it happens |
 | The reviewer decided somewhere else | `record` | Posts their verdict onto the pull request so the decision lives with the code. It does **not** submit a GitHub review: an approval must come from the reviewer's own account or it is not theirs |
 | A merge just landed | `advance` | Lists what is `BEHIND` (rebase, then re-approval) and what is `BLOCKED` (waiting on review). Does not touch branches |
+
+## Where the reviewer actually reads
+
+**The pull request.** The reviewer cannot read the chat channel behind the webhook. Every brief sent
+only there between 2026-09-22 and 2026-09-24 reached nobody, until Myan relayed it. So a brief is
+always a pull-request comment (`brief`), and the webhook is a mirror, never the delivery.
 
 ## Notification channel
 

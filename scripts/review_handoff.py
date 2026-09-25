@@ -2,6 +2,8 @@
 """Review handoff: request, notify, wait, record, advance -- never approve, never merge.
 
     scripts/review_handoff.py request <pr>    post a structured request and notify the reviewers
+    scripts/review_handoff.py brief   <pr> --file BRIEF.md
+                                              post the reviewer's action brief ON the pull request
     scripts/review_handoff.py packet  <pr>    build a paste-ready review bundle (local output only)
     scripts/review_handoff.py await   <pr>    poll until the review decision or merge state changes
     scripts/review_handoff.py record  <pr> --verdict approve|changes|comment --by <handle> --notes <text>
@@ -10,6 +12,10 @@
 Two rules, both pinned by tests in scripts/tests/: it never approves and never merges (AGENTS.md
 reserves both for a human), and GitHub's API is the source of truth for merge state rather than
 anyone's say-so. Webhook payloads carry metadata only -- no diff, no file contents.
+
+Where the reviewer reads: the pull request. Action briefs are pull-request comments that @-mention
+the reviewers, so GitHub notifies them; the webhook only mirrors a link. A brief sent only to a chat
+channel the reviewer cannot read was delivered to nobody (2026-09-24).
 """
 
 from __future__ import annotations
@@ -38,7 +44,7 @@ def pr_json(pr: str, fields: str) -> dict:
 def reviewers() -> list[str]:
     """GitHub handles to notify, from CODEOWNERS' catch-all line."""
     try:
-        with open(".github/CODEOWNERS") as fh:
+        with open(REPO_ROOT / ".github" / "CODEOWNERS") as fh:  # not the caller's cwd
             for line in fh:
                 if line.startswith("*"):
                     return [tok for tok in line.split() if tok.startswith("@")]
@@ -190,6 +196,21 @@ def cmd_request(pr: str) -> int:
     return 0
 
 
+def cmd_brief(pr: str, path: pathlib.Path) -> int:
+    """Post an action brief as a pull-request comment the reviewers are notified of."""
+    text = path.read_text().strip()
+    if not text:
+        print("brief is empty; nothing posted")
+        return 1
+    missing = [m for m in reviewers() if m.lower() not in text.lower()]
+    if missing:
+        text = " ".join(missing) + " — what this pull request needs from you\n\n" + text
+    url = gh("pr", "comment", pr, "--body", text).strip().splitlines()[-1]
+    status = notify(f"Brief for #{pr} posted on the pull request: {url}")
+    print(f"posted brief on #{pr}: {url}; {status}")
+    return 0
+
+
 def cmd_packet(pr: str) -> int:
     """A paste-ready bundle: description, changed files, cards touched, diff. Local output only."""
     data = pr_json(pr, "number,title,body,files,baseRefName,headRefName")
@@ -308,6 +329,9 @@ def main() -> int:
     for verb in ("request", "packet"):
         s = sub.add_parser(verb)
         s.add_argument("pr")
+    b = sub.add_parser("brief")
+    b.add_argument("pr")
+    b.add_argument("--file", type=pathlib.Path, required=True)
     w = sub.add_parser("await")
     w.add_argument("pr")
     w.add_argument("--interval", type=int, default=30)
@@ -322,6 +346,8 @@ def main() -> int:
 
     if a.verb == "request":
         return cmd_request(a.pr)
+    if a.verb == "brief":
+        return cmd_brief(a.pr, a.file)
     if a.verb == "packet":
         return cmd_packet(a.pr)
     if a.verb == "await":
