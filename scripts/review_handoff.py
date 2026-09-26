@@ -323,6 +323,19 @@ def cmd_advance() -> int:
     return 0
 
 
+POSTING_VERBS = ("request", "brief", "record")
+
+
+def account_guard() -> int:
+    """scripts/check_gh_account.py: post only as the operator's own GitHub login."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("check_gh_account",
+                                                  REPO_ROOT / "scripts/check_gh_account.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.main()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="verb", required=True)
@@ -344,6 +357,8 @@ def main() -> int:
     sub.add_parser("advance")
     a = ap.parse_args()
 
+    if a.verb in POSTING_VERBS and account_guard() != 0:
+        return 1  # posting as the wrong account notifies no one and cannot be approved
     if a.verb == "request":
         return cmd_request(a.pr)
     if a.verb == "brief":
