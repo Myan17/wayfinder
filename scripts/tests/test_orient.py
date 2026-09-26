@@ -80,12 +80,6 @@ def test_current_phase_inside_and_outside_the_plan():
     assert orient.current_phase([], dt.date(2026, 9, 22)) == (None, "no phase table found in DESIGN §19.1")
 
 
-def test_phase_tasks_skips_the_header_row_and_finds_the_right_section():
-    assert orient.phase_tasks(DESIGN, "P0") == [("S1 corpus", "4"), ("Schema v1", "3")]
-    assert orient.phase_tasks(DESIGN, "P1") == []        # no task table written yet
-    assert orient.phase_tasks(DESIGN, "P9") == []        # no such phase
-
-
 def test_cards_split_by_status():
     index = (
         "| `authz` | myan | ✅ [modules/authz.md](x) | i.py | f.py |\n"
@@ -97,22 +91,21 @@ def test_cards_split_by_status():
 
 def test_render_survives_everything_missing():
     out = orient.render(head="", phase=None, note="no phase table found in DESIGN §19.1",
-                        tasks=[], cards={"written": [], "placeholder": []}, trees=[], prs={},
+                        cards={"written": [], "placeholder": []}, trees=[], prs={},
                         merges=[], network=False)
     assert "(unknown)" in out
     assert "nothing — start with scripts/new-task.sh" in out
     assert "--no-network" in out
 
 
-def test_render_shows_the_phase_its_tasks_and_the_cards():
+def test_render_shows_the_phase_and_the_cards():
     phase = {"id": "P0", "theme": "Spikes", "start": dt.date(2026, 9, 21),
              "end": dt.date(2026, 9, 27), "gate": "**G0**: every spike answered"}
-    out = orient.render(head="abc1234", phase=phase, note="", tasks=[("S1 corpus", "4")],
+    out = orient.render(head="abc1234", phase=phase, note="",
                         cards={"written": ["authz"], "placeholder": ["cache"]}, trees=[], prs={},
                         merges=["abc1234 feat(authz): something"], network=True)
     assert "P0 Spikes · 2026-09-21 to 2026-09-27" in out
     assert "gate G0: every spike answered" in out          # the ** markers are stripped
-    assert "4h  S1 corpus" in out
     assert "written      authz" in out and "placeholder  cache" in out
 
 
@@ -161,7 +154,7 @@ def test_render_names_the_worktree_you_are_in_and_its_review_state():
     tree = {"path": "/wt/myan-authz-demo", "branch": "myan/authz/demo",
             "log": "docs/agent-log/myan-authz-demo.md", "handoff": "stopped at the lease test",
             "closed": False, "here": True}
-    out = orient.render(head="abc1234", phase=None, note="", tasks=[],
+    out = orient.render(head="abc1234", phase=None, note="",
                         cards={"written": [], "placeholder": []}, trees=[tree],
                         prs={"myan/authz/demo": "PR #7 APPROVED"}, merges=[], network=True)
     assert "myan/authz/demo  [PR #7 APPROVED]  <- you are here" in out
@@ -171,8 +164,141 @@ def test_render_names_the_worktree_you_are_in_and_its_review_state():
 def test_render_says_so_when_a_branch_has_no_pull_request():
     tree = {"path": "/wt/x", "branch": "myan/authz/x", "log": "l.md", "handoff": "",
             "closed": True, "here": False}
-    out = orient.render(head="abc1234", phase=None, note="", tasks=[],
+    out = orient.render(head="abc1234", phase=None, note="",
                         cards={"written": [], "placeholder": []}, trees=[tree], prs={},
                         merges=[], network=True)
     assert "[no pull request]" in out and "CLOSED" in out
     assert "none yet — read l.md" in out
+
+
+ORIENT = """
+## Current phase: P0
+
+Sep 21 {EN} 27. Gate **G0**: every spike answered. 32 h planned, 3 h of contingency.
+
+| # | Item | h | Why it is here in the order | Status |
+|---|---|---|---|---|
+| 1 | ADRs | 1 | G0 needs them | done #24 |
+| 4 | S5 River scheduling proof | 5 | Evidence for 9.3.3 | open |
+| 5 | S1 corpus | 4 | Needs ADR-0013 | open |
+| 9b | S3-1b: provision the A1 | {EM} | | blocked: Myan provisions the A1 |
+| 9c | S3-6 hybrid query | {EM} | Follow-up | open |
+
+## Owner actions
+
+These are `myan`'s to do, not an agent's.
+
+- Add `dispatcher` as a required status check
+  on main.
+
+## Next phase
+""".format(EN=EN, EM="\u2014")
+
+S5_LOG = """# Task log — myan-platform-s5-harness
+
+| Field | Value |
+|---|---|
+| Task | S5 harness against ADR-0004's rules (ORIENT item 4) |
+
+## Timeline
+
+### 2026-09-25T15:59:41Z · HANDOFF · myan · claude-code/opus-5 · 2bddc30
+State: 11/17 pass. Next, in order: (1) rerun the six; (2) mutation checks. Brief B on #34 and #35.
+
+### 2026-09-26T16:29:57Z · TEST · myan · claude-code/opus-5.5 · 6d11737
+Remaining six at 1 run each: four PASS. B2-pause FAIL S5-4, and the failure is past any clip
+because a TEST after a handoff can overturn it, which is why it is kept whole in the brief.
+"""
+
+
+def test_orient_items_keep_their_status_and_hours():
+    items = orient.orient_items(ORIENT)
+    assert [i["id"] for i in items] == ["1", "4", "5", "9b", "9c"]
+    assert items[1] == {"id": "4", "item": "S5 River scheduling proof", "hours": 5, "status": "open"}
+    assert items[3]["hours"] is None                           # an em dash is unsized, not zero
+
+
+def test_only_the_current_phase_table_counts():
+    # Review of #36 (gupta958): the next phase's list is written into ORIENT before G0 closes
+    # (rule 6), and its rows must not add hours to this phase's budget or become NEXT.
+    both = ORIENT.replace("## Next phase\n", """## Next phase: P1
+
+| # | Item | h | Why it is here in the order | Status |
+|---|---|---|---|---|
+| 1 | Kernel item | 8 | Later | open |
+
+Oct 1 {EN} 14. 70 h planned, 9 h of contingency.
+""".format(EN=EN))
+    assert [i["id"] for i in orient.orient_items(both)] == ["1", "4", "5", "9b", "9c"]
+    assert orient.orient_items(both)[0]["item"] == "ADRs"      # P0's item 1, not P1's
+    # Review round 2: the plan line is scoped the same way. P1's rows, hours and contingency
+    # change nothing, and a current phase with no plan line does not borrow P1's.
+    phase = {"id": "P0", "start": dt.date(2026, 9, 21), "end": dt.date(2026, 9, 27), "gate": "G0"}
+    today = dt.date(2026, 9, 26)
+    assert orient.budget(both, orient.orient_items(both), phase, today) == \
+        orient.budget(ORIENT, orient.orient_items(ORIENT), phase, today)
+    unplanned = both.replace("32 h planned, 3 h of contingency.", "")
+    assert "contingency" not in orient.budget(unplanned, orient.orient_items(unplanned), phase,
+                                              today)[0]
+    assert orient.orient_items("no current phase heading\n| 1 | x | 1 | y | open |") == []
+
+
+def test_next_item_is_the_first_open_one_that_is_not_blocked():
+    assert orient.next_item(orient.orient_items(ORIENT))["id"] == "4"
+    assert orient.next_item([]) is None
+
+
+def test_budget_flags_open_work_the_rest_of_the_phase_cannot_hold():
+    items = orient.orient_items(ORIENT)
+    phase = {"id": "P0", "start": dt.date(2026, 9, 21), "end": dt.date(2026, 9, 27),
+             "gate": "**G0**: x"}
+    lines = orient.budget(ORIENT, items, phase, dt.date(2026, 9, 26))
+    assert "9 h open (4 5; unsized 9c)" in lines[0] and "2 days left" in lines[0]
+    assert "3 h contingency" in lines[0]
+    assert len(lines) == 1                                     # 32 h / 7 days holds 9 h in 2 days
+    tight = orient.budget(ORIENT, items, phase, dt.date(2026, 9, 27))
+    assert "rule 5" in tight[1]                                # 1 day holds about 4.6 h, not 9
+
+
+def test_owner_actions_are_the_bullets_of_their_section_only():
+    assert orient.owner_actions(ORIENT) == ["Add `dispatcher` as a required status check on main."]
+    assert orient.owner_actions("no such section") == []
+
+
+def test_a_log_names_its_orient_item_and_what_came_after_its_handoff():
+    assert orient.orient_item_of(S5_LOG) == "4"
+    assert orient.orient_item_of(LOG) is None
+    handoff, later = orient.handoff_and_after(S5_LOG)
+    assert handoff.endswith("Brief B on #34 and #35.")         # whole entry, not clipped
+    assert len(later) == 1 and later[0].startswith("TEST 2026-09-26: Remaining six")
+    assert later[0].endswith("kept whole in the brief.")      # a TEST is never clipped
+
+
+def test_merged_pull_requests_are_marked_where_a_handoff_mentions_them():
+    assert orient.mark_merged("Waiting on B for #34 and #35.", {34}) == \
+        "Waiting on B for #34 [merged] and #35."
+
+
+def test_render_resumes_the_next_item_in_its_worktree_instead_of_restarting_it():
+    tree = {"path": "/wt/s5", "branch": "myan/platform/s5-harness", "log": "l.md",
+            "handoff": "State: 11/17 pass. [\u2026]", "closed": False, "here": False,
+            "item": "4", "task": "S5 harness (ORIENT item 4)",
+            "full": "State: 11/17 pass. Next, in order: (1) rerun the six.",
+            "later": ["TEST 2026-09-26: four PASS"]}
+    items = orient.orient_items(ORIENT)
+    out = orient.render(head="abc1234", phase=None, note="", cards={"written": [], "placeholder": []},
+                        trees=[tree], prs={}, merges=[], network=True, items=items,
+                        actions=["Add dispatcher."], budget_lines=["BUDGET x"])
+    assert "NEXT  item 4 · S5 River scheduling proof" in out
+    assert "resume  myan/platform/s5-harness" in out and "do not run new-task.sh" in out
+    assert "Next, in order: (1) rerun the six." in out         # the full handoff, not the clip
+    assert "since    TEST 2026-09-26: four PASS" in out
+    assert "OWNER ACTIONS" in out and "Add dispatcher." in out
+    assert out.index("NEXT") < out.index("OTHER IN FLIGHT") or "OTHER IN FLIGHT" not in out
+
+
+def test_render_says_how_to_start_the_next_item_when_no_worktree_has_it():
+    out = orient.render(head="abc1234", phase=None, note="", cards={"written": [], "placeholder": []},
+                        trees=[], prs={}, merges=[], network=True,
+                        items=orient.orient_items(ORIENT))
+    assert "start   scripts/new-task.sh" in out and "(ORIENT item 4)" in out
