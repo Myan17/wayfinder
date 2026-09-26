@@ -58,6 +58,8 @@
 /.gitignore                         @Gupta958            # platform — implemented by myan
 /.env.example                       @Gupta958            # platform — implemented by myan
 /README.md                          @Gupta958            # platform — implemented by myan
+/apps/api/wayfinder/__init__.py     @Gupta958            # platform — implemented by myan
+/apps/api/tests/__init__.py         @Gupta958            # platform — implemented by myan
 /docs/context/modules/platform.md   @Gupta958            # platform — implemented by myan
 /infra/compose/otel/                @Gupta958            # observability — implemented by myan
 /docs/context/modules/observability.md @Gupta958            # observability — implemented by myan
@@ -73,3 +75,8 @@
 /docs/DESIGN.md                     @Gupta958            # agreements — implemented by joint
 /scripts/                           @Gupta958            # agreements — implemented by joint
 /.githooks/                         @Gupta958            # agreements — implemented by joint
+/.github/pull_request_template.md   @Gupta958            # agreements — implemented by joint
+/docs/archive/DESIGN.v0.2.md        @Gupta958            # agreements — implemented by joint
+/docs/context/INDEX.md              @Gupta958            # agreements — implemented by joint
+/docs/context/TEMPLATE-module-card.md @Gupta958            # agreements — implemented by joint
+/docs/review/REVIEW-v0.2.md         @Gupta958            # agreements — implemented by joint
