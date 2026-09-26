@@ -37,7 +37,7 @@ existing worktree and read the last `HANDOFF` entry in its task log.
 | "Push now; CI will tell me if the size is wrong" | Run the guardrail scripts first and stop if any fails. #32 went out at 406 lines, and CI went red in front of the reviewer |
 | "Ask for a size exception" | Split the pull request by function. 400 lines, and lock files such as `go.sum` count |
 | "The rebase is done; ping the reviewer" | First rewrite the description's evidence: the base commit, the old and new heads, the test counts. `gupta958` bounced #27 twice for stale descriptions |
-| "Post the brief in Discord" | `gupta958` cannot read the channel. Comment on the PR with `@Gupta958`: `gh pr comment <pr> --body-file brief.md` until #35 merges, then `scripts/review_handoff.py brief <pr>` |
+| "Post the brief in Discord" | `gupta958` cannot read the channel. Brief on the PR: `scripts/review_handoff.py brief <pr> --file brief.md` (it @-mentions them) |
 
 ## Project facts worth loading early
 

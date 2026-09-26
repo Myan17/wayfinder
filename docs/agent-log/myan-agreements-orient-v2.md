@@ -43,3 +43,13 @@ Second cold-agent run on this branch. ORIENT.md alone: 4.5/18 facts (was 2.5). C
 ### 2026-09-26T18:30:33Z · COMMIT · myan · claude-code/opus-5.5 · parent:01b89c2
 fix(agreements): keep later TEST entries whole; ORIENT rule 1 defers to NEXT
 4 files changed, 16 insertions(+), 7 deletions(-)
+
+### 2026-09-26T18:52:59Z · DECIDE · myan · claude-code/opus-5.5 · d82addc
+Rebased onto 8435c4f (#35 merged), was based on 2bddc30; heads 59876e0 -> d82addc before this fix. Review of #36 by gupta958: orient_items scanned every five-column table, so rule 6's next-phase list would add its hours to the budget and could become NEXT. It now reads only '## Current phase' up to the next '## '. Regression test with both tables. gupta958 approved the whole handoff, the planned-hours/day pace and the four CLAUDE.md rows. The CLAUDE.md brief row now names review_handoff.py brief, which merged in #35.
+
+### 2026-09-26T18:52:59Z · TEST · myan · claude-code/opus-5.5 · d82addc
+uv run pytest scripts/tests: 73 passed (new: test_only_the_current_phase_table_counts). Brief on the real ORIENT unchanged: BUDGET 21 h open, NEXT item 4.
+
+### 2026-09-26T18:52:59Z · COMMIT · myan · claude-code/opus-5.5 · parent:d82addc
+fix(agreements): scope ORIENT items to the current phase
+4 files changed, 30 insertions(+), 3 deletions(-)

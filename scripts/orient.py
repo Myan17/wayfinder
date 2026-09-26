@@ -104,9 +104,14 @@ def current_phase(phases: list[dict], today: dt.date) -> tuple[dict | None, str]
 
 
 def orient_items(orient: str) -> list[dict]:
-    """The rows of ORIENT's item table, in order. An em dash in the hours column is unsized."""
+    """The rows of the current phase's item table, in order. An em dash in hours is unsized.
+
+    Only `## Current phase` counts, up to the next `## ` heading: rule 6 writes the next phase's
+    list into the same file before the gate closes, and its rows are not this phase's work.
+    """
+    section = re.search(r"^## Current phase\b.*?\n(.*?)(?=^## |\Z)", orient, re.M | re.S)
     items = []
-    for line in orient.splitlines():
+    for line in (section.group(1) if section else "").splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) == 5 and re.fullmatch(r"\d+[a-z]?", cells[0]):
             items.append({"id": cells[0], "item": cells[1],

@@ -172,6 +172,8 @@ def test_render_says_so_when_a_branch_has_no_pull_request():
 
 
 ORIENT = """
+## Current phase: P0
+
 Sep 21 {EN} 27. Gate **G0**: every spike answered. 32 h planned, 3 h of contingency.
 
 | # | Item | h | Why it is here in the order | Status |
@@ -214,6 +216,20 @@ def test_orient_items_keep_their_status_and_hours():
     assert [i["id"] for i in items] == ["1", "4", "5", "9b", "9c"]
     assert items[1] == {"id": "4", "item": "S5 River scheduling proof", "hours": 5, "status": "open"}
     assert items[3]["hours"] is None                           # an em dash is unsized, not zero
+
+
+def test_only_the_current_phase_table_counts():
+    # Review of #36 (gupta958): the next phase's list is written into ORIENT before G0 closes
+    # (rule 6), and its rows must not add hours to this phase's budget or become NEXT.
+    both = ORIENT.replace("## Next phase\n", """## Next phase: P1
+
+| # | Item | h | Why it is here in the order | Status |
+|---|---|---|---|---|
+| 1 | Kernel item | 8 | Later | open |
+""")
+    assert [i["id"] for i in orient.orient_items(both)] == ["1", "4", "5", "9b", "9c"]
+    assert orient.orient_items(both)[0]["item"] == "ADRs"      # P0's item 1, not P1's
+    assert orient.orient_items("no current phase heading\n| 1 | x | 1 | y | open |") == []
 
 
 def test_next_item_is_the_first_open_one_that_is_not_blocked():
