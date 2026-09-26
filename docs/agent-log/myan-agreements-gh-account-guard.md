@@ -33,3 +33,10 @@ uv run pytest scripts/tests: 70 passed (4 new guard tests, 1 new review_handoff 
 ### 2026-09-26T22:23:57Z · COMMIT · myan · claude-code/opus-5.5 · parent:8435c4f
 feat(agreements): refuse pushes and review posts under the wrong GitHub account
 6 files changed, 180 insertions(+)
+
+### 2026-09-26T22:52:22Z · DECIDE · myan · claude-code/opus-5.5 · aa37876
+Rebased onto 2e8ebe0 (#40 merged), was based on 8435c4f; head 0ff4445 before the rebase. No conflicts; no content change.
+
+### 2026-09-26T22:52:22Z · COMMIT · myan · claude-code/opus-5.5 · parent:aa37876
+docs(agents): log the rebase onto #40
+1 file changed, 3 insertions(+)
