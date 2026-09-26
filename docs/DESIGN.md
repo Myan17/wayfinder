@@ -11,7 +11,7 @@
 | Date | 2026-09-18 |
 | Supersedes | v0.2 (2026-09-17), archived at `docs/archive/DESIGN.v0.2.md`, SHA-256 `97c5886374e1488e6c8848186b1323d0ad599222b796c1fcd39fe0b4277f05e3` |
 | Review being answered | `docs/review/REVIEW-v0.2.md` (findings WF-01 … WF-30); disposition of every finding in §23 |
-| Planned build window | Mon 2026-09-21 → Sun 2026-11-15 (8 weeks), launch review Mon 2026-11-16 |
+| Planned build window | Mon 2026-09-21 → Wed 2026-11-18 (8 weeks + 3 days, §19.8 step 4 taken at G0), launch review Thu 2026-11-19 |
 | Working name | "Wayfinder" is a placeholder; rename before the repo goes public |
 
 > **What changed in v0.3.** The v0.2 review found four design-level disclosure paths, a data-identity
@@ -1948,13 +1948,13 @@ exists, and its contingency comes from features, never from evidence.
 
 | Phase | Weeks | Dates | Theme | Gate |
 |---|---|---|---|---|
-| P0 | 1 | Sep 21 – 27 | Spikes, decisions, schema, selection rules | **G0**: every spike answered; ADR-0013/0015 written before any experiment |
-| P1 | 2–3 | Sep 28 – Oct 11 | Safety and consistency kernel | **G1**: authorization, generation fencing, GC and River scheduling proven by tests |
-| P2 | 4–5 | Oct 12 – 25 | Authorized retrieval vertical slice | **G2**: install → index → authorized search → cite → cache → revoke → deny → delete, end to end, with baselines |
-| P3 | 6 | Oct 26 – Nov 1 | Generated answers | **G3**: classification, provider budgets, answer state machine, answerability |
-| P4 | 7 | Nov 2 – 8 | Measurement and hardening | **G4**: experiments, capacity profiles, faults, recovery, security suites |
-| P5 | 8 | Nov 9 – 15 | Release evidence | **G5**: exit criteria in §16.7 met on the release commit |
-| — | — | Mon Nov 16 | Launch review | Approve, or remove the unproven capability from the release |
+| P0 | 1 | Sep 21 – 30 | Spikes, decisions, schema, selection rules | **G0**: every spike answered; ADR-0013/0015 written before any experiment |
+| P1 | 2–3 | Oct 1 – 14 | Safety and consistency kernel | **G1**: authorization, generation fencing, GC and River scheduling proven by tests |
+| P2 | 4–5 | Oct 15 – 28 | Authorized retrieval vertical slice | **G2**: install → index → authorized search → cite → cache → revoke → deny → delete, end to end, with baselines |
+| P3 | 6 | Oct 29 – Nov 4 | Generated answers | **G3**: classification, provider budgets, answer state machine, answerability |
+| P4 | 7 | Nov 5 – 11 | Measurement and hardening | **G4**: experiments, capacity profiles, faults, recovery, security suites |
+| P5 | 8 | Nov 12 – 18 | Release evidence | **G5**: exit criteria in §16.7 met on the release commit |
+| — | — | Thu Nov 19 | Launch review | Approve, or remove the unproven capability from the release |
 
 Capacity: ~35 h/week × 8 = 280 h. Planned work is **247 h**, leaving **33 h** of contingency
 distributed so that *every* phase holds some: P0 3 h, P1 5 h, P2 10 h, P3 3 h, P4 2 h, P5 10 h. A phase
@@ -2282,3 +2282,4 @@ wayfinder/
 | 0.1 | 2026-09-17 | First draft |
 | 0.2 | 2026-09-17 | Internal review fixes: push-debounce loss, heartbeat staleness, compare-and-swap and GC safety, HOT-update claim removed, token refresh and `team` webhook, telemetry content policy, per-user answer rows, WBS rebuilt to 120 h, Langfuse unit math, k6 first-token measurement, dev/test splits, ADR-0007 options |
 | 0.3 | 2026-09-18 | Principal review response (two rounds: the v0.2 findings, then a verification pass over this draft that corrected the team-event revocation path, the `eligible_repo` outage and public-connector leases, envelope classification by connection input policy, cross-repository composite keys, `ON DELETE` modes on `base_generation_id` and `cached_from`, per-dimension vector tables with a real `halfvec` typmod, the denormalized `body_text` BM25 row, pseudo-repository evaluation snapshots, stable-identifier evidence manifests, the CPU table including the cost of reranking searches, telemetry sampling at 0.25%, per-phase contingency, and the missing test-ID inventory). Authorization rebuilt as leased facts with synchronous negative invalidation, fenced refresh and re-authorized artifacts (WF-01–04). Content/representation/occurrence identity with specification-keyed vectors (WF-05). Deletion closure, tombstones and ordered GC (WF-06). Desired-generation scheduling replacing queue-uniqueness assumptions (WF-07) and fenced activation (WF-08). Answer state machine and citation contract (WF-09, WF-11); answerability from a relevance signal instead of RRF (WF-10); provider budgets and deadlines (WF-12). Evaluation corrected: authorized exact oracle (WF-13), per-pair base commits and grouped splits with a final held-out set (WF-14–15), BM25 baseline and Wilson intervals (WF-28). Load protocol with open-arrival and cold profiles and an independent oracle (WF-16); capacity restated as a hypothesis with a background reservation (WF-17); three recovery tiers (WF-18); hostile-ingestion bounds (WF-19); two source modes (WF-20); threads deferred (WF-21); schedule replanned to 250 h + 30 h contingency over 8 weeks with protected evidence (WF-22); privileged-operation contracts (WF-23); chunking and retrieval determinism (WF-24–25); health and SLO math (WF-26); free-tier evidence (WF-27); release manifest (WF-29); all editorial contradictions resolved (WF-30) |
+| 0.3.1 | 2026-09-26 | §19.8 step 4 at G0: every phase moves 3 days (P0 ends Sep 30, launch review Thu Nov 19). P0 had 21 h open with a day left; nothing was cut |
