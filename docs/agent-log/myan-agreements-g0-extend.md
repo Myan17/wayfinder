@@ -58,3 +58,13 @@ Rebased onto 0126dc9 (#42 merged), was based on 2d2f1a6; head 3bc37b8 before the
 ### 2026-09-26T23:07:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:d349d8e
 docs(agents): log the rebase onto #42
 1 file changed, 3 insertions(+)
+
+### 2026-09-26T23:12:55Z · DECIDE · myan · claude-code/opus-5.5 · cfb8536
+Review of #43 by gupta958: the revision history declares 0.3.1, but the header still said v0.3 / 0.3 / 2026-09-18. Set Status to v0.3.1, Version to 0.3.1 and Date to 2026-09-26. The Status line keeps 'responds to the principal review of 2026-09-18', which is still what v0.3.x responds to. Not changed: AGENTS.md:10 and CLAUDE.md:44 cite DESIGN as '(v0.3)'. Agents may not edit AGENTS.md, and 0.3.1 is a patch of 0.3, so that is left for the reviewer to rule on.
+
+### 2026-09-26T23:12:55Z · TEST · myan · claude-code/opus-5.5 · cfb8536
+The DESIGN header lines 9-11 read v0.3.1 / 0.3.1 / 2026-09-26, matching the 0.3.1 revision row. Scripts tests pass.
+
+### 2026-09-26T23:12:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:cfb8536
+docs(agreements): DESIGN header says 0.3.1, matching its revision row
+2 files changed, 9 insertions(+), 3 deletions(-)

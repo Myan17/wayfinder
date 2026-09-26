@@ -6,9 +6,9 @@
 |---|---|
 | Author / owner | Myan Gupta |
 | Approver | Engineering Manager (reviewer of this document) |
-| Status | **Draft — for design review (v0.3, responds to the principal review of 2026-09-18)** |
-| Version | 0.3 |
-| Date | 2026-09-18 |
+| Status | **Draft — for design review (v0.3.1, responds to the principal review of 2026-09-18)** |
+| Version | 0.3.1 |
+| Date | 2026-09-26 |
 | Supersedes | v0.2 (2026-09-17), archived at `docs/archive/DESIGN.v0.2.md`, SHA-256 `97c5886374e1488e6c8848186b1323d0ad599222b796c1fcd39fe0b4277f05e3` |
 | Review being answered | `docs/review/REVIEW-v0.2.md` (findings WF-01 … WF-30); disposition of every finding in §23 |
 | Planned build window | Mon 2026-09-21 → Wed 2026-11-18 (8 weeks + 3 days, §19.8 step 4 taken at G0), launch review Thu 2026-11-19 |
