@@ -41,6 +41,8 @@ existing worktree and read the last `HANDOFF` entry in its task log.
 - **Ownership and scope:** `docs/team/OWNERSHIP.md`. Modules, path globs, phase plan. `myan`
   implements; `gupta958` reviews and merges every pull request.
 - **Context map:** `docs/context/INDEX.md`. What to read for anything you do not own.
+- **Code map:** `python3 scripts/codemap.py` shows the whole repository in about 1k tokens: modules with
+  their real footprint, scripts, migrations, ADRs and CI jobs. Run it instead of exploring the tree.
 - **Phase you are in:** see `docs/DESIGN.md` §19. Phase 1 is the safety kernel — until it passes,
   only public and synthetic data is used.
 - **Stack:** Python 3.13 + FastAPI (read path), Go (write path), Postgres with pgvector and
