@@ -47,10 +47,10 @@ tasks touch one side only.
 | `indexing` | myan | `apps/ingestd/internal/{embed,generation,gc}/**` | `generation`, `representation`, `vector_d*`, `occurrence`, `embedding_cache`, `tombstone` | [indexing](../context/modules/indexing.md) |
 | `webhooks` | myan | `apps/ingestd/internal/webhook/**` | `connection`, `repository`, `webhook_delivery` | [webhooks](../context/modules/webhooks.md) |
 | `eval-data` | myan | `eval/miners/**`, `eval/datasets/**` | — | [eval-data](../context/modules/eval-data.md) |
-| `platform` | myan | `infra/**`, `.github/workflows/**`, `loadtest/**`, `apps/ingestd/{go.mod,go.sum,cmd/**}` | — | [platform](../context/modules/platform.md) |
+| `platform` | myan | `infra/**`, `.github/workflows/**`, `loadtest/**`, `apps/ingestd/{go.mod,go.sum,cmd/**}`, `apps/api/wayfinder/__init__.py`, `apps/api/tests/__init__.py` | — | [platform](../context/modules/platform.md) |
 | `observability` | myan | `apps/*/**/telemetry*`, `infra/compose/otel/**` | `audit_event` | [observability](../context/modules/observability.md) |
 | `schema` | **joint** | `db/migrations/**` | the schema itself | [schema](../context/modules/schema.md) |
-| `agreements` | **joint** | `AGENTS.md`, `CLAUDE.md`, `ORIENT.md`, `.claude/**`, `docs/adr/**`, `docs/team/**`, `.github/CODEOWNERS`, `docs/DESIGN.md` | — | — |
+| `agreements` | **joint** | `AGENTS.md`, `CLAUDE.md`, `ORIENT.md`, `.claude/**`, `docs/adr/**`, `docs/team/**`, `.github/CODEOWNERS`, `docs/DESIGN.md`, `.github/pull_request_template.md`, `docs/archive/DESIGN.v0.2.md`, `docs/context/INDEX.md`, `docs/context/TEMPLATE-module-card.md`, `docs/review/REVIEW-v0.2.md` | — | — |
 
 **Joint** (`schema`, `agreements`) means the change is structural: it needs the reviewer's explicit
 sign-off on the *design*, not just the diff, and the review checklist for schema applies. Since
@@ -107,10 +107,10 @@ modules:
   indexing:      {owner: myan, paths: ["apps/ingestd/internal/embed/**", "apps/ingestd/internal/generation/**", "apps/ingestd/internal/gc/**", "docs/context/modules/indexing.md"]}
   webhooks:      {owner: myan, paths: ["apps/ingestd/internal/webhook/**", "docs/context/modules/webhooks.md"]}
   eval-data:     {owner: myan, paths: ["eval/miners/**", "eval/datasets/**", "docs/context/modules/eval-data.md"]}
-  platform:      {owner: myan, paths: ["infra/**", "apps/ingestd/go.mod", "apps/ingestd/go.sum", "apps/ingestd/cmd/**", ".github/workflows/**", "loadtest/**", "Makefile", "pyproject.toml", "uv.lock", ".gitignore", ".env.example", "README.md", "docs/context/modules/platform.md"]}
+  platform:      {owner: myan, paths: ["infra/**", "apps/ingestd/go.mod", "apps/ingestd/go.sum", "apps/ingestd/cmd/**", ".github/workflows/**", "loadtest/**", "Makefile", "pyproject.toml", "uv.lock", ".gitignore", ".env.example", "README.md", "apps/api/wayfinder/__init__.py", "apps/api/tests/__init__.py", "docs/context/modules/platform.md"]}
   observability: {owner: myan, paths: ["infra/compose/otel/**", "docs/context/modules/observability.md"]}
   schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
   agent-logs:    {owner: any,   paths: ["docs/agent-log/**"]}
   boundary:      {owner: any,   paths: ["docs/context/boundary/**"]}
-  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "ORIENT.md", ".claude/**", "docs/adr/**", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**"]}
+  agreements:    {owner: joint, paths: ["AGENTS.md", "CLAUDE.md", "ORIENT.md", ".claude/**", "docs/adr/**", "docs/team/**", ".github/CODEOWNERS", "docs/DESIGN.md", "scripts/**", ".githooks/**", ".github/pull_request_template.md", "docs/archive/DESIGN.v0.2.md", "docs/context/INDEX.md", "docs/context/TEMPLATE-module-card.md", "docs/review/REVIEW-v0.2.md"]}
 ```
