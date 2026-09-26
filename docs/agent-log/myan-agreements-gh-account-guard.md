@@ -40,3 +40,10 @@ Rebased onto 2e8ebe0 (#40 merged), was based on 8435c4f; head 0ff4445 before the
 ### 2026-09-26T22:52:22Z · COMMIT · myan · claude-code/opus-5.5 · parent:aa37876
 docs(agents): log the rebase onto #40
 1 file changed, 3 insertions(+)
+
+### 2026-09-26T22:59:21Z · DECIDE · myan · claude-code/opus-5.5 · 6a06bce
+Rebased onto 2d2f1a6 (#41 merged), was based on 2e8ebe0; head b9482e5 before the rebase. No conflicts; no content change.
+
+### 2026-09-26T22:59:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:6a06bce
+docs(agents): log the rebase onto #41
+1 file changed, 3 insertions(+)
