@@ -103,15 +103,18 @@ def current_phase(phases: list[dict], today: dt.date) -> tuple[dict | None, str]
     return None, "no phase table found in DESIGN §19.1"
 
 
-def orient_items(orient: str) -> list[dict]:
-    """The rows of the current phase's item table, in order. An em dash in hours is unsized.
-
-    Only `## Current phase` counts, up to the next `## ` heading: rule 6 writes the next phase's
-    list into the same file before the gate closes, and its rows are not this phase's work.
-    """
+def current_section(orient: str) -> str:
+    """`## Current phase` up to the next `## `. Rule 6 writes the next phase's list, and its own
+    plan and contingency line, into the same file before the gate closes; none of it is this
+    phase's."""
     section = re.search(r"^## Current phase\b.*?\n(.*?)(?=^## |\Z)", orient, re.M | re.S)
+    return section.group(1) if section else ""
+
+
+def orient_items(orient: str) -> list[dict]:
+    """The rows of the current phase's item table, in order. An em dash in hours is unsized."""
     items = []
-    for line in (section.group(1) if section else "").splitlines():
+    for line in current_section(orient).splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) == 5 and re.fullmatch(r"\d+[a-z]?", cells[0]):
             items.append({"id": cells[0], "item": cells[1],
@@ -146,7 +149,7 @@ def budget(orient: str, items: list[dict], phase: dict | None, today: dt.date) -
     hours = sum(i["hours"] for i in sized)
     days = (phase["end"] - today).days + 1
     gate = (re.search(r"G\d+", phase["gate"]) or re.search(r"P\d+", phase["id"])).group(0)
-    plan = re.search(r"(\d+) h planned, (\d+) h of contingency", orient)
+    plan = re.search(r"(\d+) h planned, (\d+) h of contingency", current_section(orient))
     unsized = [i["id"] for i in open_ if i["hours"] is None]
     line = (f"BUDGET  {gate} closes {phase['end']}, {days} days left · {hours} h open "
             f"({' '.join(i['id'] for i in sized)}{'; unsized ' + ' '.join(unsized) if unsized else ''})")

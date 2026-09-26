@@ -226,9 +226,20 @@ def test_only_the_current_phase_table_counts():
 | # | Item | h | Why it is here in the order | Status |
 |---|---|---|---|---|
 | 1 | Kernel item | 8 | Later | open |
-""")
+
+Oct 1 {EN} 14. 70 h planned, 9 h of contingency.
+""".format(EN=EN))
     assert [i["id"] for i in orient.orient_items(both)] == ["1", "4", "5", "9b", "9c"]
     assert orient.orient_items(both)[0]["item"] == "ADRs"      # P0's item 1, not P1's
+    # Review round 2: the plan line is scoped the same way. P1's rows, hours and contingency
+    # change nothing, and a current phase with no plan line does not borrow P1's.
+    phase = {"id": "P0", "start": dt.date(2026, 9, 21), "end": dt.date(2026, 9, 27), "gate": "G0"}
+    today = dt.date(2026, 9, 26)
+    assert orient.budget(both, orient.orient_items(both), phase, today) == \
+        orient.budget(ORIENT, orient.orient_items(ORIENT), phase, today)
+    unplanned = both.replace("32 h planned, 3 h of contingency.", "")
+    assert "contingency" not in orient.budget(unplanned, orient.orient_items(unplanned), phase,
+                                              today)[0]
     assert orient.orient_items("no current phase heading\n| 1 | x | 1 | y | open |") == []
 
 

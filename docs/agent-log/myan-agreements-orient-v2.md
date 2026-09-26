@@ -53,3 +53,13 @@ uv run pytest scripts/tests: 73 passed (new: test_only_the_current_phase_table_c
 ### 2026-09-26T18:52:59Z · COMMIT · myan · claude-code/opus-5.5 · parent:d82addc
 fix(agreements): scope ORIENT items to the current phase
 4 files changed, 30 insertions(+), 3 deletions(-)
+
+### 2026-09-26T19:11:23Z · DECIDE · myan · claude-code/opus-5.5 · 6e32783
+Review round 2 of #36 by gupta958: budget()'s plan/contingency search read the whole file, so a next-phase plan line could set this phase's pace and contingency. current_section() now serves both orient_items() and budget().
+
+### 2026-09-26T19:11:23Z · TEST · myan · claude-code/opus-5.5 · 6e32783
+73 passed. test_only_the_current_phase_table_counts now gives P1 its own table and '70 h planned, 9 h of contingency' line. The budget with P1 present equals the budget without it, and a current phase with no plan line shows no contingency. Mutation check: with the search on the whole file, the test fails (1 failed, 21 passed); restored, 73 passed.
+
+### 2026-09-26T19:11:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:6e32783
+fix(agreements): scope budget's plan line to the current phase too
+3 files changed, 29 insertions(+), 9 deletions(-)
