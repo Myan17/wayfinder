@@ -334,3 +334,62 @@ def test_a_commented_line_in_the_env_file_is_not_config(monkeypatch, tmp_path):
 
 def test_a_missing_dotenv_is_not_an_error(no_env_file):
     assert handoff.webhook_url() == ""
+
+
+@pytest.fixture
+def captured(monkeypatch, tmp_path):
+    """Fake gh and the webhook; point CODEOWNERS at a known reviewer."""
+    (tmp_path / ".github").mkdir()
+    (tmp_path / ".github" / "CODEOWNERS").write_text("*  @Gupta958\n")
+    monkeypatch.setattr(handoff, "REPO_ROOT", tmp_path)
+    calls = {"gh": [], "notify": []}
+
+    def fake_gh(*args):
+        calls["gh"].append(args)
+        return "https://github.com/o/r/pull/34#issuecomment-1\n"
+
+    monkeypatch.setattr(handoff, "gh", fake_gh)
+    monkeypatch.setattr(handoff, "notify", lambda text: calls["notify"].append(text) or "webhook: 204")
+    return calls, tmp_path
+
+
+def test_brief_is_posted_on_the_pull_request_with_a_mention(captured):
+    calls, tmp = captured
+    (brief := tmp / "b.md").write_text("Approve and squash-merge after checking ADR-0004 line 40.")
+    assert handoff.cmd_brief("34", brief) == 0
+    args = calls["gh"][0]
+    assert args[:3] == ("pr", "comment", "34")
+    body = args[args.index("--body") + 1]
+    assert body.startswith("@Gupta958") and "ADR-0004 line 40" in body
+
+
+def test_brief_webhook_carries_the_link_not_the_brief(captured):
+    calls, tmp = captured
+    (brief := tmp / "b.md").write_text("secret-ish detail that belongs on GitHub only")
+    handoff.cmd_brief("34", brief)
+    assert calls["notify"] == [
+        "Brief for #34 posted on the pull request: https://github.com/o/r/pull/34#issuecomment-1"
+    ]
+
+
+def test_brief_does_not_double_an_existing_mention(captured):
+    calls, tmp = captured
+    (brief := tmp / "b.md").write_text("@gupta958 please look at the table.")
+    handoff.cmd_brief("34", brief)
+    body = calls["gh"][0][calls["gh"][0].index("--body") + 1]
+    assert body.lower().count("@gupta958") == 1
+
+
+def test_an_empty_brief_posts_nothing(captured):
+    calls, tmp = captured
+    (brief := tmp / "b.md").write_text("  \n")
+    assert handoff.cmd_brief("34", brief) == 1
+    assert calls["gh"] == [] and calls["notify"] == []
+
+
+def test_reviewers_are_read_from_the_repository_not_the_callers_directory(captured, monkeypatch, tmp_path):
+    _, _ = captured
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+    assert handoff.reviewers() == ["@Gupta958"]
