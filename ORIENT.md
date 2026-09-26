@@ -1,5 +1,8 @@
 # ORIENT.md — what to work on, in order
 
+Wayfinder is permission-aware retrieval and question answering over a GitHub organization's code,
+docs, issues and pull requests (`docs/DESIGN.md`).
+
 **Every agent session reads this file before its first action.** A `SessionStart` hook in
 `.claude/settings.json` prints it, followed by the `scripts/orient.py` brief, into every Claude Code
 session. Tools without hooks read it by hand as step 1 of `AGENTS.md` §9. It is not optional, and it
@@ -11,7 +14,10 @@ gives the **order** to work them in and the **status** of each item, which DESIG
 ## The rule
 
 1. The next task is the **first item below whose status is not `done`** and that is not `blocked`.
-   Start it with `scripts/new-task.sh`. Do not offer a menu of options. The order is already decided.
+   The status here changes only on merge, so an `open` item may already be under way:
+   `scripts/orient.py`'s NEXT line says `resume <branch>` (work there, from its last HANDOFF) or
+   `start` (run `scripts/new-task.sh`, ending the description with `(ORIENT item <n>)` so the next
+   session finds it). Do not offer a menu of options. The order is already decided.
 2. Work outside this list happens only when `myan` or `gupta958` directs it explicitly in the
    session. Log a `DECIDE` entry that quotes the direction. "It would be useful" is not a direction.
 3. The pull request that completes an item also changes that item's status here to `done #<pr>`.
@@ -48,6 +54,14 @@ experiment. 32 h planned, 3 h of contingency.
 - Agreements tooling not in §19: line limit (#8), review handoff and its skill (#11, #13), content
   hashes for cards (#14), webhook fix (#15), `scripts/orient.py` (#20, #21).
 - Platform: platform card (#2), dev dependency lock (#3, #18), S3 acceptance rules (#16, #17).
+
+## Owner actions
+
+These are `myan`'s or `gupta958`'s to do, not an agent's. `scripts/orient.py` prints them so every
+session can remind the owner. The pull request that follows up on one removes its line.
+
+- Add `dispatcher` as a required status check on main (only `guardrails` is required as of
+  2026-09-26): `gh api -X PATCH repos/Myan17/wayfinder/branches/main/protection/required_status_checks -F strict=true -f 'checks[][context]=guardrails' -f 'checks[][context]=dispatcher'`
 
 ## Next phase
 

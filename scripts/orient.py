@@ -7,9 +7,9 @@ the brief cannot go stale, cannot land in a diff and cannot conflict on a rebase
 Also reads `git worktree list` for what is open, each task log's last HANDOFF for where it stopped,
 and GitHub for review state.
 
-No done column for the phase's tasks: nothing in the repository records completion, so it would be
-a guess, and a guessed "done" is worse than none. Nothing from CLAUDE.md either — a Claude Code
-session already loads it, and printing it again would be paying twice.
+Also reads ORIENT.md's item table for the NEXT item, its owner actions and the phase's budget.
+Status comes from ORIENT only, where a merged pull request records it; the brief never guesses one.
+Nothing from CLAUDE.md — a Claude Code session already loads it, and printing it twice costs twice.
 
 usage: scripts/orient.py [--no-network]
 """
@@ -20,6 +20,7 @@ import json
 import re
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 MONTHS = {m: i for i, m in enumerate(
@@ -30,6 +31,7 @@ MONTHS = {m: i for i, m in enumerate(
 ROOT = Path(__file__).resolve().parents[1]
 DESIGN = ROOT / "docs/DESIGN.md"
 INDEX = ROOT / "docs/context/INDEX.md"
+ORIENT = ROOT / "ORIENT.md"
 LOG_DIR = Path("docs/agent-log")  # relative: joined onto each worktree's own path
 
 
@@ -101,17 +103,65 @@ def current_phase(phases: list[dict], today: dt.date) -> tuple[dict | None, str]
     return None, "no phase table found in DESIGN §19.1"
 
 
-def phase_tasks(design: str, phase_id: str) -> list[tuple[str, str]]:
-    """The task/hours rows of the §19.x table for one phase."""
-    section = re.search(rf"^### 19\.\d+ Phase {phase_id[1:]} — .*?(?=^### |^## )", design, re.M | re.S)
-    if not section:
+def current_section(orient: str) -> str:
+    """`## Current phase` up to the next `## `. Rule 6 writes the next phase's list, and its own
+    plan and contingency line, into the same file before the gate closes; none of it is this
+    phase's."""
+    section = re.search(r"^## Current phase\b.*?\n(.*?)(?=^## |\Z)", orient, re.M | re.S)
+    return section.group(1) if section else ""
+
+
+def orient_items(orient: str) -> list[dict]:
+    """The rows of the current phase's item table, in order. An em dash in hours is unsized."""
+    items = []
+    for line in current_section(orient).splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) == 5 and re.fullmatch(r"\d+[a-z]?", cells[0]):
+            items.append({"id": cells[0], "item": cells[1],
+                          "hours": int(cells[2]) if cells[2].isdigit() else None,
+                          "status": cells[4]})
+    return items
+
+
+def next_item(items: list[dict]) -> dict | None:
+    """ORIENT rule 1: the first item that is neither done nor blocked."""
+    return next((i for i in items if not i["status"].startswith(("done", "blocked"))), None)
+
+
+def owner_actions(orient: str) -> list[str]:
+    """The bullets of ORIENT's `## Owner actions` section: things only an owner can do."""
+    section = re.search(r"^## Owner actions\n(.*?)(?=^## |\Z)", orient, re.M | re.S)
+    # a bullet runs on over indented continuation lines, as Markdown wraps them
+    bullets = re.findall(r"^- (.+(?:\n  +\S.*)*)", section.group(1), re.M) if section else []
+    return [" ".join(b.split()) for b in bullets]
+
+
+def budget(orient: str, items: list[dict], phase: dict | None, today: dt.date) -> list[str]:
+    """Open hours against the days the phase has left, at the pace the phase was planned at.
+
+    The warning is ORIENT rule 5's trigger, and it has to be computed: nobody reads "Sep 21 - 27"
+    and the item table together at the top of a session and does the sum.
+    """
+    if not phase:
         return []
-    tasks = []
-    for row in re.finditer(r"^\| ([^|]+?) \| (\d+) \|", section.group(0), re.M):
-        label = re.sub(r"[`*]", "", row.group(1)).strip()
-        if label.lower() != "task":
-            tasks.append((label, row.group(2)))
-    return tasks
+    open_ = [i for i in items if not i["status"].startswith(("done", "blocked"))]
+    sized = [i for i in open_ if i["hours"] is not None]
+    hours = sum(i["hours"] for i in sized)
+    days = (phase["end"] - today).days + 1
+    gate = (re.search(r"G\d+", phase["gate"]) or re.search(r"P\d+", phase["id"])).group(0)
+    plan = re.search(r"(\d+) h planned, (\d+) h of contingency", current_section(orient))
+    unsized = [i["id"] for i in open_ if i["hours"] is None]
+    line = (f"BUDGET  {gate} closes {phase['end']}, {days} days left · {hours} h open "
+            f"({' '.join(i['id'] for i in sized)}{'; unsized ' + ' '.join(unsized) if unsized else ''})")
+    if not plan:
+        return [line]
+    lines = [line + f" · {plan.group(2)} h contingency"]
+    pace = int(plan.group(1)) / ((phase["end"] - phase["start"]).days + 1)
+    if 0 < days and hours > pace * days:
+        lines.append(f"  !! at the planned pace ({pace:.1f} h/day) {days} days hold {pace * days:.0f} h:"
+                     f" apply ORIENT rule 5 (DESIGN §19.8) today, and rule 6 (the next phase's list)"
+                     f" before {gate} closes")
+    return lines
 
 
 def parse_cards(index: str) -> dict[str, list[str]]:
@@ -137,26 +187,58 @@ def is_closed(log: str) -> bool:
     return re.search(r"^TASK CLOSED\b", timeline(log), re.M) is not None
 
 
+def entries(log: str) -> list[tuple[str, str, str]]:
+    """(kind, date, body) for every timeline entry, oldest first, body on one line."""
+    heads = list(re.finditer(r"^### (\d{4}-\d{2}-\d{2})\S* · ([A-Z]+) ·.*$", timeline(log), re.M))
+    text = timeline(log)
+    return [(h.group(2), h.group(1),
+             " ".join(text[h.end():heads[n + 1].start() if n + 1 < len(heads) else None].split()))
+            for n, h in enumerate(heads)]
+
+
+def clip(text: str, limit: int) -> str:
+    """Clipped at a sentence boundary when there is one before the limit."""
+    if len(text) <= limit:
+        return text
+    cut = text.rfind(". ", 0, limit)
+    return text[: cut + 1] + " […]" if cut > 0 else text[:limit].rstrip() + " […]"
+
+
 def last_handoff(log: str, limit: int = 220) -> str:
-    """The last HANDOFF entry, clipped at a sentence boundary.
+    """The last HANDOFF entry, clipped: the brief shows it for work that is not the next item."""
+    handoff, _ = handoff_and_after(log)
+    return clip(handoff, limit)
 
-    Clipped because a full handoff runs to a paragraph and this is read at the top of every
-    session. The first sentences say where the work stopped; the log is one `cat` away.
+
+def handoff_and_after(log: str) -> tuple[str, list[str]]:
+    """The last HANDOFF whole, and one clipped line per entry written after it.
+
+    Whole because this is the worktree the session is about to resume: the clip used to cut
+    "Next, in order: ..." off the S5 handoff, so the brief said where work stopped but not what
+    came next. The later entries are there because a TEST after the handoff can overturn it.
     """
-    entries = re.split(r"^### .*?· ([A-Z]+) ·.*$", timeline(log), flags=re.M)
-    # split() yields [preamble, kind, body, kind, body, ...]
-    for kind, body in reversed(list(zip(entries[1::2], entries[2::2], strict=False))):
-        if kind != "HANDOFF":
-            continue
-        text = " ".join(body.split())
-        if len(text) <= limit:
-            return text
-        cut = text.rfind(". ", 0, limit)
-        return text[: cut + 1] + " […]" if cut > 0 else text[:limit].rstrip() + " […]"
-    return ""
+    es = entries(log)
+    last = max((n for n, e in enumerate(es) if e[0] == "HANDOFF"), default=None)
+    if last is None:
+        return "", []
+    # a TEST, DECIDE or BLOCKED can overturn the handoff, so those stay whole; the rest is a record
+    return es[last][2], [f"{k} {d}: {b if k in ('TEST', 'DECIDE', 'BLOCKED') else clip(b, 160)}"
+                         for k, d, b in es[last + 1:]]
 
 
-def worktrees(here: Path) -> list[dict]:
+def orient_item_of(log: str) -> str | None:
+    """The ORIENT item a task log says it works on, from its header's Task field."""
+    m = re.search(r"^\| Task \| .*?ORIENT item (\w+)", log, re.M)
+    return m.group(1) if m else None
+
+
+def mark_merged(text: str, merged: set[int]) -> str:
+    """Handoffs are written before merges happen; say so where they name a merged pull request."""
+    return re.sub(r"#(\d+)\b", lambda m: m.group(0) + (" [merged]" if int(m.group(1)) in merged
+                                                        else ""), text)
+
+
+def worktrees(here: Path, merged: set[int] = frozenset()) -> list[dict]:
     """Every task worktree, with its branch and the state its own log was left in.
 
     `--porcelain` puts the main worktree first; it is the checkout of `main`, not a task, so it is
@@ -172,8 +254,12 @@ def worktrees(here: Path) -> list[dict]:
         log = LOG_DIR / f"{branch.group(1).replace('/', '-')}.md"
         on_disk = Path(path.group(1)) / log
         text = on_disk.read_text() if on_disk.exists() else ""
+        full, later = handoff_and_after(text)
+        task = re.search(r"^\| Task \| (.+?) \|$", text, re.M)
         out.append({"path": path.group(1), "branch": branch.group(1), "log": str(log),
-                    "handoff": last_handoff(text),
+                    "handoff": mark_merged(last_handoff(text), merged),
+                    "full": mark_merged(full, merged), "later": later,
+                    "item": orient_item_of(text), "task": task.group(1) if task else "",
                     "closed": is_closed(text),
                     "here": Path(path.group(1)) == here})
     return out
@@ -198,12 +284,25 @@ def open_prs() -> dict[str, str]:
     return states
 
 
+def merged_prs() -> set[int]:
+    """Numbers of recently merged pull requests, to mark stale mentions in handoffs."""
+    raw = run("gh", "pr", "list", "--state", "merged", "--limit", "100", "--json", "number",
+              timeout=20)
+    try:
+        return {pr["number"] for pr in json.loads(raw)} if raw else set()
+    except json.JSONDecodeError:
+        return set()
 
-def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]],
-           cards: dict[str, list[str]], trees: list[dict], prs: dict[str, str],
-           merges: list[str], network: bool) -> str:
+
+def render(head: str, phase: dict | None, note: str, cards: dict[str, list[str]],
+           trees: list[dict], prs: dict[str, str], merges: list[str], network: bool,
+           items: list[dict] | None = None, actions: list[str] | None = None,
+           budget_lines: list[str] | None = None) -> str:
     lines: list[str] = []
     add = lines.append
+
+    def state(t_: dict) -> str:
+        return prs.get(t_["branch"], "no pull request" if network else "pull request state unknown")
 
     add(f"WAYFINDER — main {head or '(unknown)'}")
     if phase:
@@ -212,31 +311,51 @@ def render(head: str, phase: dict | None, note: str, tasks: list[tuple[str, str]
         add(f"  gate {re.sub(r'[*]', '', phase['gate'])}")
     else:
         add(f"  {note}")
+    lines.extend(budget_lines or [])
 
+    nxt = next_item(items or [])
+    resumed = next((t_ for t_ in trees if nxt and t_.get("item") == nxt["id"] and not t_["closed"]),
+                   None)
+    if nxt:
+        add("")
+        add(f"NEXT  item {nxt['id']} · {nxt['item']}  (ORIENT rule 1)")
+        if resumed:
+            add(f"  resume  {resumed['branch']}  [{state(resumed)}] — do not run new-task.sh")
+            add(f"    worktree {resumed['path']}")
+            if resumed.get("task"):
+                add(f"    task     {resumed['task']}")
+            add(textwrap.fill(resumed.get("full") or f"none yet — read {resumed['log']}", width=100,
+                              initial_indent="    handoff  ", subsequent_indent=" " * 13))
+            for n, entry in enumerate(resumed.get("later", [])):
+                add(textwrap.fill(entry, width=100, subsequent_indent=" " * 13,
+                                  initial_indent="    since    " if n == 0 else " " * 13))
+        else:
+            add(f'  start   scripts/new-task.sh <module> <slug> "<description> (ORIENT item {nxt["id"]})"')
+
+    if actions:
+        add("")
+        add("OWNER ACTIONS  myan's, not an agent's; remind, do not do")
+        for a in actions:
+            add(f"  - {a}")
+
+    others = [t_ for t_ in trees if t_ is not resumed]
     add("")
-    add("IN FLIGHT" if trees else "IN FLIGHT  nothing — start with scripts/new-task.sh")
-    for t_ in trees:
-        state = prs.get(t_["branch"], "no pull request" if network else "pull request state unknown")
+    if resumed:
+        add("OTHER IN FLIGHT" if others else "OTHER IN FLIGHT  nothing")
+    else:
+        add("IN FLIGHT" if others else "IN FLIGHT  nothing — start with scripts/new-task.sh")
+    for t_ in others:
         marks = "  <- you are here" if t_["here"] else ""
         marks += "  CLOSED" if t_["closed"] else ""
-        add(f"  {t_['branch']}  [{state}]{marks}")
+        add(f"  {t_['branch']}  [{state(t_)}]{marks}")
         add(f"    worktree {t_['path']}")
-        if t_["handoff"]:
-            add(f"    handoff  {t_['handoff']}")
-        else:
-            add(f"    handoff  none yet — read {t_['log']}")
+        add(f"    handoff  {t_['handoff'] or 'none yet — read ' + t_['log']}")
 
     if merges:
         add("")
         add("LAST MERGES")
         for m in merges:
             add(f"  {m}")
-
-    if tasks:
-        add("")
-        add(f"{phase['id']} TASKS (DESIGN §19; no done column — nothing in the repo records completion)")
-        for label, hours in tasks:
-            add(f"  {hours:>2}h  {label}")
 
     if cards["written"] or cards["placeholder"]:
         add("")
@@ -264,16 +383,20 @@ def main(argv: list[str]) -> int:
     if base is None:
         note = "DESIGN has no 'Planned build window' row, so §19.1's dates carry no year"
 
+    orient = ORIENT.read_text() if ORIENT.exists() else ""
+    items = orient_items(orient)
     print(render(
         head=run("git", "rev-parse", "--short", "main").strip(),
         phase=phase,
         note=note,
-        tasks=phase_tasks(design, phase["id"]) if phase else [],
         cards=parse_cards(index),
-        trees=worktrees(here),
+        trees=worktrees(here, merged_prs() if network else set()),
         prs=open_prs() if network else {},
         network=network,
-        merges=[m for m in run("git", "log", "main", "--oneline", "-5").splitlines() if m],
+        merges=[m for m in run("git", "log", "main", "--oneline", "-3").splitlines() if m],
+        items=items,
+        actions=owner_actions(orient),
+        budget_lines=budget(orient, items, phase, today),
     ))
     return 0
 

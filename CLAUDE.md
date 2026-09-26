@@ -34,6 +34,10 @@ existing worktree and read the last `HANDOFF` entry in its task log.
 | "I'll approve/merge this since it's obviously fine" | Agents never approve and never merge |
 | "Here are some options for what to do next" | `ORIENT.md` already says. Take its first open item |
 | "This tooling would help, I'll build it first" | Not in `ORIENT.md` means not now, unless an owner directs it (AGENTS.md rule 6) |
+| "Push now; CI will tell me if the size is wrong" | Run the guardrail scripts first and stop if any fails. #32 went out at 406 lines, and CI went red in front of the reviewer |
+| "Ask for a size exception" | Split the pull request by function. 400 lines, and lock files such as `go.sum` count |
+| "The rebase is done; ping the reviewer" | First rewrite the description's evidence: the base commit, the old and new heads, the test counts. `gupta958` bounced #27 twice for stale descriptions |
+| "Post the brief in Discord" | `gupta958` cannot read the channel. Brief on the PR: `scripts/review_handoff.py brief <pr> --file brief.md` (it @-mentions them) |
 
 ## Project facts worth loading early
 
@@ -47,6 +51,12 @@ existing worktree and read the last `HANDOFF` entry in its task log.
   ParadeDB `pg_search`, Ollama embeddings, Next.js static export, Terraform on Oracle Cloud.
 - **Security posture:** private repository content never reaches a provider or exporter that is not
   approved for it (`DESIGN` §9.7.1, §17.1). When in doubt, treat data as private and log the question.
+
+## Shell traps already hit
+
+zsh reads `$v:e` as a modifier, so write `${v}`. macOS has no `timeout`. `pyproject` addopts already
+has `-q`, and adding another hides pytest's summary. `--force-with-lease` needs the **remote** head.
+Commit types are Conventional Commits only (no `wip`).
 
 ## Definition of done
 
