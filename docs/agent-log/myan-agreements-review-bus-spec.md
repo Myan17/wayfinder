@@ -33,3 +33,10 @@ Spec self-review: no TBD; the round limits agree (gate f allows rounds 1-3, roun
 ### 2026-09-26T19:02:40Z · COMMIT · myan · claude-code/opus-5.5 · parent:8435c4f
 docs(agreements): ADR-0016 and REVIEW-BUS.md — review bus spec
 3 files changed, 268 insertions(+)
+
+### 2026-09-26T22:26:52Z · DECIDE · myan · claude-code/opus-5.5 · b939b3a
+Spec revised. Myan, 2026-09-26: gupta958 is 'my other account', and asked for the review model: 'Keep gupta958 as a reviewer hat'. So ADR-0016 now says plainly that gupta958 is Myan's second account and not a second person, and the human-committed AGENTS and ROSTER text corrects the 'Engineer B' wording. Both roles run on Myan's Mac with separate GH_CONFIG_DIRs, and each checks its own login before writing (#44's guard). The reviewer uses a fresh session and a different model where available. Myan is accountable for every approval.
+
+### 2026-09-26T22:26:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:b939b3a
+docs(agreements): ADR-0016 for a reviewer account that is Myan's own
+3 files changed, 106 insertions(+), 64 deletions(-)
