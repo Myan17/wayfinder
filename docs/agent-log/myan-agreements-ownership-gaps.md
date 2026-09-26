@@ -33,3 +33,10 @@ gen_codeowners.py --check OK. codemap.py from #37, run against this tree: no fil
 ### 2026-09-26T18:54:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:8435c4f
 chore(agreements): give the 7 files with no module an owner
 3 files changed, 42 insertions(+), 4 deletions(-)
+
+### 2026-09-26T22:52:14Z · DECIDE · myan · claude-code/opus-5.5 · 0944500
+Rebased onto 2e8ebe0 (#40 merged), was based on 8435c4f; head 5370851 before the rebase. No conflicts; no content change.
+
+### 2026-09-26T22:52:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:0944500
+docs(agents): log the rebase onto #40
+1 file changed, 3 insertions(+)
