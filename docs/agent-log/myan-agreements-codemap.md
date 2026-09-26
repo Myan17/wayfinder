@@ -46,3 +46,10 @@ uv run pytest scripts/tests: 71 passed.
 ### 2026-09-26T18:53:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:41ffd32
 fix(agreements): codemap says no OWNERSHIP module, not routed to nobody
 3 files changed, 20 insertions(+), 6 deletions(-)
+
+### 2026-09-26T22:52:10Z · DECIDE · myan · claude-code/opus-5.5 · 8627d49
+Rebased onto 2e8ebe0 (#40 merged), was based on 8435c4f; head 7cebc68 before the rebase. No conflicts; no content change.
+
+### 2026-09-26T22:52:10Z · COMMIT · myan · claude-code/opus-5.5 · parent:8627d49
+docs(agents): log the rebase onto #40
+1 file changed, 3 insertions(+)
