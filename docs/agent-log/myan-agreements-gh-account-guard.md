@@ -47,3 +47,10 @@ Rebased onto 2d2f1a6 (#41 merged), was based on 2e8ebe0; head b9482e5 before the
 ### 2026-09-26T22:59:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:6a06bce
 docs(agents): log the rebase onto #41
 1 file changed, 3 insertions(+)
+
+### 2026-09-26T23:07:49Z · DECIDE · myan · claude-code/opus-5.5 · 0775c97
+Rebased onto 0126dc9 (#42 merged), was based on 2d2f1a6; head acb4a09 before the rebase. No conflicts; no content change.
+
+### 2026-09-26T23:07:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:0775c97
+docs(agents): log the rebase onto #42
+1 file changed, 3 insertions(+)
