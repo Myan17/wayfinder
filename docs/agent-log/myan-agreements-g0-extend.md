@@ -30,3 +30,10 @@ DESIGN §19.1: every phase moved +3 days and the build window updated, plus a 0.
 ### 2026-09-26T19:03:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:8435c4f
 docs(agreements): extend the schedule 3 days at G0 (DESIGN §19.8 step 4)
 3 files changed, 39 insertions(+), 10 deletions(-)
+
+### 2026-09-26T19:04:05Z · PLAN · myan · claude-code/opus-5.5 · 77a0731
+Take DESIGN §19.8 step 4: shift every §19.1 phase and the build window by the shortfall (3 days) and add a revision row. Update ORIENT's P0 and next-phase lines. Rejected: extending only P0 and compressing P1, which cuts P1's time and so its evidence (rule 5: the date moves, evidence is never cut). This PLAN is recorded after the edit; the guardrail caught that it was missing.
+
+### 2026-09-26T19:04:05Z · COMMIT · myan · claude-code/opus-5.5 · parent:77a0731
+docs(agreements): record the g0-extend PLAN the guardrail found missing
+1 file changed, 3 insertions(+)
