@@ -36,3 +36,13 @@ uv run pytest scripts/tests: 66 passed (6 new). Real map 4.6k chars (~1.2k token
 ### 2026-09-26T18:33:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:2bddc30
 feat(agreements): scripts/codemap.py — the whole repository in one screen
 4 files changed, 243 insertions(+)
+
+### 2026-09-26T18:53:45Z · DECIDE · myan · claude-code/opus-5.5 · 41ffd32
+Rebased onto 8435c4f (#35 merged), was based on 2bddc30; head 9a60a36 before this fix. Review of #37 by gupta958: files with no OWNERSHIP module are not routed to nobody, because CODEOWNERS' catch-all '*' still requests their review. unowned() is renamed without_module(), its docstring states the distinction, and the map's line reads 'no OWNERSHIP module (review still routed by CODEOWNERS' catch-all *)'. The real-repo test pins that wording.
+
+### 2026-09-26T18:53:45Z · TEST · myan · claude-code/opus-5.5 · 41ffd32
+uv run pytest scripts/tests: 71 passed.
+
+### 2026-09-26T18:53:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:41ffd32
+fix(agreements): codemap says no OWNERSHIP module, not routed to nobody
+3 files changed, 20 insertions(+), 6 deletions(-)

@@ -50,8 +50,12 @@ def footprint(module: dict, files: dict[str, int]) -> tuple[int, int]:
     return len(own), sum(files[f] for f in own)
 
 
-def unowned(mods: list[dict], files: dict[str, int]) -> list[str]:
-    """Tracked files that no module claims. CODEOWNERS routes these to nobody."""
+def without_module(mods: list[dict], files: dict[str, int]) -> list[str]:
+    """Tracked files that no OWNERSHIP module claims.
+
+    Only module ownership is missing for them. Review routing is not: CODEOWNERS' catch-all `*`
+    line still requests gupta958's review for these files.
+    """
     return sorted(f for f in files if not any(matches(f, g) for m in mods for g in m["paths"]))
 
 
@@ -106,8 +110,9 @@ def main() -> int:
         paths = " ".join(p for p in m["paths"] if not p.startswith("docs/context/modules/"))
         paths = paths if len(paths) <= 70 else paths[:69] + "…"
         add(f"  {m['name']:<13} {m['owner']:<5} {status.get(m['name'], '-'):<11} {size}  {paths}")
-    stray = unowned(mods, files)
-    add(f"  unowned: {' '.join(stray) if stray else 'none'}")
+    stray = without_module(mods, files)
+    add(f"  no OWNERSHIP module (review still routed by CODEOWNERS' catch-all *): "
+        f"{' '.join(stray) if stray else 'none'}")
 
     add("")
     add("SCRIPTS")

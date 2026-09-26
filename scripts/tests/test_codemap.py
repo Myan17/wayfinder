@@ -38,7 +38,7 @@ def test_a_module_counts_code_but_not_its_card_or_lock_files():
     assert codemap.footprint(mods[0], files) == (1, 10)
     assert codemap.footprint(mods[1], files) == (0, 0)           # web: nothing but its card
     assert codemap.footprint(mods[2], files) == (1, 7)           # go.sum is a lock file
-    assert codemap.unowned(mods, files) == ["README.md"]
+    assert codemap.without_module(mods, files) == ["README.md"]
 
 
 def test_a_scripts_purpose_is_its_first_header_line():
@@ -61,4 +61,7 @@ def test_the_map_renders_on_the_real_repository():
     assert out.returncode == 0, out.stderr
     for section in ("MODULES", "SCRIPTS", "MIGRATIONS", "ADRS", "CI", "DOCS"):
         assert section in out.stdout
-    assert len(out.stdout) < 6000                               # the point is to be cheap to read
+    assert len(out.stdout) < 6000
+    # Review of #37 (gupta958): a file with no module still has a reviewer, through CODEOWNERS' `*`
+    assert "no OWNERSHIP module (review still routed by CODEOWNERS' catch-all *)" in out.stdout
+    assert "nobody" not in out.stdout and "unowned" not in out.stdout                               # the point is to be cheap to read
