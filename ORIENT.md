@@ -25,7 +25,7 @@ gives the **order** to work them in and the **status** of each item, which DESIG
 
 ## Current phase: P0 — spikes, decisions, schema, selection rules
 
-Sep 21 – 27. Gate **G0**: every spike answered, and ADR-0013 and ADR-0015 written before any
+Sep 21 – 30 (moved from Sep 27 under rule 5, DESIGN §19.8 step 4, on 2026-09-26). Gate **G0**: every spike answered, and ADR-0013 and ADR-0015 written before any
 experiment. 32 h planned, 3 h of contingency.
 
 | # | Item | h | Why it is here in the order | Status |
@@ -51,5 +51,5 @@ experiment. 32 h planned, 3 h of contingency.
 
 ## Next phase
 
-P1, the safety and consistency kernel (Sep 28 – Oct 11, gate G1). Its ordered list is written here
+P1, the safety and consistency kernel (Oct 1 – 14, gate G1). Its ordered list is written here
 before G0 closes (rule 6). Until then, DESIGN §19.3 is the only source for it.
