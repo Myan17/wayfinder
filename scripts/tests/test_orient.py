@@ -204,7 +204,8 @@ S5_LOG = """# Task log — myan-platform-s5-harness
 State: 11/17 pass. Next, in order: (1) rerun the six; (2) mutation checks. Brief B on #34 and #35.
 
 ### 2026-09-26T16:29:57Z · TEST · myan · claude-code/opus-5.5 · 6d11737
-Remaining six at 1 run each: four PASS, B2-pause FAIL S5-4.
+Remaining six at 1 run each: four PASS. B2-pause FAIL S5-4, and the failure is past any clip
+because a TEST after a handoff can overturn it, which is why it is kept whole in the brief.
 """
 
 
@@ -242,7 +243,8 @@ def test_a_log_names_its_orient_item_and_what_came_after_its_handoff():
     assert orient.orient_item_of(LOG) is None
     handoff, later = orient.handoff_and_after(S5_LOG)
     assert handoff.endswith("Brief B on #34 and #35.")         # whole entry, not clipped
-    assert later == ["TEST 2026-09-26: Remaining six at 1 run each: four PASS, B2-pause FAIL S5-4."]
+    assert len(later) == 1 and later[0].startswith("TEST 2026-09-26: Remaining six")
+    assert later[0].endswith("kept whole in the brief.")      # a TEST is never clipped
 
 
 def test_merged_pull_requests_are_marked_where_a_handoff_mentions_them():

@@ -213,7 +213,9 @@ def handoff_and_after(log: str) -> tuple[str, list[str]]:
     last = max((n for n, e in enumerate(es) if e[0] == "HANDOFF"), default=None)
     if last is None:
         return "", []
-    return es[last][2], [f"{k} {d}: {clip(b, 160)}" for k, d, b in es[last + 1:]]
+    # a TEST, DECIDE or BLOCKED can overturn the handoff, so those stay whole; the rest is a record
+    return es[last][2], [f"{k} {d}: {b if k in ('TEST', 'DECIDE', 'BLOCKED') else clip(b, 160)}"
+                         for k, d, b in es[last + 1:]]
 
 
 def orient_item_of(log: str) -> str | None:
@@ -317,7 +319,8 @@ def render(head: str, phase: dict | None, note: str, cards: dict[str, list[str]]
             add(textwrap.fill(resumed.get("full") or f"none yet — read {resumed['log']}", width=100,
                               initial_indent="    handoff  ", subsequent_indent=" " * 13))
             for n, entry in enumerate(resumed.get("later", [])):
-                add(("    since    " if n == 0 else " " * 13) + entry)
+                add(textwrap.fill(entry, width=100, subsequent_indent=" " * 13,
+                                  initial_indent="    since    " if n == 0 else " " * 13))
         else:
             add(f'  start   scripts/new-task.sh <module> <slug> "<description> (ORIENT item {nxt["id"]})"')
 

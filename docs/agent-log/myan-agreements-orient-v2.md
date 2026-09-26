@@ -36,3 +36,10 @@ uv run pytest scripts/tests: 67 passed (8 new in test_orient.py; the phase_tasks
 ### 2026-09-26T18:28:53Z · COMMIT · myan · claude-code/opus-5.5 · parent:2bddc30
 feat(agreements): orientation v2 — the brief resumes the next item's worktree
 5 files changed, 328 insertions(+), 62 deletions(-)
+
+### 2026-09-26T18:30:33Z · TEST · myan · claude-code/opus-5.5 · 01b89c2
+Second cold-agent run on this branch. ORIENT.md alone: 4.5/18 facts (was 2.5). CLAUDE.md + hook output: 17.5/18 (was about 10). Every question answered or partial, and the agent's confidence was 75/100 (was 55). The half point lost was the S5 TEST after the handoff, which the 160-char clip cut before 'B2-pause FAIL'. Fixed: TEST, DECIDE and BLOCKED entries after a handoff print whole. The ORIENT-only agent still said 'start with new-task.sh', so rule 1 now says the status changes only on merge and orient.py's NEXT says resume or start. 67 passed.
+
+### 2026-09-26T18:30:33Z · COMMIT · myan · claude-code/opus-5.5 · parent:01b89c2
+fix(agreements): keep later TEST entries whole; ORIENT rule 1 defers to NEXT
+4 files changed, 16 insertions(+), 7 deletions(-)

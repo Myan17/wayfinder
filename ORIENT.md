@@ -14,9 +14,10 @@ gives the **order** to work them in and the **status** of each item, which DESIG
 ## The rule
 
 1. The next task is the **first item below whose status is not `done`** and that is not `blocked`.
-   Start it with `scripts/new-task.sh`, and end the description with `(ORIENT item <n>)` so
-   `scripts/orient.py` can send the next session back to that worktree instead of a new one. Do not
-   offer a menu of options. The order is already decided.
+   The status here changes only on merge, so an `open` item may already be under way:
+   `scripts/orient.py`'s NEXT line says `resume <branch>` (work there, from its last HANDOFF) or
+   `start` (run `scripts/new-task.sh`, ending the description with `(ORIENT item <n>)` so the next
+   session finds it). Do not offer a menu of options. The order is already decided.
 2. Work outside this list happens only when `myan` or `gupta958` directs it explicitly in the
    session. Log a `DECIDE` entry that quotes the direction. "It would be useful" is not a direction.
 3. The pull request that completes an item also changes that item's status here to `done #<pr>`.
