@@ -37,3 +37,10 @@ Take DESIGN §19.8 step 4: shift every §19.1 phase and the build window by the 
 ### 2026-09-26T19:04:05Z · COMMIT · myan · claude-code/opus-5.5 · parent:77a0731
 docs(agreements): record the g0-extend PLAN the guardrail found missing
 1 file changed, 3 insertions(+)
+
+### 2026-09-26T22:52:18Z · DECIDE · myan · claude-code/opus-5.5 · ac9e842
+Rebased onto 2e8ebe0 (#40 merged), was based on 8435c4f; head 5c26afd before the rebase. No conflicts; no content change.
+
+### 2026-09-26T22:52:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:ac9e842
+docs(agents): log the rebase onto #40
+1 file changed, 3 insertions(+)
