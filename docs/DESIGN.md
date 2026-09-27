@@ -6,9 +6,9 @@
 |---|---|
 | Author / owner | Myan Gupta |
 | Approver | Engineering Manager (reviewer of this document) |
-| Status | **Draft — for design review (v0.3.1, responds to the principal review of 2026-09-18)** |
-| Version | 0.3.1 |
-| Date | 2026-09-26 |
+| Status | **Draft — for design review (v0.3.2, responds to the principal review of 2026-09-18)** |
+| Version | 0.3.2 |
+| Date | 2026-09-27 |
 | Supersedes | v0.2 (2026-09-17), archived at `docs/archive/DESIGN.v0.2.md`, SHA-256 `97c5886374e1488e6c8848186b1323d0ad599222b796c1fcd39fe0b4277f05e3` |
 | Review being answered | `docs/review/REVIEW-v0.2.md` (findings WF-01 … WF-30); disposition of every finding in §23 |
 | Planned build window | Mon 2026-09-21 → Wed 2026-11-18 (8 weeks + 3 days, §19.8 step 4 taken at G0), launch review Thu 2026-11-19 |
@@ -899,17 +899,18 @@ The fix removes the dependency entirely:
 - Every accepted source event increments `repository.desired_generation` **in the receiving
   transaction** and enqueues `IndexRepo{repo_id}`. The queue is a wake-up mechanism, not the source of
   truth.
-- A worker claims the repository with a lease: `UPDATE repository … SET lease_token, lease_expires_at
-  WHERE id = $1 AND (lease_expires_at IS NULL OR lease_expires_at < now())` and reads `D =
-  desired_generation`.
+- A worker claims the repository: `UPDATE repository … SET claim_token, claim_expires_at
+  WHERE id = $1 AND (claim_expires_at IS NULL OR claim_expires_at < now())` and reads `D =
+  desired_generation`. (Column names as in schema v1; v0.3 said `lease_token`/`lease_expires_at`.)
 - On completion the worker re-reads `desired_generation`. If it advanced, it re-claims immediately
   (or re-enqueues) rather than waiting for reconciliation.
-- If the worker dies, the lease expires and the reconciler re-enqueues any repository whose
+- If the worker dies, the claim expires and the reconciler re-enqueues any repository whose
   `desired_generation` exceeds its active generation's.
 
 Correctness does not depend on which states River deduplicates; spike S5 proves it against the pinned
 version by pushing at every boundary (before claim, mid-build, during the final head check, during
-activation, during retry) and killing the process at each one.
+activation, during retry) and killing the process at each one. **Result (ADR-0004, 2026-09-27):
+accepted as designed**. All 17 scenarios passed 20 of 20 runs.
 
 #### 9.3.4 Jobs
 
@@ -931,7 +932,8 @@ BEGIN;
 SELECT desired_generation, active_generation_id, claim_token, claim_expires_at
   FROM repository WHERE id = $repo FOR UPDATE;
 -- Application aborts unless ALL hold:
---   claim_token = $my_claim AND claim_expires_at > now()       (I still own this repository)
+--   claim_token = $my_claim AND claim_expires_at > now()       (I still own this repository;
+--   a released claim has claim_expires_at NULL, which must read as not live: coalesce(..., false))
 --   desired_generation = $D                                    (my target is still the desired one)
 --   active_generation_id IS NOT DISTINCT FROM $base            (nobody activated underneath me)
 --   generation.status = 'ready' AND chunk_count verified       (the build is complete)
@@ -2283,3 +2285,4 @@ wayfinder/
 | 0.2 | 2026-09-17 | Internal review fixes: push-debounce loss, heartbeat staleness, compare-and-swap and GC safety, HOT-update claim removed, token refresh and `team` webhook, telemetry content policy, per-user answer rows, WBS rebuilt to 120 h, Langfuse unit math, k6 first-token measurement, dev/test splits, ADR-0007 options |
 | 0.3 | 2026-09-18 | Principal review response (two rounds: the v0.2 findings, then a verification pass over this draft that corrected the team-event revocation path, the `eligible_repo` outage and public-connector leases, envelope classification by connection input policy, cross-repository composite keys, `ON DELETE` modes on `base_generation_id` and `cached_from`, per-dimension vector tables with a real `halfvec` typmod, the denormalized `body_text` BM25 row, pseudo-repository evaluation snapshots, stable-identifier evidence manifests, the CPU table including the cost of reranking searches, telemetry sampling at 0.25%, per-phase contingency, and the missing test-ID inventory). Authorization rebuilt as leased facts with synchronous negative invalidation, fenced refresh and re-authorized artifacts (WF-01–04). Content/representation/occurrence identity with specification-keyed vectors (WF-05). Deletion closure, tombstones and ordered GC (WF-06). Desired-generation scheduling replacing queue-uniqueness assumptions (WF-07) and fenced activation (WF-08). Answer state machine and citation contract (WF-09, WF-11); answerability from a relevance signal instead of RRF (WF-10); provider budgets and deadlines (WF-12). Evaluation corrected: authorized exact oracle (WF-13), per-pair base commits and grouped splits with a final held-out set (WF-14–15), BM25 baseline and Wilson intervals (WF-28). Load protocol with open-arrival and cold profiles and an independent oracle (WF-16); capacity restated as a hypothesis with a background reservation (WF-17); three recovery tiers (WF-18); hostile-ingestion bounds (WF-19); two source modes (WF-20); threads deferred (WF-21); schedule replanned to 250 h + 30 h contingency over 8 weeks with protected evidence (WF-22); privileged-operation contracts (WF-23); chunking and retrieval determinism (WF-24–25); health and SLO math (WF-26); free-tier evidence (WF-27); release manifest (WF-29); all editorial contradictions resolved (WF-30) |
 | 0.3.1 | 2026-09-26 | §19.8 step 4 at G0: every phase moves 3 days (P0 ends Sep 30, launch review Thu Nov 19). P0 had 21 h open with a day left; nothing was cut |
+| 0.3.2 | 2026-09-27 | S5 results (ADR-0004): §9.3.3 accepted as designed. The prose uses schema v1's `claim_*` names, and §9.3.5 notes that a released (NULL) claim is not live |

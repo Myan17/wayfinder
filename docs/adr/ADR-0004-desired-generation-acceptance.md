@@ -1,6 +1,7 @@
 # ADR-0004 — Acceptance rules for "a push during a build is never lost" (spike S5)
 
-- **Status:** Proposed. **The decision is deliberately empty**; spike S5 fills it.
+- **Status:** **Accepted** on 2026-09-27: §9.3.3 as designed (#45–#47). The Decision below was
+  written after the run, and the rules above are unchanged since #34.
 - **Date written:** 2026-09-24, **before** any S5 harness exists.
 - **Decides:** assumption A-6 (`DESIGN` §7.1) and risk R-11 (§20). It is the evidence for §9.3.3,
   which Phase 1's ingestion and generation work builds on.
@@ -115,8 +116,55 @@ and no "PASS with a note".
 
 ## Decision
 
-*Empty until S5 runs.* It will be completed with one of:
+**Accept §9.3.3 as designed.** S5-1 to S5-5 hold in every run of every scenario, with every insert
+made without unique-job options (S5-5).
 
-- **Accept §9.3.3 as designed.** S5-1 to S5-5 all PASS, with the run output quoted.
-- **Revise the protocol.** Name the failing rule and the scenario, quote the output, and edit §9.3
-  in the same pull request as the fix.
+The harness was `apps/ingestd/cmd/s5spike` at c0e049b, which is part 3's tree. It ran against River
+v0.47.0 and the pinned ParadeDB, on a fresh template0 database per run, with a 1.5 s claim TTL:
+
+```
+$ s5spike run -admin postgresql://…@localhost:55432/s3spike -root . -runs 20
+B1-push      pass 20  fail  0  error  0
+B1-kill      pass 20  fail  0  error  0
+B1-pushkill  pass 20  fail  0  error  0
+B2-push      pass 20  fail  0  error  0
+B2-kill      pass 20  fail  0  error  0
+B2-pushkill  pass 20  fail  0  error  0
+B3-push      pass 20  fail  0  error  0
+B3-kill      pass 20  fail  0  error  0
+B3-pushkill  pass 20  fail  0  error  0
+B4-push      pass 20  fail  0  error  0
+B4-kill      pass 20  fail  0  error  0
+B4-pushkill  pass 20  fail  0  error  0
+B5-push      pass 20  fail  0  error  0
+B5-kill      pass 20  fail  0  error  0
+B5-pushkill  pass 20  fail  0  error  0
+B2-pause     pass 20  fail  0  error  0
+B4'-pause    pass 20  fail  0  error  0
+run time (not judged, ADR-0004): median 2.186s, max 2.995s over 340 runs
+S5-1..S5-5: no failure in any run of any scenario
+```
+
+**Found on the way. None of these revises the protocol:**
+
+- **NULL is not live.** The stand-in `activate()` read `claim_expires_at > now()` into a boolean.
+  After a takeover released its claim, that column was NULL, and pgx failed instead of refusing, so
+  River retried and the resumed worker could activate a redundant rebuild. §9.3.5 already says to
+  abort unless `claim_expires_at > now()`, so the protocol was right and the implementation wrong.
+  The fix is `coalesce(…, false)`, and §9.3.5 now says so explicitly for implementers.
+- **A harness read bug.** The paused-takeover read stopped on the `failed … "activation refused"`
+  line, before the `refused` event that S5-4 checks. It now matches the event prefix.
+- **Mutation checks show S5-4 is enforced in depth.** The task log of part 1 has the details.
+  - Removing only the claim fence (M1) is caught by the compare-and-swap on `active_generation_id`.
+  - Removing only the compare-and-swap (M4) is caught by the claim fence.
+  - Removing both (M5) is caught by schema v1's `one_active_per_repo` index, whose unique violation
+    fails the job.
+  - A naive activation that retires whatever is active (M6) **fails S5-4** in both pause scenarios.
+    That shows the harness can detect the violation.
+  - Removing the reconciler (M3) fails S5-1 in 9 scenarios.
+  - Removing the final head check (M2) survives. The activation fence's `desired != D` and the
+    re-read after activation back it up, so it is an early exit, not the safety mechanism.
+
+**Consequences.** P1 builds ingestion on §9.3.3 unchanged, with no River uniqueness options. The
+production worker must carry the `coalesce` rule. §9.3.3's prose now uses schema v1's `claim_*`
+names (the column-name note above).
