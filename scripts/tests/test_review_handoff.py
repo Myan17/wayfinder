@@ -393,3 +393,17 @@ def test_reviewers_are_read_from_the_repository_not_the_callers_directory(captur
     elsewhere.mkdir()
     monkeypatch.chdir(elsewhere)
     assert handoff.reviewers() == ["@Gupta958"]
+
+
+def test_a_posting_verb_refuses_under_the_wrong_account(monkeypatch, tmp_path):
+    # 2026-09-26: briefs posted as the reviewer's own login @-mentioned their author and
+    # notified no one. The guard runs before the verb, and a refusal posts nothing.
+    posted = []
+    monkeypatch.setattr(handoff, "account_guard", lambda: 1)
+    monkeypatch.setattr(handoff, "cmd_brief", lambda *a: posted.append(a) or 0)
+    brief = tmp_path / "b.md"
+    brief.write_text("x")
+    monkeypatch.setattr(sys, "argv", ["review_handoff.py", "brief", "40", "--file", str(brief)])
+    assert handoff.main() == 1 and posted == []
+    monkeypatch.setattr(handoff, "account_guard", lambda: 0)
+    assert handoff.main() == 0 and len(posted) == 1
