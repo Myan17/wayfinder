@@ -79,11 +79,17 @@ func (r *run) pausedTakeover(w1 *proc) error {
 	}
 	w1.signal(syscall.SIGCONT)
 	w1.resume()
-	line, err := w1.await("EVENT ", 30*time.Second) // the resumed worker's next protocol step
-	for err == nil && !strings.Contains(line, "refused") && !strings.Contains(line, "activated") {
-		line, err = w1.await("EVENT ", 30*time.Second)
+	// Read until the resumed worker's outcome event. Match its prefix, as rules.go does: the
+	// preceding "failed ... reason=\"activation refused\"" line contains the word, not the event.
+	for {
+		line, err := w1.await("EVENT ", 30*time.Second)
+		if err != nil {
+			return err
+		}
+		if ev := strings.TrimPrefix(line, "EVENT "); strings.HasPrefix(ev, "refused") || strings.HasPrefix(ev, "activated") {
+			return nil
+		}
 	}
-	return err
 }
 
 // reconcile is ReconcileSources for one repository: re-enqueue when the desired generation is ahead

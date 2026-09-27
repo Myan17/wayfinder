@@ -134,7 +134,8 @@ func (w *indexWorker) activate(ctx context.Context, repo int64, token uuid.UUID,
 	var claim *uuid.UUID
 	var live bool
 	if err := tx.QueryRow(ctx, `
-		SELECT desired_generation, active_generation_id, claim_token, claim_expires_at > now()
+		SELECT desired_generation, active_generation_id, claim_token,
+		       coalesce(claim_expires_at > now(), false) -- a released claim (NULL) is not live
 		  FROM repository WHERE id = $1 FOR UPDATE`, repo).Scan(&desired, &active, &claim, &live); err != nil {
 		return false, err
 	}

@@ -36,3 +36,13 @@ State: harness builds (go vet clean), 11/17 scenarios pass at 1 run; B4-pushkill
 ### 2026-09-25T15:59:49Z · COMMIT · myan · claude-code/opus-5 · parent:2bddc30
 feat(platform): S5 harness in progress — protocol, worker, orchestrator, rules
 9 files changed, 1001 insertions(+), 1 deletion(-)
+
+### 2026-09-26T16:29:57Z · TEST · myan · claude-code/opus-5.5 · 6d11737
+Remaining six at 1 run each on 6d11737: B4-pushkill PASS (async-push fix confirmed), B5-push PASS, B5-kill PASS, B5-pushkill PASS. B2-pause FAIL S5-4: events [claim 464aeaa9 d=2, claim 3a69677a d=2, activated gen=4 d=2 token=3a69677a]; the harness attributes the activation to the resumed worker - not yet known whether 3a69677a is the resumed worker or the takeover (harness attribution bug vs protocol finding). B4'-pause ERROR: w1: no "EVENT " within 30s. Now 15/17 at 1 run.
+
+### 2026-09-27T20:38:08Z · TEST · myan · claude-code/opus-5.5 · 6d11737
+Root cause of B2-pause and B4'-pause (found with temporary stderr diagnostics, since removed). The fence in activate() scanned 'claim_expires_at > now()' into a Go bool. After the takeover released its claim (claim_expires_at NULL), the comparison was NULL, pgx failed with 'cannot scan NULL into *bool', and Work returned that error instead of refusing. River then retried the job, which explains both earlier symptoms: the retry claimed and activated a redundant rebuild, or nothing came within 30 s. Fix: coalesce(claim_expires_at > now(), false), as reconcileOnce already does; a released claim is not live. Second bug, in the harness only: pausedTakeover stopped on any EVENT line containing 'refused', so the 'failed ... reason="activation refused"' line ended the read before the 'refused' event that S5-4 checks for. It now matches the event prefix, as rules.go does. Result: B2-pause 3/3 and B4'-pause 3/3 pass, and all 17 scenarios pass at 1 run each on this commit's code.
+
+### 2026-09-27T20:38:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:6d11737
+fix(platform): S5 fence treats a released claim as not live; pause read stops on the event
+3 files changed, 18 insertions(+), 5 deletions(-)
