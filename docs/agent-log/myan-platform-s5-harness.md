@@ -70,3 +70,10 @@ Moved type scenario and observe() (the S5-3 check) from scenarios.go into rules.
 ### 2026-09-27T21:44:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:207e521
 refactor(platform): S5 scenario type and S5-3 observer live with the rules
 3 files changed, 23 insertions(+), 20 deletions(-)
+
+### 2026-09-27T21:44:17Z · DECIDE · myan · claude-code/opus-5.5 · 0718ea2
+The S5 harness is 1,000+ lines against the 400-line limit, so it ships as three stacked PRs, split by function as the reviewer prefers. Part 1 (this branch): go.mod/go.sum with River v0.47.0 pinned, protocol.go (the §9.3.3-9.3.5 IndexRepo protocol, including the claim-liveness fix), worker.go, and a main.go with only the worker command. Part 2, myan/platform/s5-harness-rules: harness.go (databases, seeding, worker processes) and rules.go (S5-1 to S5-5). Part 3, myan/platform/s5-harness-results: scenarios.go, the run command, the 17x20 output, ADR-0004's Decision, the DESIGN §9.3.3 lease_* -> claim_* prose, and ORIENT item 4 done. Each part compiles and vets on its own (checked in a scratch module). The full code is at 0718ea2 on this branch's history.
+
+### 2026-09-27T21:44:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:0718ea2
+feat(platform): S5 part 1 of 3 — IndexRepo protocol and worker under River v0.47.0
+5 files changed, 5 insertions(+), 602 deletions(-)
