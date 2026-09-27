@@ -41,3 +41,10 @@ def test_unknown_operator_or_login_fails_closed():
     assert "wayfinder.operator" in guard.problem("", "Myan17", ROSTER)
     assert "not in docs/team/ROSTER.md" in guard.problem("nobody", "Myan17", ROSTER)
     assert "could not read" in guard.problem("myan", "", ROSTER)
+
+
+def test_missing_gh_fails_closed(monkeypatch, capsys):
+    # Review of #44: without gh the account cannot be verified, so the guard refuses.
+    monkeypatch.setattr(guard.shutil, "which", lambda name: None if name == "gh" else "/usr/bin/" + name)
+    assert guard.main() == 1
+    assert "gh is not installed" in capsys.readouterr().err

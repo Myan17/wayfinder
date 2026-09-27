@@ -61,3 +61,13 @@ Rebased onto 84881e4 (#43 merged), was based on 0126dc9; head 09f12e8 before the
 ### 2026-09-27T00:13:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:fea6cf2
 docs(agents): log the rebase onto #43
 1 file changed, 3 insertions(+)
+
+### 2026-09-27T20:19:07Z · DECIDE · myan · claude-code/opus-5.5 · 815fa73
+Review of #44 by gupta958, relayed by myan: with gh missing the guard returned 0 with a warning. gupta958 asked for it to fail closed, for the docstring to say so, and for a regression test. This request had not reached this session before: #44 has no review or comment from gupta958 on GitHub.
+
+### 2026-09-27T20:19:07Z · TEST · myan · claude-code/opus-5.5 · 815fa73
+85 passed. New test test_missing_gh_fails_closed mocks shutil.which('gh') as None and asserts main() == 1 and that the error names the cause. Mutation check: with the return set back to 0, the test fails (1 failed, 4 passed); restored.
+
+### 2026-09-27T20:19:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:815fa73
+fix(agreements): the account guard fails closed when gh is missing
+3 files changed, 20 insertions(+), 5 deletions(-)

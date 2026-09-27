@@ -7,9 +7,9 @@ config, so it looks right even when the active login is wrong. On 2026-09-26 the
 was active in the implementer's session: four pull requests were opened as the reviewer, who
 therefore could not approve them, and every brief @-mentioned its own author and notified no one.
 
-Run by `.githooks/pre-push` and by `review_handoff.py` before any verb that posts. It fails closed
-on an unknown operator or login. With no `gh` installed it passes with a warning, because then `gh`
-is not the one pushing.
+Run by `.githooks/pre-push` and by `review_handoff.py` before any verb that posts. It fails closed:
+an unknown operator, an unreadable login and a missing `gh` are all refusals. The active login
+cannot be verified without `gh`, and an unverified account is exactly what this guard exists to stop.
 
 usage: scripts/check_gh_account.py
 """
@@ -56,8 +56,10 @@ def out(*args: str) -> str:
 
 def main() -> int:
     if not shutil.which("gh"):
-        print("warning: gh not installed; account not checked", file=sys.stderr)
-        return 0
+        print("::error::gh is not installed, so the active GitHub account cannot be verified; "
+              "refusing. Install gh (https://cli.github.com) and log in as the operator.",
+              file=sys.stderr)
+        return 1
     roster = (ROOT / "docs/team/ROSTER.md").read_text()
     msg = problem(out("git", "config", "wayfinder.operator"), out("gh", "api", "user", "--jq", ".login"),
                   roster)
