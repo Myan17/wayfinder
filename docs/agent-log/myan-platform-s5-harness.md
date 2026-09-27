@@ -46,3 +46,20 @@ Root cause of B2-pause and B4'-pause (found with temporary stderr diagnostics, s
 ### 2026-09-27T20:38:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:6d11737
 fix(platform): S5 fence treats a released claim as not live; pause read stops on the event
 3 files changed, 18 insertions(+), 5 deletions(-)
+
+### 2026-09-27T21:32:07Z · TEST · myan · claude-code/opus-5.5 · b09a5f7
+Mutation checks on b09a5f7, all 17 scenarios. Each mutant was built from a patched copy and the source restored (git status clean).
+M1, no claim-liveness fence: SURVIVES. The pause scenarios are refused by the CAS on active_generation_id, since w2 has already moved it. ADR-0004 S5-4 counts either fence ('touches 0 rows, or its claim check fails'), so the handoff's expectation that M1 fails S5-4 was wrong.
+M2, no final head check: SURVIVES. The activation fence's desired != d and the post-activation re-read backstop it; the head check is an early exit.
+M3, no reconciler: KILLED. S5-1 fails in B1-kill, B2-kill, B2-pushkill, B3-push, B3-kill, B3-pushkill, B4-kill, B4-pushkill and B5-kill; the pause scenarios error because nobody re-enqueues.
+M4, no CAS (claim fence kept): SURVIVES. The claim fence refuses.
+M5, both fences removed: caught as ERROR in both pause scenarios. The river_job error was 'duplicate key value violates unique constraint "one_active_per_repo" (SQLSTATE 23505)', so the schema's partial unique index is a third layer.
+M6, naive activation (no fences, retire whatever is active): KILLED, S5-4 FAIL in B2-pause and B4'-pause, 2/2 runs each, on all three S5-4 checks (activated, not refused, 1 row not failed or live).
+Conclusion: S5-4 is enforced in depth (claim fence, CAS, one_active_per_repo), and the harness detects a stale activation when all three are gone.
+
+### 2026-09-27T21:42:29Z · TEST · myan · claude-code/opus-5.5 · b09a5f7
+ADR-0004 full run, 17 scenarios x 20 runs, binary built from b09a5f7, River v0.47.0, ParadeDB at localhost:55432 via make db-up: every scenario 'pass 20 fail 0 error 0'. Run time (not judged): median 2.193s, max 2.849s over 340 runs. Harness verdict: 'S5-1..S5-5: no failure in any run of any scenario'. Exit 0.
+
+### 2026-09-27T21:42:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:b09a5f7
+test(platform): S5 mutation checks and the 17x20 run, logged
+1 file changed, 13 insertions(+)
