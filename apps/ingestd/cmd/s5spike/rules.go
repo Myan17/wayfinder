@@ -5,6 +5,10 @@ import (
 	"strings"
 )
 
+type scenario struct {
+	name, barrier, injection string // injection: push | kill | pushkill | pause
+}
+
 // checkRules evaluates ADR-0004's S5-1..S5-5 after quiescence. S5-3 is also observed during the run.
 func (r *run) checkRules(sc scenario) []string {
 	var fails []string
@@ -81,4 +85,20 @@ func (r *run) checkRules(sc scenario) []string {
 		add("S5-5: %d job(s) carried a unique key", unique)
 	}
 	return fails
+}
+
+// observe checks S5-3 continuously, at every quiescence poll.
+func (r *run) observe() {
+	var active int
+	var matches bool
+	if err := r.pool.QueryRow(r.ctx, `
+		SELECT count(*), bool_and(g.id = r.active_generation_id)
+		  FROM generation g JOIN repository r ON r.id = g.repo_id
+		 WHERE g.repo_id = 1 AND g.status = 'active'`).Scan(&active, &matches); err != nil {
+		r.errs = append(r.errs, err.Error())
+		return
+	}
+	if active != 1 || !matches {
+		r.failures = append(r.failures, fmt.Sprintf("S5-3: %d active generations (pointer matches: %v)", active, matches))
+	}
 }

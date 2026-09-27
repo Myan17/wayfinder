@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type scenario struct {
-	name, barrier, injection string // injection: push | kill | pushkill | pause
-}
-
 // scenarios is ADR-0004's list: B1..B5 x {push, kill, push then kill}, plus paused at B2 and B4'.
 func scenarios() []scenario {
 	var s []scenario
@@ -142,20 +138,4 @@ func (r *run) quiesce(limit time.Duration) error {
 	}
 	r.failures = append(r.failures, fmt.Sprintf("S5-1: not quiescent within %s", limit))
 	return nil
-}
-
-// observe checks S5-3 continuously, at every quiescence poll.
-func (r *run) observe() {
-	var active int
-	var matches bool
-	if err := r.pool.QueryRow(r.ctx, `
-		SELECT count(*), bool_and(g.id = r.active_generation_id)
-		  FROM generation g JOIN repository r ON r.id = g.repo_id
-		 WHERE g.repo_id = 1 AND g.status = 'active'`).Scan(&active, &matches); err != nil {
-		r.errs = append(r.errs, err.Error())
-		return
-	}
-	if active != 1 || !matches {
-		r.failures = append(r.failures, fmt.Sprintf("S5-3: %d active generations (pointer matches: %v)", active, matches))
-	}
 }

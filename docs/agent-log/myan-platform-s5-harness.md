@@ -63,3 +63,10 @@ ADR-0004 full run, 17 scenarios x 20 runs, binary built from b09a5f7, River v0.4
 ### 2026-09-27T21:42:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:b09a5f7
 test(platform): S5 mutation checks and the 17x20 run, logged
 1 file changed, 13 insertions(+)
+
+### 2026-09-27T21:44:03Z · EDIT · myan · claude-code/opus-5.5 · 207e521
+Moved type scenario and observe() (the S5-3 check) from scenarios.go into rules.go, where the rules live, so the harness can be split into parts that compile on their own. Code moved, not changed; 17/17 scenarios pass at 1 run on the refactored binary.
+
+### 2026-09-27T21:44:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:207e521
+refactor(platform): S5 scenario type and S5-3 observer live with the rules
+3 files changed, 23 insertions(+), 20 deletions(-)
