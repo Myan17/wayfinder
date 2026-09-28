@@ -119,7 +119,7 @@ and no "PASS with a note".
 **Accept §9.3.3 as designed.** S5-1 to S5-5 hold in every run of every scenario, with every insert
 made without unique-job options (S5-5).
 
-The harness was `apps/ingestd/cmd/s5spike` with `apps/ingestd` at tree `9491f5b`, which is #47's
+The harness was `apps/ingestd/cmd/s5spike` with `apps/ingestd` at tree `be8bff2`, which is #47's
 code (a tree hash survives rebases; a commit SHA does not). It ran against River v0.47.0 and the
 pinned ParadeDB, on a fresh template0 database per run, with a 1.5 s claim TTL:
 
@@ -142,7 +142,7 @@ B5-kill      pass 20  fail  0  error  0
 B5-pushkill  pass 20  fail  0  error  0
 B2-pause     pass 20  fail  0  error  0
 B4'-pause    pass 20  fail  0  error  0
-run time (not judged, ADR-0004): median 2.243s, max 10.432s over 340 runs
+run time (not judged, ADR-0004): median 2.231s, max 3.381s over 340 runs
 S5-1..S5-5: no failure in any run of any scenario
 ```
 
@@ -158,6 +158,10 @@ S5-1..S5-5: no failure in any run of any scenario
   before the decision, as this ADR defines B3. A push there leaves the read stale, and the
   activation fence refuses it: in B3-push, generation D=2 ends `failed` and D=3 is active. The run
   above has the corrected B3; the earlier 340/340 with the wrong order is superseded.
+- **The rules fail closed** (review of #46 and #47). A query or scan error in any rule is a run
+  ERROR, never a judged rule. The verdict is read after the final S5-3 observation. Before this,
+  an S5-4 or S5-5 read error counted as 0 bad rows, and a failure from the final observe() was
+  dropped. The run above is on the fail-closed code.
 - **A harness read bug.** The paused-takeover read stopped on the `failed … "activation refused"`
   line, before the `refused` event that S5-4 checks. It now matches the event prefix.
 - **Mutation checks show S5-4 is enforced in depth.** The task log of part 1 has the details.

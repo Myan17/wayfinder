@@ -67,3 +67,10 @@ go test ./cmd/s5spike: 2 tests pass, TestRulesFailClosedWhenTheDatabaseCannotBeR
 ### 2026-09-28T01:53:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:2f55546
 fix(platform): S5 verdict read after checkRules' final observation
 3 files changed, 29 insertions(+), 1 deletion(-)
+
+### 2026-09-28T02:04:06Z · TEST · myan · claude-code/opus-5.5 · dc7255e
+17 x 20 on apps/ingestd tree be8bff2 (the fail-closed rules from #46 plus verdict()): every scenario 'pass 20 fail 0 error 0', median 2.231 s, max 3.381 s over 340 runs. S5-1..S5-5 no failure, exit 0. ADR-0004 now pins be8bff2, quotes this output, and records the fail-closed change. #46 merged as 05be7b0; restacked onto main (was on 6e68184) and #47 retargeted to main.
+
+### 2026-09-28T02:04:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:dc7255e
+docs(platform): ADR-0004 quotes the 17x20 run on the fail-closed rules
+2 files changed, 9 insertions(+), 2 deletions(-)
