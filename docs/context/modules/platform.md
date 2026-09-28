@@ -19,8 +19,8 @@ design_sections:
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
   "Makefile": "b05391f52d55e72d"
-  "pyproject.toml": "9d94aa70a0730215"
-verified_on: 2026-09-24
+  "pyproject.toml": "c661ca775eec5f61"
+verified_on: 2026-09-28
 ---
 
 # platform
@@ -63,8 +63,9 @@ And `.github/workflows/ci.yml` (jobs `unit`, `db`, `go`, `dispatcher`). The Go m
 
 Plus the Python project definition:
 
-- package root `apps/api`; tests in `apps/api/tests`, `scripts/tests` **and** `infra/manifest/tests`,
-  so tooling is covered by the same `make test`; `pythonpath = ["apps/api"]`
+- package root `apps/api`; tests in `apps/api/tests`, `scripts/tests`, `infra/manifest/tests` **and**
+  `eval/miners/tests`, so tooling and the S1 miner are covered by the same `make test`;
+  `pythonpath = ["apps/api", "eval/miners"]`
 - `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff and
   `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
@@ -158,3 +159,4 @@ by CI on every pull request.
 | 2026-09-24 | CI skeleton: `ci.yml` (`unit`, `db`, `dispatcher`); `make db-up`, `db-test`, `db-down`, `schema-check` | — |
 | 2026-09-24 | Release-manifest format and cache keys; `make manifest-check`; `infra/manifest/tests` collected | — |
 | 2026-09-24 | Go `ingestd` scaffold: module, `cmd/ingestd`, `make go-test`/`go-build`, CI job `go` in the dispatcher | — |
+| 2026-09-28 | `eval/miners/tests` collected and `eval/miners` on the pythonpath, for the S1 miner's core (eval-data) | — |
