@@ -84,3 +84,10 @@ go test ./cmd/s5spike: 3 tests pass. The new TestInvocationsThatRunNothingCannot
 ### 2026-09-28T02:08:59Z · COMMIT · myan · claude-code/opus-5.5 · parent:448e33e
 fix(platform): s5spike rejects -runs < 1 and unknown -scenario before any verdict
 3 files changed, 65 insertions(+), 1 deletion(-)
+
+### 2026-09-28T02:09:23Z · DECIDE · myan · claude-code/opus-5.5 · 61690f2
+The size guard stopped the push at 435/400. Split by function: this PR (#47) keeps the code, meaning scenarios.go, the run command, verdict(), the argument validation and their tests, 335 lines. The evidence moves to a new PR stacked on it, myan/platform/s5-results: ADR-0004's Decision, DESIGN 0.3.2 and ORIENT item 4 done, with the 17x20 re-run on this PR's final tree. Those three files are restored to main here, so this PR no longer needs Scope: agreements.
+
+### 2026-09-28T02:09:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:61690f2
+chore(platform): move the S5 evidence docs to their own PR
+4 files changed, 19 insertions(+), 84 deletions(-)
