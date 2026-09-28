@@ -86,3 +86,24 @@ def test_end_to_end_rename_into_the_snapshot_path_counts_the_delete(tmp_path):
     )
     assert out.returncode == 1, out.stdout          # 500 deleted lines of db/big.sql still count
     assert "500 changed lines" in out.stdout
+
+
+def test_the_s1_pairs_dataset_is_exempt_at_its_exact_path():
+    # Reviewer ruling on #50 (2026-09-28): the generated S1 dataset is reviewed mechanically.
+    rows = numstat((1200, 0, "eval/datasets/s1/pairs.jsonl"), (30, 0, "eval/datasets/s1/manifest.json"))
+    counted, exempted, _ = size.tally(rows, BRANCH)
+    assert (counted, exempted) == (30, 1200)                       # the manifest still counts
+
+
+@pytest.mark.parametrize("path", [
+    "eval/datasets/s1/pairs.json",
+    "eval/datasets/s1/pairs.jsonl.bak",
+    "eval/datasets/s2/pairs.jsonl",
+    "eval/datasets/pairs.jsonl",
+    "eval/datasets/s1/sample/pairs.jsonl",
+    "./eval/datasets/s1/pairs.jsonl",
+    "eval/datasets/s1/{old => pairs.jsonl}",
+])
+def test_dataset_lookalike_paths_still_count(path):
+    counted, exempted, _ = size.tally(numstat((500, 0, path)), BRANCH)
+    assert (counted, exempted) == (500, 0)
