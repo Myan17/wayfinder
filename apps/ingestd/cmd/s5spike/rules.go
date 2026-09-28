@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
 )
 
 type scenario struct {
@@ -10,16 +12,20 @@ type scenario struct {
 }
 
 // checkRules evaluates ADR-0004's S5-1..S5-5 after quiescence. S5-3 is also observed during the run.
+//
+// It fails closed: a query or scan error is recorded in r.errs, which makes the run an ERROR, and
+// that rule is not judged on a partial read. No observation error can become a PASS.
 func (r *run) checkRules(sc scenario) []string {
 	var fails []string
 	add := func(format string, a ...any) { fails = append(fails, fmt.Sprintf(format, a...)) }
+	unobserved := func(rule string, err error) { r.errs = append(r.errs, fmt.Sprintf("%s: %v", rule, err)) }
 
 	// S5-1: no lost push.
 	var repoD, activeD int64
 	if err := r.pool.QueryRow(r.ctx, `
 		SELECT r.desired_generation, g.desired_generation
 		  FROM repository r JOIN generation g ON g.id = r.active_generation_id WHERE r.id = 1`).Scan(&repoD, &activeD); err != nil {
-		add("S5-1: %v", err)
+		unobserved("S5-1", err)
 	} else if repoD != activeD {
 		add("S5-1: repository desired %d, active generation serves %d", repoD, activeD)
 	}
@@ -28,15 +34,10 @@ func (r *run) checkRules(sc scenario) []string {
 	rows, err := r.pool.Query(r.ctx, `SELECT desired_generation FROM generation
 		WHERE repo_id = 1 AND activated_at IS NOT NULL ORDER BY activated_at, id`)
 	if err != nil {
-		add("S5-2: %v", err)
+		unobserved("S5-2", err)
+	} else if seq, err := activations(rows); err != nil {
+		unobserved("S5-2", err)
 	} else {
-		var seq []int64
-		for rows.Next() {
-			var d int64
-			_ = rows.Scan(&d)
-			seq = append(seq, d)
-		}
-		rows.Close()
 		for i := 1; i < len(seq); i++ {
 			if seq[i] < seq[i-1] {
 				add("S5-2: activations went %v", seq)
@@ -67,24 +68,41 @@ func (r *run) checkRules(sc scenario) []string {
 			add("S5-4: the resumed worker was not refused (events %v)", w1.events)
 		}
 		var bad int
-		_ = r.pool.QueryRow(r.ctx, `
+		if err := r.pool.QueryRow(r.ctx, `
 			SELECT count(*) FROM generation g
 			  JOIN occurrence o ON o.generation_id = g.id JOIN representation p ON p.id = o.representation_id
 			 WHERE g.lease_token = (SELECT lease_token FROM generation WHERE id = (
 			         SELECT min(id) FROM generation WHERE repo_id = 1 AND id > 1))
-			   AND (g.status <> 'failed' OR p.live)`).Scan(&bad)
-		if bad > 0 {
+			   AND (g.status <> 'failed' OR p.live)`).Scan(&bad); err != nil {
+			unobserved("S5-4", err)
+		} else if bad > 0 {
 			add("S5-4: %d row(s) of the resumed worker's generation are not failed or are live", bad)
 		}
 	}
 
 	// S5-5: no IndexRepo job was inserted with unique-job options.
 	var unique int
-	_ = r.pool.QueryRow(r.ctx, `SELECT count(*) FROM river_job WHERE kind = 'index_repo' AND unique_key IS NOT NULL`).Scan(&unique)
-	if unique > 0 {
+	if err := r.pool.QueryRow(r.ctx, `SELECT count(*) FROM river_job WHERE kind = 'index_repo' AND unique_key IS NOT NULL`).Scan(&unique); err != nil {
+		unobserved("S5-5", err)
+	} else if unique > 0 {
 		add("S5-5: %d job(s) carried a unique key", unique)
 	}
 	return fails
+}
+
+// activations reads S5-2's sequence. A scan error or an error ending the iteration is returned,
+// never a shorter sequence: a partial read could hide a regression.
+func activations(rows pgx.Rows) ([]int64, error) {
+	defer rows.Close()
+	var seq []int64
+	for rows.Next() {
+		var d int64
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		seq = append(seq, d)
+	}
+	return seq, rows.Err()
 }
 
 // observe checks S5-3 continuously, at every quiescence poll.

@@ -44,3 +44,13 @@ docs(agents): log the restack onto part 1's B3 fix
 ### 2026-09-28T01:44:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:9f9af68
 docs(agents): log the rebase onto main after #45
 1 file changed, 3 insertions(+)
+
+### 2026-09-28T01:52:15Z · DECIDE · myan · claude-code/opus-5.5 · 4d405ed
+Review of #46 by gupta958: every S5 rule must fail closed on database observation errors, and no query error may become a PASS. Before this, S5-2 dropped rows.Scan errors and never checked rows.Err, S5-4 and S5-5 discarded their Scan errors with '_ =' (so an error read as 0 bad rows and passed), and S5-1 reported its error as a rule failure. Now every query or scan error goes to r.errs via unobserved(), which makes the run an ERROR, and that rule is not judged. S5-2 reads through activations(), which returns an error rather than a shorter sequence.
+
+### 2026-09-28T01:52:16Z · TEST · myan · claude-code/opus-5.5 · 4d405ed
+go test ./cmd/s5spike: TestRulesFailClosedWhenTheDatabaseCannotBeRead points the rules at an unreachable database and asserts S5-1, S5-2, S5-4 and S5-5 errors are all in r.errs, plus the final S5-3 observe() (5 in all), and that no rule was judged on a DB read. Mutation: restoring '_ =' on S5-5 makes the test fail ('S5-5: query error was not recorded'); restored, it passes. go vet and gofmt are clean.
+
+### 2026-09-28T01:52:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:4d405ed
+fix(platform): S5 rules fail closed on database observation errors
+3 files changed, 81 insertions(+), 14 deletions(-)
