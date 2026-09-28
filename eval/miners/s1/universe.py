@@ -8,8 +8,12 @@ from pathlib import PurePosixPath
 
 EXTENSIONS = (".py", ".pyi", ".go", ".md")
 TEST_DIRS = {"test", "tests", "testdata"}
-TEST_NAMES = (re.compile(r"test_.*\.py"), re.compile(r".*_test\.py"), re.compile(r".*_test\.go"),
-              re.compile(r"conftest\.py"))
+TEST_NAMES = (
+    re.compile(r"test_.*\.py"),
+    re.compile(r".*_test\.py"),
+    re.compile(r".*_test\.go"),
+    re.compile(r"conftest\.py"),
+)
 VENDOR_DIRS = {"vendor", "third_party", "_vendor"}
 GENERATED_NAMES = (re.compile(r".*_pb2\.pyi?"), re.compile(r".*\.pb\.go"))
 GO_GENERATED = re.compile(rb"^// Code generated .* DO NOT EDIT\.$")
@@ -35,8 +39,11 @@ def excluded(path: str, mode: str, content: bytes | None) -> str | None:
         return "vendored"
     if any(r.fullmatch(name) for r in GENERATED_NAMES):
         return "generated"
-    if p.suffix == ".go" and content is not None and any(
-            GO_GENERATED.match(line) for line in content.split(b"\n")[:10]):
+    if (
+        p.suffix == ".go"
+        and content is not None
+        and any(GO_GENERATED.match(line) for line in content.split(b"\n")[:10])
+    ):
         return "generated"
     if p.suffix == ".md" and (any(r.fullmatch(name) for r in MARKDOWN_NAMES) or ".github" in p.parts[:-1]):
         return "markdown"

@@ -37,9 +37,13 @@
     "selected": {"type": "array", "items": {"type": "integer"}},
     "pairs_file": {
       "type": "object",
-      "required": ["path", "sha256", "count"],
-      "properties": {"path": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-                     "count": {"type": "integer", "minimum": 0}}
+      "description": "total_count = strong_count + weak_count, checked by s1.manifest.count_problem",
+      "required": ["path", "sha256", "total_count", "strong_count", "weak_count"],
+      "properties": {"path": {"const": "eval/datasets/s1/pairs.jsonl"},
+                     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                     "total_count": {"type": "integer", "minimum": 0},
+                     "strong_count": {"type": "integer", "minimum": 0},
+                     "weak_count": {"type": "integer", "minimum": 0}}
     },
     "exclusions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
     "splits": {
