@@ -37,3 +37,13 @@ The size guard blocked the push at 492/400. Split by function: this PR keeps the
 ### 2026-09-28T22:33:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:6579aad
 refactor(eval-data): move the D-5 split and selection to the next PR
 6 files changed, 69 insertions(+), 223 deletions(-)
+
+### 2026-09-28T23:36:56Z · DECIDE · myan · claude-code/opus-5.5 · dea5487
+Review of #50 by gupta958, relayed by myan on 2026-09-28. (1) gold_files takes pairs.Changed records (path, previous_path, base_mode, base_bytes) and labels only base-snapshot files: an added path is excluded, a rename uses its old path, and the base's mode and bytes decide the symlink, generated and UTF-8 steps; unread base bytes are excluded. (2) pairs_file has explicit total_count, strong_count and weak_count, with the path fixed by the schema, and s1.manifest.count_problem checks total = strong + weak. (3) ruff check and ruff format --check are clean on eval/miners. (4) The .py/.pyi/.go reading of D-2 is accepted. (5) Option A is recorded in the card: the exact path eval/datasets/s1/pairs.jsonl, the exemption in #52 (merges first), and the ordering, validation, SHA-256 and count checks required before the file lands.
+
+### 2026-09-28T23:36:56Z · TEST · myan · claude-code/opus-5.5 · dea5487
+uv run --extra dev pytest: 187 passed (new: the 7 base-snapshot cases, 4 count cases). ruff check and ruff format --check on eval/miners: clean (2 files reformatted, 1 import sort fixed). context-freshness OK after --fix eval-data for the schema change.
+
+### 2026-09-28T23:36:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:dea5487
+fix(eval-data): gold labels verified at the base snapshot; explicit dataset counts
+7 files changed, 167 insertions(+), 49 deletions(-)

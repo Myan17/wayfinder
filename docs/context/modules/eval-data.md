@@ -15,7 +15,7 @@ design_sections:
   - "DESIGN §14.1-14.2, §14.5 (corpus, historical protocol, dataset versioning)"
   - "ADR-0013 (dataset rules D-1 to D-7), ADR-0016 (S1's candidates, rules and selection)"
 verified_hashes:
-  "eval/datasets/manifest.schema.json": "eb4c5b6e885b03d0"
+  "eval/datasets/manifest.schema.json": "9871b7a4d6bc55f6"
 verified_on: 2026-09-28
 ---
 
@@ -32,9 +32,10 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 - **`eval/datasets/manifest.schema.json`**: the manifest every consumer reads first. It holds the as-of
   time, the miner commit, the rules applied (`max_files`, gold extensions, chunk lines), each
   candidate's S1-1 to S1-5 results and chunk estimate, every selection round, the selected
-  `github_repo_id`s, the pairs file's path, SHA-256 and count, exclusion counts by reason, per-repository
+  `github_repo_id`s, the pairs file's path, SHA-256 and explicit `total_count`, `strong_count` and
+  `weak_count` (total = strong + weak, checked by `s1.manifest.count_problem`), exclusion counts by reason, per-repository
   split counts and boundaries, and the API-call tally.
-- **The pairs file** (JSONL, one `$defs/pair` per line): `github_repo_id`, `issue`, `pr`, `base_commit`
+- **The pairs file**, committed at exactly `eval/datasets/s1/pairs.jsonl` (JSONL, one `$defs/pair` per line): `github_repo_id`, `issue`, `pr`, `base_commit`
   (40 hex characters), `gold` (at least 1 source path), `strong`, `group_id`, `t_g` and `split`.
 - **The miner** (`eval/miners/s1/`): `universe.excluded / lines / chunks`, `pairs.gold_files / keep / weak`,
   and, in the next pull request, `split.assign` and `select.best`. These are pure functions; the
@@ -44,8 +45,10 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 
 - Every pair's `base_commit` is the parent of the PR's first commit (D-1). A pair whose base did not
   resolve is excluded with a reason, never approximated.
-- `gold` lists only files in ADR-0016's file universe with a `.py`, `.pyi` or `.go` extension, and
-  has 1 to `max_files` entries (D-2).
+- `gold` lists only **base-snapshot** paths: each existed at `base_commit` (a file the PR added is
+  never a label, and a rename is labelled by its old path), and at the base it was a regular, non-generated,
+  UTF-8 file in ADR-0016's universe with a `.py`, `.pyi` or `.go` extension. It has 1 to `max_files`
+  entries (D-2; the extensions were accepted by gupta958 on #50, 2026-09-28).
 - `strong` is false exactly when the issue was updated after the merge (D-3). Weak pairs are never
   pooled into strong counts.
 - No `group_id` spans two splits, and within a repository every held-out group is at least as
@@ -78,7 +81,9 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `eval/miners/tests/test_s1_universe.py::test_the_file_universe_is_adr_0016s_seven_steps` | ADR-0016's seven steps, including test Markdown (S1-4) |
 | `…::test_lines_and_chunks_are_byte_exact` | The line and chunk definitions |
 | `…::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
+| `…::test_gold_labels_are_verified_against_the_base_snapshot` | D-2 labels at the base: added, renamed, symlink, generated, UTF-8, unread |
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
+| `…::test_the_manifest_counts_are_explicit_and_add_up` | total = strong + weak |
 | The D-5 and selection tests | They land with `split.py` and `select.py` in the next pull request, which pins the D-5 and `selected` invariants above |
 
 ## Fake
@@ -86,12 +91,17 @@ None in Postgres. It owns the files under `eval/datasets/`.
 A sample dataset under `eval/datasets/sample/` will land with the first run, so the harness can
 build against it before the full dataset exists.
 
-## Open questions
+## Decisions
 
-- **Where the full pairs JSONL lives.** A dataset of about 1,000 lines exceeds the 400-line PR limit.
-  The options are a reviewer exemption like `db/schema.sql`'s, or a release asset with only the
-  manifest committed. This needs gupta958's decision before the results PR.
+- **Where the pairs JSONL lives** (gupta958, #50, 2026-09-28: option A). It is committed at the one
+  canonical path `eval/datasets/s1/pairs.jsonl`, exempt from the line limit by exact path (#52, which
+  merges before the dataset). It is reviewed mechanically, and the eval-data checks must prove four
+  things: canonical ordering (by `github_repo_id`, then `pr`, then `issue`), schema and JSONL
+  validity for every line, the file's SHA-256 matching the manifest, and the counts matching the
+  manifest. These checks land with the miner, before the file.
 
 ## Change log
 
 - 2026-09-28: first contract, with the manifest schema and the pure core of the S1 miner.
+- 2026-09-28 (review of #50): gold labels are verified against the base snapshot; the pairs file has
+  explicit total, strong and weak counts; the pairs file's location is decided.
