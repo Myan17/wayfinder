@@ -77,3 +77,10 @@ The S5 harness is 1,000+ lines against the 400-line limit, so it ships as three 
 ### 2026-09-27T21:44:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:0718ea2
 feat(platform): S5 part 1 of 3 — IndexRepo protocol and worker under River v0.47.0
 5 files changed, 5 insertions(+), 602 deletions(-)
+
+### 2026-09-28T01:09:49Z · DECIDE · myan · claude-code/opus-5.5 · 6026ec1
+Review of #45 by gupta958: B3 fired before the final 'SELECT desired_generation', but ADR-0004 defines B3 as 'between reading D and deciding to activate'. A push at B3 was visible to the read, so the worker just rebuilt, and the stale-read case, where the activation fence must refuse, was never exercised. The barrier now fires after Scan(&now) succeeds and before 'if now != d'. Every B3 result so far (both 340/340 runs and the mutation checks) was taken with the wrong order and is re-run in part 3.
+
+### 2026-09-28T01:09:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:6026ec1
+fix(platform): S5 barrier B3 after the final read of D, as ADR-0004 defines it
+2 files changed, 6 insertions(+), 1 deletion(-)

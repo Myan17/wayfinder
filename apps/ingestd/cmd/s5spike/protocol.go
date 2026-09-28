@@ -62,11 +62,13 @@ func (w *indexWorker) Work(ctx context.Context, job *river.Job[IndexRepoArgs]) e
 		if err != nil {
 			return err
 		}
-		w.barriers.hit("B3") // final head check: between reading D and deciding
 		var now int64
 		if err := w.pool.QueryRow(ctx, `SELECT desired_generation FROM repository WHERE id = $1`, repo).Scan(&now); err != nil {
 			return err
 		}
+		// B3, ADR-0004: after the final read of D, before deciding. A push here leaves "now" stale,
+		// so only the activation fence (desired != d) can refuse it.
+		w.barriers.hit("B3")
 		if now != d {
 			w.fail(ctx, gen, "superseded")
 			d = now
