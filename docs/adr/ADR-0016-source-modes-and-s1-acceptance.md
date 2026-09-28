@@ -48,7 +48,7 @@ including failures, with the measured value.
 | S1-1 | **Permissive license** | The repository's SPDX id, read from the license file in the clone and cross-checked against the GitHub API, is one of MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0 or ISC. A mismatch between the two sources fails the rule |
 | S1-2 | **At least 100 linkable pairs** | Merged PRs (before the as-of time) with a non-empty `closingIssuesReferences` to an issue in the same repository, counted as (issue, PR) pairs **before** ADR-0013's filters |
 | S1-3 | **Base commits resolve** | For every S1-2 pair, the parent of the PR's first commit (ADR-0013 D-1) exists in the clone, including commits from fork PRs through `refs/pull/*/head`. The rule passes if **at least 95%** resolve. Unresolved pairs are excluded with the reason (D-6) |
-| S1-4 | **Real Markdown documentation** | At least 5 `.md` files in the chunk estimate's file universe (below: steps 1, 2, 4, 6 and 7, so not vendored, changelog, license or `.github/`), with at least 2,000 whitespace-separated words among them, at the as-of commit |
+| S1-4 | **Real Markdown documentation** | At least 5 files in the chunk estimate's file universe (below) restricted to `.md`, meaning after all seven of its steps, test and generated exclusions included, with at least 2,000 whitespace-separated words among them, at the as-of commit |
 | S1-5 | **Acquisition works read-only** | Every S1 read comes from a read-only clone and REST/GraphQL as an ordinary authenticated user, with no App and no write scope. S1 records the API calls used, and the rule fails if any read needed more access |
 
 ## The chunk estimate
@@ -65,7 +65,7 @@ its as-of commit, over exactly this file universe:
 5. **Generated.** Exclude `*_pb2.py`, `*_pb2.pyi` and `*.pb.go`, and any `.go` file whose first 10
    lines contain a line matching `^// Code generated .* DO NOT EDIT\.$` (Go's convention).
 6. **Markdown.** Exclude files named `CHANGELOG*`, `CHANGES*` or `LICENSE*`, and anything under
-   `.github/`. This is the same Markdown universe as S1-4.
+   `.github/`. S1-4 counts exactly this universe's `.md` files, with no exception.
 7. **Binary.** Exclude a file that is not valid UTF-8.
 
 A file's lines are its count of `\n` bytes, plus 1 if it is non-empty and does not end in `\n`. The

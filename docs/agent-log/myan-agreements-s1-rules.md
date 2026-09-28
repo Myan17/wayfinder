@@ -41,3 +41,10 @@ Review of #49 by gupta958, relayed by myan (the first round never reached GitHub
 ### 2026-09-28T21:12:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:035d1ca
 docs(agreements): ADR-0016 — R-03 in DESIGN's order, total tie-break, exact file universe
 2 files changed, 75 insertions(+), 21 deletions(-)
+
+### 2026-09-28T22:22:34Z · DECIDE · myan · claude-code/opus-5.5 · 3d0ccef
+Review of #49 by gupta958, round 2: S1-4 listed steps 1, 2, 4, 6 and 7, skipping the test (3) and generated (5) exclusions, while step 6 claimed the universes were the same. S1-4 is now the chunk-estimate universe restricted to .md after all seven steps. There is no test-Markdown exception, so the 'same universe' statement is now true, and it is reworded to say so exactly.
+
+### 2026-09-28T22:22:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:3d0ccef
+docs(agreements): ADR-0016 — S1-4 counts the full file universe's Markdown
+2 files changed, 5 insertions(+), 2 deletions(-)
