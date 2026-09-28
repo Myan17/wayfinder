@@ -48,6 +48,13 @@ func runAll(args []string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+	// Review of #47: a run that executes nothing must not print a passing verdict.
+	if *runs < 1 {
+		return fmt.Errorf("-runs must be at least 1, got %d", *runs)
+	}
+	if *only != "" && !isScenario(*only) {
+		return fmt.Errorf("unknown -scenario %q", *only)
+	}
 	type tally struct{ pass, fail, errored int }
 	results := map[string]*tally{}
 	failures := map[string][]string{}
@@ -90,12 +97,16 @@ func runAll(args []string) error {
 		fmt.Printf("run time (not judged, ADR-0004): median %s, max %s over %d runs\n",
 			took[len(took)/2].Round(time.Millisecond), took[len(took)-1].Round(time.Millisecond), len(took))
 	}
-	total := 0
+	total, passed := 0, 0
 	for _, t := range results {
 		total += t.fail + t.errored
+		passed += t.pass
 	}
 	if total > 0 {
 		return fmt.Errorf("%d runs failed or errored; ADR-0004 allows none", total)
+	}
+	if passed == 0 { // unreachable after the checks above; kept so no path prints a vacuous PASS
+		return fmt.Errorf("no run executed; nothing to judge")
 	}
 	fmt.Println("S5-1..S5-5: no failure in any run of any scenario")
 	return nil
@@ -142,4 +153,13 @@ func verdict(r *run, fails []string) ([]string, error) {
 		return nil, fmt.Errorf("%s", strings.Join(r.errs, "; "))
 	}
 	return append(append([]string(nil), r.failures...), fails...), nil
+}
+
+func isScenario(name string) bool {
+	for _, sc := range scenarios() {
+		if sc.name == name {
+			return true
+		}
+	}
+	return false
 }

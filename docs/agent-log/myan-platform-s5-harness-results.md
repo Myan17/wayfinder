@@ -74,3 +74,13 @@ fix(platform): S5 verdict read after checkRules' final observation
 ### 2026-09-28T02:04:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:dc7255e
 docs(platform): ADR-0004 quotes the 17x20 run on the fail-closed rules
 2 files changed, 9 insertions(+), 2 deletions(-)
+
+### 2026-09-28T02:08:59Z · DECIDE · myan · claude-code/opus-5.5 · 448e33e
+Review of #47 by gupta958: validate that runs >= 1 and reject an unknown -scenario before reporting. Before this, '-runs 0' or a misspelled '-scenario' ran nothing and still printed 'S5-1..S5-5: no failure in any run of any scenario' with exit 0. runAll now rejects runs < 1 and names that are not exactly an ADR-0004 scenario (case-sensitive) right after parsing, before any database is touched. A backstop also refuses a verdict when no run passed.
+
+### 2026-09-28T02:08:59Z · TEST · myan · claude-code/opus-5.5 · 448e33e
+go test ./cmd/s5spike: 3 tests pass. The new TestInvocationsThatRunNothingCannotPass covers -runs 0, -runs -3, -scenario B9-bogus and -scenario b2-pause: each must return an error and print neither 'no failure' nor a 'pass' tally. Mutation: with both validations disabled, the -runs cases fail (the tallies print; the backstop still stops the 'no failure' line); restored, it passes. go vet and gofmt are clean. This touches only argument handling before any run, so the be8bff2 evidence is unchanged for every valid invocation.
+
+### 2026-09-28T02:08:59Z · COMMIT · myan · claude-code/opus-5.5 · parent:448e33e
+fix(platform): s5spike rejects -runs < 1 and unknown -scenario before any verdict
+3 files changed, 65 insertions(+), 1 deletion(-)
