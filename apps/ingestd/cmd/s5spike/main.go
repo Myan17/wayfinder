@@ -131,8 +131,15 @@ func oneRun(admin, root string, sc scenario, i int) ([]string, error) {
 	if err := r.execute(sc); err != nil {
 		return nil, err
 	}
+	return verdict(r, r.checkRules(sc))
+}
+
+// verdict is one run's result, taken only after checkRules. Its final observe() can add to both
+// r.failures and r.errs, so neither is read before it runs. Any observation error makes the run
+// an ERROR (review of #46/#47): a query that could not be read never counts as a PASS.
+func verdict(r *run, fails []string) ([]string, error) {
 	if len(r.errs) > 0 {
 		return nil, fmt.Errorf("%s", strings.Join(r.errs, "; "))
 	}
-	return append(r.failures, r.checkRules(sc)...), nil
+	return append(append([]string(nil), r.failures...), fails...), nil
 }

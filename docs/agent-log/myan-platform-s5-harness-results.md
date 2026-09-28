@@ -57,3 +57,13 @@ docs(platform): S5 evidence re-run with B3 after the read; M7 recorded
 ### 2026-09-28T01:45:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:a4f6a46
 docs(agents): log the restack after #45
 1 file changed, 3 insertions(+)
+
+### 2026-09-28T01:53:14Z · DECIDE · myan · claude-code/opus-5.5 · 2f55546
+Review of #46/#47 by gupta958: errors added by the final observe() must be checked after checkRules(). oneRun evaluated append(r.failures, r.checkRules(sc)...). Go reads r.failures before checkRules runs, so an S5-3 failure from the final observe() was dropped, and r.errs was checked only before checkRules, so an observation error there became a PASS. Now verdict(r, r.checkRules(sc)) reads both after the call, and any r.errs makes the run an ERROR. Restacked onto #46's fail-closed rules (6e68184); was on 4d405ed.
+
+### 2026-09-28T01:53:14Z · TEST · myan · claude-code/opus-5.5 · 2f55546
+go test ./cmd/s5spike: 2 tests pass, TestRulesFailClosedWhenTheDatabaseCannotBeRead (from #46) and TestTheVerdictIsTakenAfterTheFinalObservation. go vet and gofmt are clean. The 17x20 re-run on the new apps/ingestd tree follows.
+
+### 2026-09-28T01:53:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:2f55546
+fix(platform): S5 verdict read after checkRules' final observation
+3 files changed, 29 insertions(+), 1 deletion(-)
