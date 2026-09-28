@@ -33,3 +33,10 @@ S5 complete on merge. Order: #47 (code), then this PR (evidence). After #47 merg
 ### 2026-09-28T02:20:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:9107d01
 docs(platform): S5 evidence — ADR-0004 accepted, DESIGN 0.3.2, ORIENT item 4 done
 4 files changed, 116 insertions(+), 16 deletions(-)
+
+### 2026-09-28T20:06:34Z · DECIDE · myan · claude-code/opus-5.5 · b97dbd4
+#47 merged as fe42a41. Rebased onto main (was stacked on 9107d01) and retargeted to main. The apps/ingestd tree on main is still 15e1d8c, so the quoted run stands.
+
+### 2026-09-28T20:06:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:b97dbd4
+docs(agents): log the rebase onto main after #47
+1 file changed, 3 insertions(+)
