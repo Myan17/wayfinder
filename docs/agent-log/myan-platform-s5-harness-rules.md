@@ -30,3 +30,10 @@ go vet ./... clean with parts 1+2. Behaviour is tested in part 3, where the scen
 ### 2026-09-27T21:44:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:6026ec1
 feat(platform): S5 part 2 of 3 — the harness and ADR-0004's rules
 3 files changed, 377 insertions(+)
+
+### 2026-09-28T01:10:32Z · DECIDE · myan · claude-code/opus-5.5 · 387dfe8
+Restacked onto part 1's head 4528713 (the B3 fix from review of #45); was on 6026ec1. No conflicts; part 2's content is unchanged.
+
+### 2026-09-28T01:10:32Z · COMMIT · myan · claude-code/opus-5.5 · parent:387dfe8
+docs(agents): log the restack onto part 1's B3 fix
+1 file changed, 3 insertions(+)
