@@ -37,3 +37,10 @@ Restacked onto part 1's head 4528713 (the B3 fix from review of #45); was on 602
 ### 2026-09-28T01:10:32Z · COMMIT · myan · claude-code/opus-5.5 · parent:387dfe8
 docs(agents): log the restack onto part 1's B3 fix
 1 file changed, 3 insertions(+)
+
+### 2026-09-28T01:44:49Z · DECIDE · myan · claude-code/opus-5.5 · 9f9af68
+#45 merged as 466c475. Rebased part 2 onto main (was stacked on 4528713, part 1's head) and retargeted #46 to main. Part 2's content is unchanged.
+
+### 2026-09-28T01:44:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:9f9af68
+docs(agents): log the rebase onto main after #45
+1 file changed, 3 insertions(+)
