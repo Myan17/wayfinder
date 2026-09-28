@@ -29,7 +29,7 @@ lands its first interface file — CI enforces this.
 | `chunking` | myan | 🟡 [modules/chunking.md](modules/chunking.md) | `apps/ingestd/internal/chunk/chunk.go` | `chunk/fake` |
 | `indexing` | myan | ✅ [modules/indexing.md](modules/indexing.md) | `apps/ingestd/internal/generation/api.go`, `db/views/retrieval_rows.sql` | `generation/fake` |
 | `webhooks` | myan | ✅ [modules/webhooks.md](modules/webhooks.md) | `apps/ingestd/internal/webhook/events.go` | `webhook/fake` |
-| `eval-data` | myan | 🟡 [modules/eval-data.md](modules/eval-data.md) | `eval/datasets/manifest.schema.json` | sample dataset |
+| `eval-data` | myan | ✅ [modules/eval-data.md](modules/eval-data.md) | `eval/datasets/manifest.schema.json` | sample dataset (with the first run) |
 | `platform` | myan | 🟡 [modules/platform.md](modules/platform.md) | `infra/compose/compose.yaml`, `Makefile` | — |
 | `observability` | myan | 🟡 [modules/observability.md](modules/observability.md) | `apps/*/telemetry/interface.*`, `infra/compose/otel/policy.yaml` | in-memory exporter |
 | `schema` | joint | ✅ [modules/schema.md](modules/schema.md) | `db/migrations/**` (read to write one), `db/views/**` | test fixtures |
