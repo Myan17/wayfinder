@@ -80,7 +80,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 |---|---|
 | `eval/miners/tests/test_s1_universe.py::test_the_file_universe_is_adr_0016s_seven_steps` | ADR-0016's seven steps, including test Markdown (S1-4) |
 | `…::test_lines_and_chunks_are_byte_exact` | The line and chunk definitions |
-| `…::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
+| `eval/miners/tests/test_s1_pairs.py::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
 | `…::test_gold_labels_are_verified_against_the_base_snapshot` | D-2 labels at the base: added, renamed, symlink, generated, UTF-8, unread |
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
 | `…::test_the_manifest_counts_are_explicit_and_add_up` | total = strong + weak |
