@@ -50,3 +50,10 @@ Restacked onto part 2's 6215ea0. ADR-0004's Decision now pins the run to the app
 ### 2026-09-28T01:23:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:0bd230c
 docs(platform): S5 evidence re-run with B3 after the read; M7 recorded
 2 files changed, 22 insertions(+), 3 deletions(-)
+
+### 2026-09-28T01:45:07Z · DECIDE · myan · claude-code/opus-5.5 · a4f6a46
+#45 merged; part 2 rebased onto main as 4d405ed. Restacked part 3 onto it (was on 6215ea0). The apps/ingestd tree is still 9491f5b, the one the 17x20 ran on, so the ADR's pin holds.
+
+### 2026-09-28T01:45:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:a4f6a46
+docs(agents): log the restack after #45
+1 file changed, 3 insertions(+)
