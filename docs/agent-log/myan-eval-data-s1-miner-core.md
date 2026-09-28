@@ -30,3 +30,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest: 190 passed, including 33 ne
 ### 2026-09-28T22:32:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccc79cc
 feat(eval-data): S1 miner core — file universe, D-2/D-3, D-5 split, ADR-0016 selection
 12 files changed, 484 insertions(+), 36 deletions(-)
+
+### 2026-09-28T22:33:03Z · DECIDE · myan · claude-code/opus-5.5 · 6579aad
+The size guard blocked the push at 492/400. Split by function: this PR keeps the manifest schema, the card, universe.py and pairs.py with their tests, and the pyproject and platform-card change. split.py and select.py with their tests (the D-5 worked example, latest merge, per-repository issues, total order, sorted-tuple tie-break, no feasible corpus) move to myan/eval-data/s1-miner-select, stacked on this one.
+
+### 2026-09-28T22:33:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:6579aad
+refactor(eval-data): move the D-5 split and selection to the next PR
+6 files changed, 69 insertions(+), 223 deletions(-)
