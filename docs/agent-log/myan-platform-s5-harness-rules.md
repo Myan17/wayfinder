@@ -54,3 +54,10 @@ go test ./cmd/s5spike: TestRulesFailClosedWhenTheDatabaseCannotBeRead points the
 ### 2026-09-28T01:52:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:4d405ed
 fix(platform): S5 rules fail closed on database observation errors
 3 files changed, 81 insertions(+), 14 deletions(-)
+
+### 2026-09-28T01:52:40Z · TEST · myan · claude-code/opus-5.5 · 5962fdb
+The size guard stopped the push at 410/400, so nothing was pushed. Made the test more compact without changing what it checks: all four rule errors must be in r.errs, there must be exactly 5 errors (the four plus the final observe), and no rule may be judged. Mutation: dropping the S5-4 error makes it fail; restored, it passes.
+
+### 2026-09-28T01:52:40Z · COMMIT · myan · claude-code/opus-5.5 · parent:5962fdb
+test(platform): tighter fail-closed test for the S5 rules
+2 files changed, 12 insertions(+), 20 deletions(-)
