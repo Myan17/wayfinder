@@ -47,3 +47,10 @@ uv run --extra dev pytest: 187 passed (new: the 7 base-snapshot cases, 4 count c
 ### 2026-09-28T23:36:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:dea5487
 fix(eval-data): gold labels verified at the base snapshot; explicit dataset counts
 7 files changed, 167 insertions(+), 49 deletions(-)
+
+### 2026-09-28T23:38:21Z · DECIDE · myan · claude-code/opus-5.5 · ccc1c38
+The size guard blocked the push at 449/400. Split by function again. The file universe (universe.py, its tests, the pyproject testpath, the platform card) moves to its own PR, myan/eval-data/s1-universe, based on main and merged first. This PR then stacks on it with the pair filters, the manifest schema, the count checks and the eval-data card. Tests split into test_s1_universe.py (universe) and test_s1_pairs.py (pairs, counts).
+
+### 2026-09-28T23:38:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccc1c38
+refactor(eval-data): split the S1 tests into universe and pair modules
+4 files changed, 81 insertions(+), 72 deletions(-)
