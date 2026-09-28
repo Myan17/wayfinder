@@ -54,3 +54,10 @@ The size guard blocked the push at 449/400. Split by function again. The file un
 ### 2026-09-28T23:38:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccc1c38
 refactor(eval-data): split the S1 tests into universe and pair modules
 4 files changed, 81 insertions(+), 72 deletions(-)
+
+### 2026-09-28T23:39:08Z · DECIDE · myan · claude-code/opus-5.5 · 7d2ea77
+Restacked onto myan/eval-data/s1-universe (511da78) with rebase -X theirs; the 4 commits were replayed. This PR's diff against it is now the pair filters, the manifest schema, the count checks and the card (358 lines). It no longer touches pyproject.toml, so Scope: platform is dropped. Checks: 187 passed in 1.43s; ruff check: All checks passed!; ruff format --check: 6 files already formatted; context-freshness OK: 8 interface files checked across 16 cards.
+
+### 2026-09-28T23:39:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:7d2ea77
+docs(agents): log the restack onto the universe PR
+1 file changed, 3 insertions(+)
