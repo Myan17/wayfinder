@@ -119,8 +119,9 @@ and no "PASS with a note".
 **Accept §9.3.3 as designed.** S5-1 to S5-5 hold in every run of every scenario, with every insert
 made without unique-job options (S5-5).
 
-The harness was `apps/ingestd/cmd/s5spike` at c0e049b, which is part 3's tree. It ran against River
-v0.47.0 and the pinned ParadeDB, on a fresh template0 database per run, with a 1.5 s claim TTL:
+The harness was `apps/ingestd/cmd/s5spike` with `apps/ingestd` at tree `9491f5b`, which is #47's
+code (a tree hash survives rebases; a commit SHA does not). It ran against River v0.47.0 and the
+pinned ParadeDB, on a fresh template0 database per run, with a 1.5 s claim TTL:
 
 ```
 $ s5spike run -admin postgresql://…@localhost:55432/s3spike -root . -runs 20
@@ -141,7 +142,7 @@ B5-kill      pass 20  fail  0  error  0
 B5-pushkill  pass 20  fail  0  error  0
 B2-pause     pass 20  fail  0  error  0
 B4'-pause    pass 20  fail  0  error  0
-run time (not judged, ADR-0004): median 2.186s, max 2.995s over 340 runs
+run time (not judged, ADR-0004): median 2.243s, max 10.432s over 340 runs
 S5-1..S5-5: no failure in any run of any scenario
 ```
 
@@ -152,6 +153,11 @@ S5-1..S5-5: no failure in any run of any scenario
   River retried and the resumed worker could activate a redundant rebuild. §9.3.5 already says to
   abort unless `claim_expires_at > now()`, so the protocol was right and the implementation wrong.
   The fix is `coalesce(…, false)`, and §9.3.5 now says so explicitly for implementers.
+- **B3 was in the wrong place** (review of #45). The barrier fired before the final read of `D`,
+  so a push at B3 was seen by the read and the worker only rebuilt. It now fires after the read and
+  before the decision, as this ADR defines B3. A push there leaves the read stale, and the
+  activation fence refuses it: in B3-push, generation D=2 ends `failed` and D=3 is active. The run
+  above has the corrected B3; the earlier 340/340 with the wrong order is superseded.
 - **A harness read bug.** The paused-takeover read stopped on the `failed … "activation refused"`
   line, before the `refused` event that S5-4 checks. It now matches the event prefix.
 - **Mutation checks show S5-4 is enforced in depth.** The task log of part 1 has the details.
@@ -164,6 +170,13 @@ S5-1..S5-5: no failure in any run of any scenario
   - Removing the reconciler (M3) fails S5-1 in 9 scenarios.
   - Removing the final head check (M2) survives. The activation fence's `desired != D` and the
     re-read after activation back it up, so it is an early exit, not the safety mechanism.
+  - Removing the activation fence's `desired != D` (M7) **also survives** B3-push, B3-kill and
+    B3-pushkill, 3/3 each. The stale target activates for a moment. The re-read after activation
+    sees `D` advanced and rebuilds, so S5-1 (the final state) and S5-2 (never backwards) still
+    hold. **These rules do not detect a briefly stale activation.** §9.3.5's `desired = D` check is
+    kept because the design requires it, but S5 does not prove it necessary. A rule that no
+    activation serves a `D` below the one desired when its transaction began would catch it. That
+    is a question for the reviewer, not a change to these rules after the run.
 
 **Consequences.** P1 builds ingestion on §9.3.3 unchanged, with no River uniqueness options. The
 production worker must carry the `coalesce` rule. §9.3.3's prose now uses schema v1's `claim_*`

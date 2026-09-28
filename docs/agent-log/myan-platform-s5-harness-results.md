@@ -40,3 +40,13 @@ ORIENT item 4 (S5) is complete across #45 (part 1, protocol and worker), #46 (pa
 ### 2026-09-27T21:55:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:c0e049b
 docs(platform): S5 results — ADR-0004 accepted, DESIGN 0.3.2, ORIENT item 4 done
 4 files changed, 79 insertions(+), 16 deletions(-)
+
+### 2026-09-28T01:23:14Z · TEST · myan · claude-code/opus-5.5 · 0bd230c
+After the B3 fix (review of #45), re-run on apps/ingestd tree 9491f5b, the same tree before and after the restack: 17 x 20 all 'pass 20 fail 0 error 0', median 2.243 s, max 10.432 s (a B3-push refusal waits for claim expiry; run time not judged). S5-1..S5-5 no failure, exit 0. B3-push exercises the stale read: generation D=2 'failed', D=3 'active'. Mutations on B3-push/kill/pushkill, 3 runs each: M2 (no head check) survives; M7 (no desired != d in the activation fence) survives, because the re-read after activation recovers. Recorded in ADR-0004 as a limit of the rules, not a rule change.
+
+### 2026-09-28T01:23:14Z · DECIDE · myan · claude-code/opus-5.5 · 0bd230c
+Restacked onto part 2's 6215ea0. ADR-0004's Decision now pins the run to the apps/ingestd tree hash, not a commit SHA, so rebases do not stale it, and adds the B3 finding and M7.
+
+### 2026-09-28T01:23:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:0bd230c
+docs(platform): S5 evidence re-run with B3 after the read; M7 recorded
+2 files changed, 22 insertions(+), 3 deletions(-)
