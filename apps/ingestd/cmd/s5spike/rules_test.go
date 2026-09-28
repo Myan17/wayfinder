@@ -30,3 +30,18 @@ func TestRulesFailClosedWhenTheDatabaseCannotBeRead(t *testing.T) {
 		t.Errorf("want 5 errors and no judged rules, got %d errors, fails %v", len(r.errs), fails)
 	}
 }
+
+// Review of #47: oneRun used to evaluate append(r.failures, r.checkRules(sc)...), which reads
+// r.failures before checkRules' final observe() appends to it, and never read r.errs afterwards.
+func TestTheVerdictIsTakenAfterTheFinalObservation(t *testing.T) {
+	r := &run{}
+	fails := []string{"S5-1: x"}
+	r.failures = append(r.failures, "S5-3: added by the final observe")
+	if got, err := verdict(r, fails); err != nil || len(got) != 2 {
+		t.Errorf("want both failures, got %v, %v", got, err)
+	}
+	r.errs = append(r.errs, "S5-3: added by the final observe")
+	if got, err := verdict(r, nil); err == nil {
+		t.Errorf("an observation error became a result: %v", got)
+	}
+}
