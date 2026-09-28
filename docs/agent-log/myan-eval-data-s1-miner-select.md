@@ -30,3 +30,13 @@ uv run --extra dev pytest: 190 passed (8 new here). These were written test-firs
 ### 2026-09-28T22:33:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:dea5487
 feat(eval-data): S1 D-5 group-then-temporal split and ADR-0016 corpus selection
 5 files changed, 195 insertions(+), 3 deletions(-)
+
+### 2026-09-28T23:40:44Z · DECIDE · myan · claude-code/opus-5.5 · d5a3f6a
+Review of #51 by gupta958, relayed by myan on 2026-09-28. (1) select.best returns the feasible id tuples sorted, so neither the winner nor the list depends on candidate input order. (2) Regression test: reversed input gives the same winner and the same sorted feasible list. (3) ruff check and ruff format --check are clean on eval/miners (a concatenated list in the D-5 test is now unpacked, RUF005). (4) Not merged while stacked: restacked onto #50's new head b060f0f; once #50 merges it is rebased onto main and re-reviewed.
+
+### 2026-09-28T23:40:44Z · TEST · myan · claude-code/opus-5.5 · d5a3f6a
+uv run --extra dev pytest: 196 passed. Mutation: returning the feasible list unsorted makes test_selection_does_not_depend_on_candidate_input_order fail; restored, it passes. ruff check and ruff format --check clean; context-freshness OK.
+
+### 2026-09-28T23:40:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:d5a3f6a
+fix(eval-data): S1 selection output independent of candidate input order
+5 files changed, 82 insertions(+), 24 deletions(-)

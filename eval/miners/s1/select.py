@@ -9,8 +9,12 @@ MAX_CHUNKS = 60_000
 
 def _key(subset: tuple[dict, ...]):
     # More surviving strong pairs, more repositories, fewer chunks, then the sorted id tuple.
-    return (-sum(c["pairs"] for c in subset), -len(subset), sum(c["chunks"] for c in subset),
-            tuple(sorted(c["repo_id"] for c in subset)))
+    return (
+        -sum(c["pairs"] for c in subset),
+        -len(subset),
+        sum(c["chunks"] for c in subset),
+        tuple(sorted(c["repo_id"] for c in subset)),
+    )
 
 
 def best(cands: list[dict], max_chunks: int = MAX_CHUNKS):
@@ -26,4 +30,6 @@ def best(cands: list[dict], max_chunks: int = MAX_CHUNKS):
     if not feasible:
         return None, "chunk bound"
     win = min(feasible, key=_key)
-    return tuple(sorted(c["repo_id"] for c in win)), [tuple(sorted(c["repo_id"] for c in s)) for s in feasible]
+    # Sorted, so neither the winner nor the feasible list depends on candidate input order (review of #51).
+    ids = sorted(tuple(sorted(c["repo_id"] for c in s)) for s in feasible)
+    return tuple(sorted(c["repo_id"] for c in win)), ids

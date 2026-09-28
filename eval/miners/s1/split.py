@@ -39,15 +39,20 @@ def assign(ps: list[dict]) -> dict:
         # Step 3. Nodes are keyed by repository and S1-2 counts same-repository closing
         # references only, so a group is single-repository in practice; the rule stays as written.
         repo = min(r for r, n in repos.items() if n == top)
-        groups.append({"members": members, "repo": repo,
-                       "t": max(ps[i]["merged_at"] for i in members),   # step 2: latest merge
-                       "first_pr": min(ps[i]["pr"] for i in members)})
+        groups.append(
+            {
+                "members": members,
+                "repo": repo,
+                "t": max(ps[i]["merged_at"] for i in members),  # step 2: latest merge
+                "first_pr": min(ps[i]["pr"] for i in members),
+            }
+        )
     out = [dict(p) for p in ps]
     achieved: dict = {}
     boundaries: dict = {}
     for repo in sorted({g["repo"] for g in groups}):
         mine = sorted((g for g in groups if g["repo"] == repo), key=lambda g: (g["t"], g["first_pr"]))
-        n = sum(len(g["members"]) for g in mine)                          # N: the repository's pairs
+        n = sum(len(g["members"]) for g in mine)  # N: the repository's pairs
         c, counts, bounds = 0, {"dev": 0, "test": 0, "held_out": 0}, {}
         for g in mine:
             name = next(s for s, frac in SPLITS if c < frac * n)
