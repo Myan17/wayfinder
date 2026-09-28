@@ -30,3 +30,14 @@ No code. Checked the references: A-3, R-03 and R-14 exist in DESIGN (§7.1 and �
 ### 2026-09-28T20:42:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:46397f0
 docs(agreements): ADR-0016 — source modes and S1's acceptance rules, before S1
 2 files changed, 130 insertions(+)
+
+### 2026-09-28T21:12:23Z · DECIDE · myan · claude-code/opus-5.5 · 035d1ca
+Review of #49 by gupta958, relayed by myan (the first round never reached GitHub; #49 had no review or comment). Four blockers, all fixed:
+(1) R-03's order now follows DESIGN ('Wider candidate list; relax file-count filter to 15; report the weak set separately'): widen first, then relax.
+(2) The tie-break is a total order: surviving pairs, then repository count, then chunk estimate, then the lexicographically smaller sorted tuple of github_repo_ids. The sum of ids could tie.
+(3) The chunk estimate has an exact file universe: git ls-tree regular files, the extension list, and test, vendored, generated, Markdown and binary exclusions; lines and ceil(lines/60) are defined. S1-4 uses the same Markdown universe.
+(4) After each R-03 step, selection re-runs from scratch over all qualifying candidates. 'No feasible corpus' is defined (fewer than 3 qualify, or no subset meets language mix and chunk bound): only widening applies, then A-3 fails with the reason, and R-14 is recorded if acquisition is the cause. The Decision options cover each outcome.
+
+### 2026-09-28T21:12:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:035d1ca
+docs(agreements): ADR-0016 — R-03 in DESIGN's order, total tie-break, exact file universe
+2 files changed, 75 insertions(+), 21 deletions(-)

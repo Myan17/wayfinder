@@ -48,37 +48,79 @@ including failures, with the measured value.
 | S1-1 | **Permissive license** | The repository's SPDX id, read from the license file in the clone and cross-checked against the GitHub API, is one of MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0 or ISC. A mismatch between the two sources fails the rule |
 | S1-2 | **At least 100 linkable pairs** | Merged PRs (before the as-of time) with a non-empty `closingIssuesReferences` to an issue in the same repository, counted as (issue, PR) pairs **before** ADR-0013's filters |
 | S1-3 | **Base commits resolve** | For every S1-2 pair, the parent of the PR's first commit (ADR-0013 D-1) exists in the clone, including commits from fork PRs through `refs/pull/*/head`. The rule passes if **at least 95%** resolve. Unresolved pairs are excluded with the reason (D-6) |
-| S1-4 | **Real Markdown documentation** | At least 5 `.md` files outside `CHANGELOG*`, `LICENSE*`, `.github/` and vendored paths, with at least 2,000 words among them, at the as-of commit |
+| S1-4 | **Real Markdown documentation** | At least 5 `.md` files in the chunk estimate's file universe (below: steps 1, 2, 4, 6 and 7, so not vendored, changelog, license or `.github/`), with at least 2,000 whitespace-separated words among them, at the as-of commit |
 | S1-5 | **Acquisition works read-only** | Every S1 read comes from a read-only clone and REST/GraphQL as an ordinary authenticated user, with no App and no write scope. S1 records the API calls used, and the rule fails if any read needed more access |
+
+## The chunk estimate
+
+The chunker does not exist yet, so the size estimate is fixed now. It is computed per candidate at
+its as-of commit, over exactly this file universe:
+
+1. **Tracked regular files.** Every path in `git ls-tree -r <as-of commit>` with mode `100644` or
+   `100755`. Symlinks (`120000`) and submodules (`160000`) are excluded.
+2. **Extensions.** Keep only `.py`, `.pyi`, `.go` and `.md`.
+3. **Tests.** Exclude a path with a directory component `test`, `tests` or `testdata`, and a
+   filename matching `test_*.py`, `*_test.py`, `*_test.go` or `conftest.py`.
+4. **Vendored.** Exclude a path with a directory component `vendor`, `third_party` or `_vendor`.
+5. **Generated.** Exclude `*_pb2.py`, `*_pb2.pyi` and `*.pb.go`, and any `.go` file whose first 10
+   lines contain a line matching `^// Code generated .* DO NOT EDIT\.$` (Go's convention).
+6. **Markdown.** Exclude files named `CHANGELOG*`, `CHANGES*` or `LICENSE*`, and anything under
+   `.github/`. This is the same Markdown universe as S1-4.
+7. **Binary.** Exclude a file that is not valid UTF-8.
+
+A file's lines are its count of `\n` bytes, plus 1 if it is non-empty and does not end in `\n`. The
+file contributes `ceil(lines / 60)` chunks, and an empty file contributes 0. A candidate's estimate
+is the sum over its files, and a corpus's estimate is the sum over its repositories. The manifest
+records each candidate's file count and estimate.
 
 ## Selecting the corpus
 
-Among qualifying candidates, S1 chooses **3 or 4** repositories:
+Among qualifying candidates, S1 chooses **3 or 4** repositories. A subset is **feasible** if:
 
-1. At least one Python and one Go repository.
-2. The estimated total size is **no more than 60,000 chunks**. The chunker does not exist yet, so the
-   estimate is fixed now: for each source and Markdown file at the as-of commit, `ceil(lines / 60)`,
-   summed. Tests, vendored and generated paths are excluded, matching D-2's exclusions.
-3. Within 1 and 2, maximise the **surviving pairs**, meaning pairs that pass ADR-0013 D-1, D-2 and
-   D-3's strong set. Ties go to more repositories, then to the smaller total chunk estimate, then
-   to the smaller sum of `github_repo_id`. It is an exhaustive search over the 3- and 4-subsets of
-   qualifying candidates.
+1. it has at least one Python and one Go repository, and
+2. its chunk estimate is **at most 60,000**.
+
+Among feasible subsets, S1 chooses by an exhaustive search over every 3- and 4-subset of qualifying
+candidates. The comparison is a **total order**, applied key by key:
+
+1. More **surviving strong pairs**: pairs that pass ADR-0013 D-1 and D-2 and are in D-3's strong
+   set.
+2. More repositories.
+3. A smaller chunk estimate.
+4. The lexicographically smaller **sorted tuple of `github_repo_id`s**. IDs are unique, so no two
+   distinct subsets tie here. A sum of IDs would not guarantee that.
 
 ## The aggregate bar
 
 **A-3 passes** if the selected corpus has **at least 300 surviving strong pairs** under ADR-0013
-D-1 to D-3, before the temporal split (D-5).
+D-1 to D-3, before the temporal split (D-5). The weak set is always reported separately and never
+counted (D-3, and R-03's last clause).
 
-**If it has fewer, R-03's fallbacks apply in this order, each only if the previous one still falls
-short:**
+### When the corpus falls short: R-03, in DESIGN's order
 
-1. Relax D-2's upper file count from 10 to 15 (R-03). The decision records how many pairs this adds.
-2. Widen the candidate list. That is a new pull request that names the added candidates **before**
-   measuring them, for the same reason as this document.
+Each step applies only if the previous one still falls short. Neither lowers the 300 bar.
 
-Neither fallback lowers the bar. If both are used and the corpus still falls short, S1 reports the
-shortfall and A-3 fails. DESIGN §14.2's intervals are then published at the achieved size, which
-ADR-0013 already allows.
+1. **Widen the candidate list.** A new pull request names the added candidates **before** measuring
+   them, for the same reason as this document. The new candidates are measured under S1-1 to S1-5.
+   Selection then **re-runs from scratch** over every qualifying candidate, old and new.
+2. **Relax D-2's upper file count from 10 to 15**, for every candidate. Surviving pairs are
+   recomputed, and selection re-runs from scratch over every qualifying candidate. Qualification
+   (S1-2 counts pairs before ADR-0013's filters) and the chunk estimates do not change.
+
+The Decision records every selection round: its candidate set, its feasible subsets and the
+winner.
+
+### When no subset is feasible
+
+This happens if fewer than 3 candidates qualify, or if no 3- or 4-subset of qualifying candidates
+meets both feasibility conditions. S1 then records **"no feasible corpus"**, naming the constraint
+that failed: the qualification count, the language mix or the chunk bound.
+
+Relaxing D-2 cannot help, since it changes neither qualification nor size, so only step 1 (widen)
+applies. If a widened list still has no feasible subset, **A-3 fails** with that reason. If the
+cause is S1-5 (read-only acquisition), R-14's mitigation is recorded as well. In either failing
+case, S1 still delivers the per-candidate measurements, and DESIGN §14.2's evaluation cannot start
+until the corpus exists.
 
 ## What S1 must deliver (the manifest)
 
@@ -98,5 +140,10 @@ consequences:
 
 - **Accept the corpus:** name the 3–4 repositories, quote each candidate's S1-1 to S1-5 results,
   the chunk estimate and the surviving-pair count, and state A-3 as passed.
-- **Accept with fallback:** the same, naming which R-03 fallback was used and what it added.
-- **A-3 fails:** quote the shortfall, and record the consequence for §14.2's intervals.
+- **Accept with fallback:** the same, naming which R-03 step was used, what it added, and every
+  selection round.
+- **A-3 fails, short:** a feasible corpus exists but has fewer than 300 surviving strong pairs
+  after both R-03 steps. Quote the shortfall and every selection round. §14.2's intervals are
+  published at the achieved size.
+- **A-3 fails, no feasible corpus:** name the constraint that failed, and record R-14 if the cause
+  is acquisition.
