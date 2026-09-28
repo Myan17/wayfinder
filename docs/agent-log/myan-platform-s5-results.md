@@ -40,3 +40,10 @@ docs(platform): S5 evidence — ADR-0004 accepted, DESIGN 0.3.2, ORIENT item 4 d
 ### 2026-09-28T20:06:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:b97dbd4
 docs(agents): log the rebase onto main after #47
 1 file changed, 3 insertions(+)
+
+### 2026-09-28T20:24:44Z · DECIDE · myan · claude-code/opus-5.5 · 91c10ae
+gupta958's decision on M7, relayed by myan on 2026-09-28: accept the limitation. ADR-0004 tests eventual 'no lost push', not a guarantee that a briefly stale generation never activates. The prewritten rules are not changed. The desired_generation = D activation fence stays in production, and the production worker implementation must test that fence directly. ADR-0004's M7 paragraph and Consequences now record this, and the 'question for the reviewer' wording is gone.
+
+### 2026-09-28T20:24:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:91c10ae
+docs(platform): ADR-0004 records the M7 decision — limitation accepted
+2 files changed, 13 insertions(+), 6 deletions(-)

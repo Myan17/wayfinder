@@ -178,11 +178,15 @@ S5-1..S5-5: no failure in any run of any scenario
   - Removing the activation fence's `desired != D` (M7) **also survives** B3-push, B3-kill and
     B3-pushkill, 3/3 each. The stale target activates for a moment. The re-read after activation
     sees `D` advanced and rebuilds, so S5-1 (the final state) and S5-2 (never backwards) still
-    hold. **These rules do not detect a briefly stale activation.** §9.3.5's `desired = D` check is
-    kept because the design requires it, but S5 does not prove it necessary. A rule that no
-    activation serves a `D` below the one desired when its transaction began would catch it. That
-    is a question for the reviewer, not a change to these rules after the run.
+    hold. **These rules do not detect a briefly stale activation.**
+    **Reviewer decision (gupta958, 2026-09-28): accept the limitation.** This ADR tests eventual
+    "no lost push", not a guarantee that a briefly stale generation never activates. The rules
+    above were written before the run and are not changed after it. §9.3.5's
+    `desired_generation = D` activation fence stays in production. **The production worker's
+    implementation must include a direct test of that fence**, because S5 does not exercise it on
+    its own.
 
 **Consequences.** P1 builds ingestion on §9.3.3 unchanged, with no River uniqueness options. The
-production worker must carry the `coalesce` rule. §9.3.3's prose now uses schema v1's `claim_*`
-names (the column-name note above).
+production worker must carry the `coalesce` rule. It must also keep the `desired_generation = D`
+fence, with a direct test of it (the M7 decision above). §9.3.3's prose now uses schema v1's
+`claim_*` names (the column-name note above).
