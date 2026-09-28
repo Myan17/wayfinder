@@ -38,8 +38,8 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 - **The pairs file**, committed at exactly `eval/datasets/s1/pairs.jsonl` (JSONL, one `$defs/pair` per line): `github_repo_id`, `issue`, `pr`, `base_commit`
   (40 hex characters), `gold` (at least 1 source path), `strong`, `group_id`, `t_g` and `split`.
 - **The miner** (`eval/miners/s1/`): `universe.excluded / lines / chunks`, `pairs.gold_files / keep / weak`,
-  and, in the next pull request, `split.assign` and `select.best`. These are pure functions; the
-  acquisition code (clone, GraphQL) follows them. Callers use the dataset and manifest, not these functions.
+  `split.assign` and `select.best`. These are pure functions, and the acquisition code (clone,
+  GraphQL) lands next. Callers use the dataset and manifest, not these functions.
 
 ## Invariants a caller may rely on
 
@@ -83,8 +83,8 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `eval/miners/tests/test_s1_pairs.py::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
 | `…::test_gold_labels_are_verified_against_the_base_snapshot` | D-2 labels at the base: added, renamed, symlink, generated, UTF-8, unread |
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
-| `…::test_the_manifest_counts_are_explicit_and_add_up` | total = strong + weak |
-| The D-5 and selection tests | They land with `split.py` and `select.py` in the next pull request, which pins the D-5 and `selected` invariants above |
+| `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
+| `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed` | ADR-0016's selection |
 
 ## Fake
 
