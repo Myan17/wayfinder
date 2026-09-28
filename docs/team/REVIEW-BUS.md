@@ -1,10 +1,10 @@
 # The review bus — architecture, reading list, onboarding
 
-The rules are in ADR-0016. This file says how the bus works, what to read to understand it, how to
+The rules are in ADR-0019. This file says how the bus works, what to read to understand it, how to
 run it, and how to extend it.
 
 **Who is who.** `Myan17` is Myan's author account. `gupta958` is Myan's second account, used only to
-review and merge. It is not a second person (ADR-0016, Context). Both watchers run on Myan's Mac,
+review and merge. It is not a second person (ADR-0019, Context). Both watchers run on Myan's Mac,
 and each has its own `gh` login.
 
 ## 1. Reading list (about 40 minutes, in this order)
@@ -13,7 +13,7 @@ For Myan before switching the bus on, and for anyone joining who needs to trust 
 
 | # | File | Why you read it | Time |
 |---|---|---|---|
-| 1 | `docs/adr/ADR-0016-review-bus-delegated-approval.md` | What the reviewer agent may do, and every gate it must pass | 10 min |
+| 1 | `docs/adr/ADR-0019-review-bus-delegated-approval.md` | What the reviewer agent may do, and every gate it must pass | 10 min |
 | 2 | This file, §2–§5 | How the two sides talk and what each message means | 10 min |
 | 3 | `scripts/reviewbus/gates.py` | **The one file that decides whether the reviewer account approves.** Every gate is a small function with a test | 8 min |
 | 4 | `scripts/reviewbus/protocol.py` | The message format, and the author check that ignores comments from anyone else | 5 min |
@@ -70,7 +70,7 @@ Each bus message is a PR comment. Its first line is a hidden header, and the res
 | `escalate` | either | reason, question | A human is needed. The comment @-mentions Myan17 |
 
 A finding has `id`, `file`, `line`, `severity`, `blocking` and `text`. Messages from any other
-GitHub account are ignored (ADR-0016 rule 6).
+GitHub account are ignored (ADR-0019 rule 6).
 
 ## 4. The life of one PR
 
@@ -120,7 +120,7 @@ Each file has one job, and one test file of the same name in `scripts/tests/revi
 |---|---|---|
 | `protocol.py` | Build and parse bus messages; the author-role check | nothing |
 | `state.py` | The PR life cycle (§4), rebuilt from comments; the local cache | protocol |
-| `gates.py` | ADR-0016 rule 4: one function per gate, and `decide()` | protocol, tier config |
+| `gates.py` | ADR-0019 rule 4: one function per gate, and `decide()` | protocol, tier config |
 | `tier.py` | Is a file in the human-only tier? Paths come from OWNERSHIP.md, not a copy | OWNERSHIP.md |
 | `github.py` | Every `gh` call in one place (list PRs, comments, checks, review, merge), each run with its role's `GH_CONFIG_DIR` and account check | `gh`, `check_gh_account` |
 | `agents.py` | Run the configured CLI (`codex exec` / `claude -p`) with a prompt; parse the JSON verdict | the CLI |
@@ -135,7 +135,7 @@ command.
 ## 8. Extending it
 
 - **Add a gate:** a function in `gates.py` that returns `(ok, reason)`, added to `GATES`, with a test
-  that it blocks. Then add a line to ADR-0016 rule 4 in the same PR. The human-only tier applies,
+  that it blocks. Then add a line to ADR-0019 rule 4 in the same PR. The human-only tier applies,
   since `scripts/reviewbus/**` is in it.
 - **Add an agent CLI:** one entry in `agents.py`'s `COMMANDS` (argv template and output parsing),
   plus a fake-CLI test.
@@ -156,7 +156,7 @@ command.
 
 | PR | Content | Approved by |
 |---|---|---|
-| 1 | ADR-0016 and this file, the spec | Myan as gupta958 by hand. The AGENTS.md and ROSTER text is committed by Myan by hand |
+| 1 | ADR-0019 and this file, the spec | Myan as gupta958 by hand. The AGENTS.md and ROSTER text is committed by Myan by hand |
 | 2 | `protocol`, `state`, `tier`, `gates`, `github`, with tests | Myan as gupta958 by hand |
 | 3 | `agents`, `reviewer`, `prompts/review.md`, `cli doctor/once/watch`, example config | Myan as gupta958 by hand |
 | 4 | `author`, `prompts/fix.md`, launchd entry for Myan, CLAUDE.md pointer | Myan as gupta958 by hand, then **shadow week** |

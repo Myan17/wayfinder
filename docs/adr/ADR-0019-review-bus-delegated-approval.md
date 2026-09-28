@@ -1,4 +1,4 @@
-# ADR-0016 — The review bus, and the reviewer account's agent
+# ADR-0019 — The review bus, and the reviewer account's agent
 
 - **Status:** Proposed. It takes effect only when this pull request is approved by hand from the
   reviewer account **and** `WAYFINDER_AGENT_APPROVAL` is turned on. Until then nothing changes.
@@ -82,16 +82,16 @@ approved (#36–#39, reopened as #40–#43; #44 adds a guard).
 merges, never edits ..." with:
 
 > An agent never approves a pull request or merges one, **except** the reviewer account's agent
-> acting under ADR-0016's gates. Myan is accountable for its approvals. No agent ever edits branch
+> acting under ADR-0019's gates. Myan is accountable for its approvals. No agent ever edits branch
 > protection, CI permissions, `AGENTS.md`, `CODEOWNERS` or the roster, or grants itself scope.
 
 **`AGENTS.md` §7**, after "one approving review from `gupta958` via CODEOWNERS on `*`", add:
 
-> (Myan's reviewer account, by hand or through its agent under ADR-0016)
+> (Myan's reviewer account, by hand or through its agent under ADR-0019)
 
 **`docs/team/ROSTER.md`:** for gupta958, set `name: Myan Gupta (reviewer account)`, change the role
 comment to `# Myan's second account: reviews and merges; not a second person`, and add
-`- reviewbus/<cli>   # approves and merges under ADR-0016` to its `agents:` list.
+`- reviewbus/<cli>   # approves and merges under ADR-0019` to its `agents:` list.
 
 ## Consequences
 

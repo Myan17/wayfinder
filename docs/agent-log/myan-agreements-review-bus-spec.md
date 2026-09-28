@@ -40,3 +40,10 @@ Spec revised. Myan, 2026-09-26: gupta958 is 'my other account', and asked for th
 ### 2026-09-26T22:26:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:b939b3a
 docs(agreements): ADR-0016 for a reviewer account that is Myan's own
 3 files changed, 106 insertions(+), 64 deletions(-)
+
+### 2026-09-28T20:41:03Z · DECIDE · myan · claude-code/opus-5.5 · a7fc587
+Renumbered to ADR-0019. DESIGN §12 pre-assigns 0016 to 'Two source modes', which S1's acceptance rules will use; 0017 and 0018 are also taken (deletion closure, recovery tiers).
+
+### 2026-09-28T20:41:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:a7fc587
+docs(agreements): renumber the review bus ADR to 0019 (0016 is DESIGN's source modes)
+3 files changed, 14 insertions(+), 11 deletions(-)
