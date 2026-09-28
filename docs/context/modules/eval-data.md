@@ -37,8 +37,8 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 - **The pairs file** (JSONL, one `$defs/pair` per line): `github_repo_id`, `issue`, `pr`, `base_commit`
   (40 hex characters), `gold` (at least 1 source path), `strong`, `group_id`, `t_g` and `split`.
 - **The miner** (`eval/miners/s1/`): `universe.excluded / lines / chunks`, `pairs.gold_files / keep / weak`,
-  `split.assign` and `select.best`. These are pure functions, and the acquisition code (clone, GraphQL)
-  lands next. Callers use the dataset and manifest, not these functions.
+  and, in the next pull request, `split.assign` and `select.best`. These are pure functions; the
+  acquisition code (clone, GraphQL) follows them. Callers use the dataset and manifest, not these functions.
 
 ## Invariants a caller may rely on
 
@@ -75,12 +75,11 @@ None in Postgres. It owns the files under `eval/datasets/`.
 
 | Test | Pins |
 |---|---|
-| `eval/miners/tests/test_s1_core.py::test_the_file_universe_is_adr_0016s_seven_steps` | ADR-0016's seven steps, including test Markdown (S1-4) |
+| `eval/miners/tests/test_s1_universe.py::test_the_file_universe_is_adr_0016s_seven_steps` | ADR-0016's seven steps, including test Markdown (S1-4) |
 | `…::test_lines_and_chunks_are_byte_exact` | The line and chunk definitions |
 | `…::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
-| `…::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge` | D-5 |
-| `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed` | ADR-0016's selection |
+| The D-5 and selection tests | They land with `split.py` and `select.py` in the next pull request, which pins the D-5 and `selected` invariants above |
 
 ## Fake
 
