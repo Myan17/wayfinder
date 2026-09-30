@@ -37,3 +37,7 @@ Review of #52 by gupta958: the governing rules still say two exemptions. docs/te
 ### 2026-09-30T20:33:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:93c68a5
 docs(agreements): WORKING-AGREEMENT names the third size exemption
 2 files changed, 4 insertions(+), 1 deletion(-)
+
+### 2026-09-30T20:36:38Z · COMMIT · myan · human · parent:b68c013
+docs(agreements): AGENTS.md names the third size exemption
+1 file changed, 8 insertions(+), 4 deletions(-)
