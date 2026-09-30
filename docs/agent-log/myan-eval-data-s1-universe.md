@@ -30,3 +30,10 @@ uv run --extra dev pytest: 175 passed in 1.29s. Written test-first in the core t
 ### 2026-09-28T23:38:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccc79cc
 feat(eval-data): S1 file universe and chunk estimate (ADR-0016)
 6 files changed, 144 insertions(+), 6 deletions(-)
+
+### 2026-09-30T20:55:13Z · DECIDE · myan · claude-code/opus-5.5 · 1a935f4
+'Update branch' was clicked on #53, which created merge commit 27adbb3 (main into this branch, authored gupta958@umn.edu). Guardrails rejected it: the author is not in ROSTER, and task branches must not carry merge commits. The merge commit is dropped: the branch is rebased from 511da78 onto main 17e7542 (#52), with no conflicts and no content change. Tests: 183 passed in 1.44s.
+
+### 2026-09-30T20:55:13Z · COMMIT · myan · claude-code/opus-5.5 · parent:1a935f4
+docs(agents): log the rebase that drops the Update-branch merge commit
+1 file changed, 3 insertions(+)
