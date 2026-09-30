@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "wayfinder/eval/datasets/manifest.schema.json",
+  "title": "Locate dataset manifest (DESIGN §14.5, ADR-0013, ADR-0016)",
+  "type": "object",
+  "required": ["schema_version", "as_of", "miner_commit", "rules", "candidates", "selection_rounds",
+               "selected", "pairs_file", "exclusions", "splits", "api_calls"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "as_of": {"type": "string", "format": "date-time"},
+    "miner_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "rules": {
+      "type": "object",
+      "required": ["adrs", "max_files", "gold_extensions", "chunk_lines"],
+      "properties": {
+        "adrs": {"type": "array", "items": {"type": "string"}},
+        "max_files": {"enum": [10, 15]},
+        "gold_extensions": {"type": "array", "items": {"type": "string"}},
+        "chunk_lines": {"const": 60}
+      }
+    },
+    "candidates": {"type": "array", "items": {"$ref": "#/$defs/candidate"}},
+    "selection_rounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["candidates", "max_files", "winner"],
+        "properties": {
+          "candidates": {"type": "array", "items": {"type": "integer"}},
+          "max_files": {"enum": [10, 15]},
+          "feasible": {"type": "array", "items": {"type": "array", "items": {"type": "integer"}}},
+          "winner": {"type": ["array", "null"], "items": {"type": "integer"}},
+          "no_feasible_reason": {"enum": [null, "qualification count", "language mix", "chunk bound"]}
+        }
+      }
+    },
+    "selected": {"type": "array", "items": {"type": "integer"}},
+    "pairs_file": {
+      "type": "object",
+      "description": "total_count = strong_count + weak_count, checked by s1.manifest.count_problem",
+      "required": ["path", "sha256", "total_count", "strong_count", "weak_count"],
+      "properties": {"path": {"const": "eval/datasets/s1/pairs.jsonl"},
+                     "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                     "total_count": {"type": "integer", "minimum": 0},
+                     "strong_count": {"type": "integer", "minimum": 0},
+                     "weak_count": {"type": "integer", "minimum": 0}}
+    },
+    "exclusions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "splits": {
+      "type": "object",
+      "description": "Per github_repo_id: achieved counts and the two boundary times (ADR-0013 D-5 step 7)",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["dev", "test", "held_out", "test_from", "held_out_from"],
+        "properties": {"dev": {"type": "integer"}, "test": {"type": "integer"}, "held_out": {"type": "integer"},
+                       "test_from": {"type": ["string", "null"]}, "held_out_from": {"type": ["string", "null"]}}
+      }
+    },
+    "api_calls": {"type": "object", "required": ["graphql", "rest"],
+                  "properties": {"graphql": {"type": "integer"}, "rest": {"type": "integer"}}}
+  },
+  "$defs": {
+    "candidate": {
+      "type": "object",
+      "required": ["repo", "github_repo_id", "lang", "as_of_commit", "spdx", "rules", "file_count", "chunk_estimate"],
+      "properties": {
+        "repo": {"type": "string"}, "github_repo_id": {"type": "integer"}, "lang": {"enum": ["py", "go"]},
+        "as_of_commit": {"type": "string"}, "spdx": {"type": ["string", "null"]},
+        "rules": {"type": "object", "required": ["S1-1", "S1-2", "S1-3", "S1-4", "S1-5"],
+                  "additionalProperties": {"type": "object", "required": ["value", "pass"],
+                                           "properties": {"pass": {"type": "boolean"}}}},
+        "file_count": {"type": "integer"}, "chunk_estimate": {"type": "integer"}
+      }
+    },
+    "pair": {
+      "description": "One line of the pairs JSONL file",
+      "type": "object",
+      "required": ["github_repo_id", "issue", "pr", "base_commit", "gold", "strong", "group_id", "t_g", "split"],
+      "properties": {
+        "github_repo_id": {"type": "integer"}, "issue": {"type": "integer"}, "pr": {"type": "integer"},
+        "base_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "gold": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "strong": {"type": "boolean"}, "group_id": {"type": "string"},
+        "t_g": {"type": "string", "format": "date-time"}, "split": {"enum": ["dev", "test", "held_out"]}
+      }
+    }
+  }
+}
