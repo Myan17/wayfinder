@@ -67,7 +67,7 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 | Condition | What the caller sees | What the caller should do |
 |---|---|---|
 | No feasible corpus | `selected` empty, and the last round carries `no_feasible_reason` | Treat A-3 as failed; do not evaluate |
-| Fewer than 300 strong pairs | `pairs_file.count` of strong pairs below 300 | Report intervals at the achieved size (ADR-0013) |
+| Fewer than 300 strong pairs | `pairs_file.strong_count` below 300 | Report intervals at the achieved size (ADR-0013) |
 | The manifest's SHA-256 does not match the file | — | Refuse the dataset |
 
 ## Data owned
