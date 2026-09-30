@@ -75,3 +75,10 @@ docs(eval-data): card names pairs_file.strong_count, not the removed count
 ### 2026-09-30T20:40:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:0b6a48c
 docs(agents): log re-opening #50's content after it merged into the wrong base
 1 file changed, 3 insertions(+)
+
+### 2026-09-30T20:55:30Z · DECIDE · myan · claude-code/opus-5.5 · 1bfbfd1
+Restacked onto #53's rebased head 77a1e58 (#53 dropped the Update-branch merge commit and sits on main 17e7542); was on 511da78, head 7cc9f98. No content change. Tests: 195 passed in 1.47s.
+
+### 2026-09-30T20:55:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:1bfbfd1
+docs(agents): log the restack onto #53's rebased head
+1 file changed, 3 insertions(+)
