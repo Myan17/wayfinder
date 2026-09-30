@@ -40,3 +40,10 @@ uv run --extra dev pytest: 196 passed. Mutation: returning the feasible list uns
 ### 2026-09-28T23:40:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:d5a3f6a
 fix(eval-data): S1 selection output independent of candidate input order
 5 files changed, 82 insertions(+), 24 deletions(-)
+
+### 2026-09-30T20:55:47Z · DECIDE · myan · claude-code/opus-5.5 · 7e416c9
+Restacked onto #54's head d430627 (#54 is #50 re-opened, now on #53's rebased head); was on b060f0f. The same two commits. Tests: 204 passed in 1.47s; ruff: All checks passed!.
+
+### 2026-09-30T20:55:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:7e416c9
+docs(agents): log the restack onto #54
+1 file changed, 3 insertions(+)
