@@ -30,3 +30,10 @@ pytest scripts/tests/test_check_pr_size.py: 25 passed (8 new: the exact path is 
 ### 2026-09-28T23:35:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccc79cc
 feat(agreements): exact-path size exemption for the S1 pairs dataset
 3 files changed, 57 insertions(+), 2 deletions(-)
+
+### 2026-09-30T20:33:18Z · DECIDE · myan · claude-code/opus-5.5 · 93c68a5
+Review of #52 by gupta958: the governing rules still say two exemptions. docs/team/WORKING-AGREEMENT.md's size row now names three exact paths, including eval/datasets/s1/pairs.jsonl and its mechanical review. AGENTS.md §2.2 and §7 need the same change, and agents may not edit AGENTS.md (§1), so the patch is at ~/Downloads/Jobs/Projects/wayfinder-agents-52.patch for myan to apply and commit by hand (Agent: human).
+
+### 2026-09-30T20:33:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:93c68a5
+docs(agreements): WORKING-AGREEMENT names the third size exemption
+2 files changed, 4 insertions(+), 1 deletion(-)
