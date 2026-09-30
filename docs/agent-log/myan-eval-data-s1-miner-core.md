@@ -61,3 +61,10 @@ Restacked onto myan/eval-data/s1-universe (511da78) with rebase -X theirs; the 4
 ### 2026-09-28T23:39:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:7d2ea77
 docs(agents): log the restack onto the universe PR
 1 file changed, 3 insertions(+)
+
+### 2026-09-30T20:32:23Z · DECIDE · myan · claude-code/opus-5.5 · b060f0f
+Review of #50 by gupta958, round 2: the card's failure-modes row still named pairs_file.count, which no longer exists. It now reads pairs_file.strong_count below 300. No other 'count' field remains in the card or eval/. context-freshness OK: 8 interface files checked across 16 cards.
+
+### 2026-09-30T20:32:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:b060f0f
+docs(eval-data): card names pairs_file.strong_count, not the removed count
+2 files changed, 4 insertions(+), 1 deletion(-)
