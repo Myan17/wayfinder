@@ -68,3 +68,10 @@ Review of #50 by gupta958, round 2: the card's failure-modes row still named pai
 ### 2026-09-30T20:32:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:b060f0f
 docs(eval-data): card names pairs_file.strong_count, not the removed count
 2 files changed, 4 insertions(+), 1 deletion(-)
+
+### 2026-09-30T20:40:30Z · DECIDE · myan · claude-code/opus-5.5 · 0b6a48c
+#50 was merged into its base branch myan/eval-data/s1-universe (squash 7a80dea) before #53 had merged, so #53 grew to 455 lines and failed the size check. Myan's choice, 2026-09-30: 'Reset #53, re-open #50'. #53's branch was force-pushed back to 511da78 (lease on 7a80dea), and this branch's unchanged commits are re-opened as a new PR stacked on #53. Content is identical to the reviewed head 0b6a48c.
+
+### 2026-09-30T20:40:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:0b6a48c
+docs(agents): log re-opening #50's content after it merged into the wrong base
+1 file changed, 3 insertions(+)
