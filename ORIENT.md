@@ -31,7 +31,8 @@ gives the **order** to work them in and the **status** of each item, which DESIG
 
 ## Current phase: P0 — spikes, decisions, schema, selection rules
 
-Sep 21 – 30 (moved from Sep 27 under rule 5, DESIGN §19.8 step 4, on 2026-09-26). Gate **G0**: every spike answered, and ADR-0013 and ADR-0015 written before any
+Sep 21 – Oct 11 (moved from Sep 27 to Sep 30 on 2026-09-26, then to Oct 11 on 2026-10-04, both under
+rule 5, DESIGN §19.8 step 4; the second move came four days after G0's date had passed). Gate **G0**: every spike answered, and ADR-0013 and ADR-0015 written before any
 experiment. 32 h planned, 3 h of contingency.
 
 | # | Item | h | Why it is here in the order | Status |
@@ -65,5 +66,19 @@ session can remind the owner. The pull request that follows up on one removes it
 
 ## Next phase
 
-P1, the safety and consistency kernel (Oct 1 – 14, gate G1). Its ordered list is written here
-before G0 closes (rule 6). Until then, DESIGN §19.3 is the only source for it.
+P1, the safety and consistency kernel (Oct 12 – 25, gate G1; DESIGN §19.3, 65 h planned, 5 h of
+contingency). Exit: AUTH-01…AUTH-11, INDEX-01…INDEX-08 and INPUT-01 pass against the pinned stack.
+This is the ordered list rule 6 requires. It becomes `## Current phase` in the pull request that closes
+G0 with its gate report, and no item here starts before that.
+
+| # | Item | h | Why it is here in the order | Status |
+|---|---|---|---|---|
+| 1 | Pinned-extension integration harness | 3 | G1's exit is "against the pinned stack", so every later item's evidence runs on it. CI's `pinned-extension integration` job (item 3) runs the schema tests; the harness that G1's suites share does not exist yet | open |
+| 2 | Authorization predicate, leases, `eligible_repo`, synchronous negative invalidation | 10 | Authorization is the claim the project exists to prove (§19.8 protects its suite), and every read path builds on the predicate | open; leases, predicate and counters landed early (#4–#7, #10) |
+| 3 | Grant refresh: revision fencing, single-flight, all-or-nothing pagination, token rotation | 8 | Completes the authorization facts that item 2's predicate reads; fenced refresh landed early (#6) | open |
+| 4 | Ingestion: git sources (both modes), bounded hostile-input handling, history-missing re-snapshot | 10 | The start of the index pipeline; INPUT-01 is its exit test. ADR-0016 defines the two source modes | open |
+| 5 | Chunking (leaf + residual), normalization rules, representation identity, skipped-material manifest | 8 | Consumes ingestion's output; representation identity uses S6's evidence (P0 item 6) | open |
+| 6 | Generation build, lease fencing, activation protocol, status machine | 8 | Consumes chunks. Carries ADR-0004's two P1 obligations: the `desired_generation = D` fence with a direct test, and `coalesce(claim_expires_at > now(), false)` | open |
+| 7 | Webhook ingress: signature, dedupe, lifecycle events, desired-generation advance | 6 | Advances `desired_generation`, so it follows the generation build that consumes it | open |
+| 8 | Deletion closure: ordered GC, tombstones, reference counting | 6 | Removes what items 4–7 build; GC ordering is protected evidence (§19.8) | open |
+| 9 | Authorization and index state-machine tests with the independent oracle | 6 | G1's exit suite across items 2–8, so it runs once they exist | open |
