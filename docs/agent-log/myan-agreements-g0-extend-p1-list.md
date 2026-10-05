@@ -40,3 +40,16 @@ uv run --extra dev pytest: 204 passed (main's failing test_orient case now passe
 ### 2026-10-05T02:49:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e5b140
 test(agreements): the orient brief test no longer hard-codes a phase
 2 files changed, 8 insertions(+), 1 deletion(-)
+
+### 2026-10-05T02:56:14Z · DECIDE · myan · claude-code/opus-5.5 · 287d7c1
+gupta958's re-review of #58, relayed by myan on 2026-10-04: blocking, because DESIGN still stated 8 weeks (lines 312, 327), '35 h/week x 8 = 280 h' (1961), that every phase's length was unchanged (1965) though P0 was extended, and that every phase moves 11 days (revision 0.3.3) though P0's end was extended while P1-P5 moved. Current capacity and schedule statements must reflect the 10-week plan, and historical revision descriptions may stay. The test fix, the 11-day extension and the P1 order are approved; the pace-warning formula is a documented follow-up.
+
+### 2026-10-05T02:56:14Z · EDIT · myan · claude-code/opus-5.5 · 287d7c1
+DESIGN: section 6 Time row is 10 weeks; A-1 is 35 h/week for 10 weeks = 247 h planned + 33 h contingency + 70 h of P0 extension; 19.1 capacity is 35 x 10 = 350 h, with the 70 h attributed to P0 (one week planned, three now) and P1-P5 keeping their lengths; revision 0.3.3 says P0's end moved 11 days and P1-P5 shifted. The v0.3 review-response sentences (summary line 23, WF-22) stay historical, each with a pointer to the 10-week plan in 19.1. The arithmetic checks: 247 + 33 + 70 = 350, and P0 grew 3 + 11 = 14 days = 2 weeks = 70 h. A grep for '8 weeks', 'x 8' and '280 h' now finds only historical text.
+
+### 2026-10-05T02:56:14Z · TEST · myan · claude-code/opus-5.5 · 287d7c1
+uv run --extra dev pytest: 204 passed. orient.py --no-network still reads P0 to 2026-10-11, G0 closes 2026-10-11.
+
+### 2026-10-05T02:56:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:287d7c1
+docs(agreements): DESIGN states the 10-week plan wherever it states capacity
+2 files changed, 19 insertions(+), 8 deletions(-)

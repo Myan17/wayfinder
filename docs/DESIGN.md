@@ -21,7 +21,8 @@
 > not control. All of those are fixed here rather than deferred. The schedule is rebuilt around a
 > safety-and-consistency kernel that lands before any user interface, and it is longer: 250 planned
 > hours plus 30 hours of contingency over 8 weeks, not 120 hours over 4. Scope is not reduced to make
-> the date; the date moved. §23 maps every finding to the section that answers it.
+> the date; the date moved. (Since v0.3.3 the plan is 10 weeks: P0 was extended twice under §19.8 step 4;
+> §19.1 has the current dates and capacity.) §23 maps every finding to the section that answers it.
 
 ---
 
@@ -309,7 +310,7 @@ Priorities use MoSCoW. Acceptance criteria are Given/When/Then and map to the te
 | Constraint | Value | Consequence |
 |---|---|---|
 | Team | One engineer | Few moving parts; one datastore; one VM |
-| Time | 8 weeks at ~35 h/week (assumption A-1); overtime available, quality protected | Phase gates, not date-driven cuts |
+| Time | 10 weeks at ~35 h/week (assumption A-1; 8 planned, P0 extended twice under §19.8 step 4); overtime available, quality protected | Phase gates, not date-driven cuts |
 | Money | $0 fixed, ≤ $25/month variable | Free tiers, with account evidence; paid model calls for evaluation, private demos and safety canaries |
 | Server | Oracle Always Free Arm: 2 OCPU / 12 GB baseline | CPU is the binding constraint; drives model sizes and rerank policy |
 | Development machine | MacBook Pro M2 Pro, 16 GB | Bulk embedding and local batch jobs; not a server |
@@ -324,7 +325,7 @@ Priorities use MoSCoW. Acceptance criteria are Given/When/Then and map to the te
 
 | ID | Assumption | Validated by |
 |---|---|---|
-| A-1 | Author capacity ~35 h/week for 8 weeks (250 h planned + 30 h contingency) | Manager confirmation; §19 reports planned vs actual weekly |
+| A-1 | Author capacity ~35 h/week for 10 weeks: 247 h planned, 33 h of per-phase contingency, and 70 h added by P0's two extensions (§19.1) | Manager confirmation; §19 reports planned vs actual weekly |
 | A-2 | An Oracle Always Free A1 (2 OCPU/12 GB) and an AMD micro instance can be provisioned in the chosen region | Spike S3 |
 | A-3 | Candidate repositories yield ≥ 300 issue→fix pairs that survive the historical protocol in §14.2 | Spike S1 |
 | A-4 | Whole-system CPU at nominal load fits two cores with a rerank configuration that meets quality targets | Spike S2 (per-stage process CPU across query lengths, cache states, ACL selectivity, concurrent indexing) |
@@ -1958,11 +1959,12 @@ exists, and its contingency comes from features, never from evidence.
 | P5 | 10 | Nov 23 – 29 | Release evidence | **G5**: exit criteria in §16.7 met on the release commit |
 | — | — | Mon Nov 30 | Launch review | Approve, or remove the unproven capability from the release |
 
-Capacity: ~35 h/week × 8 = 280 h. Planned work is **247 h**, leaving **33 h** of contingency
+Capacity: ~35 h/week × 10 = 350 h. Planned work is **247 h**, with **33 h** of contingency
 distributed so that *every* phase holds some: P0 3 h, P1 5 h, P2 10 h, P3 3 h, P4 2 h, P5 10 h. A phase
 that consumes its contingency triggers the §19.8 order rather than borrowing from the next phase.
-P0 took step 4 twice: 3 days on 2026-09-26 (v0.3.1) and 11 days on 2026-10-04 (v0.3.3). The planned
-hours and every phase's length are unchanged; only the dates moved.
+The other **70 h** are P0's: it was planned as one week and took §19.8 step 4 twice, by 3 days on
+2026-09-26 (v0.3.1) and by 11 more on 2026-10-04 (v0.3.3), so it now runs three weeks. P1–P5 keep their
+planned lengths and hours and start later; the plan grew from 8 weeks to 10.
 
 ### 19.2 Phase 0 — spikes and decisions (32 h planned, 3 h contingency)
 
@@ -2179,7 +2181,7 @@ specified; "adopted with variation" means the intent is met by a different mecha
 | WF-19 hostile ingestion | Adopted — no repository code execution, explicit bounds and input classes, credential hygiene, skipped-material manifest | §9.3.7 |
 | WF-20 corpus acquisition | Adopted — two source modes; public upstream read-only; installation demos on owned repositories | §9.3.1, §14.1 |
 | WF-21 threads | **Deferred** — removed from v1 claims, stories and checklist; typed-citation contract recorded for a future promotion | §1, §3.2, §9.13 |
-| WF-22 schedule and cuts | Adopted — phased 250 h + 30 h contingency over 8 weeks; protected evidence list; contingency takes features, then experiment breadth, then generated answers, then time | §19 |
+| WF-22 schedule and cuts | Adopted — phased 250 h + 30 h contingency over 8 weeks (10 weeks since v0.3.3, after P0's two extensions; §19.1); protected evidence list; contingency takes features, then experiment breadth, then generated answers, then time | §19 |
 | WF-23 privileged operations | Adopted — operator vs administrator authority, token lifecycle before MCP, Origin/CSRF checks, revocation epoch, separate fixture profile, CI trust rules | §9.9, §13.2, §18 |
 | WF-24 chunking semantics | Adopted — leaf + residual ownership, defined normalization, explicit truncation, oversized-node fallback, coverage manifest | §9.4.1–9.4.2 |
 | WF-25 deterministic retrieval | Adopted — exact re-sort of relaxed results, stable ties, code tokenizer, escaped query grammar, per-file caps, underfill policy, exact fallback, plan capture | §9.5 |
@@ -2288,4 +2290,4 @@ wayfinder/
 | 0.3 | 2026-09-18 | Principal review response (two rounds: the v0.2 findings, then a verification pass over this draft that corrected the team-event revocation path, the `eligible_repo` outage and public-connector leases, envelope classification by connection input policy, cross-repository composite keys, `ON DELETE` modes on `base_generation_id` and `cached_from`, per-dimension vector tables with a real `halfvec` typmod, the denormalized `body_text` BM25 row, pseudo-repository evaluation snapshots, stable-identifier evidence manifests, the CPU table including the cost of reranking searches, telemetry sampling at 0.25%, per-phase contingency, and the missing test-ID inventory). Authorization rebuilt as leased facts with synchronous negative invalidation, fenced refresh and re-authorized artifacts (WF-01–04). Content/representation/occurrence identity with specification-keyed vectors (WF-05). Deletion closure, tombstones and ordered GC (WF-06). Desired-generation scheduling replacing queue-uniqueness assumptions (WF-07) and fenced activation (WF-08). Answer state machine and citation contract (WF-09, WF-11); answerability from a relevance signal instead of RRF (WF-10); provider budgets and deadlines (WF-12). Evaluation corrected: authorized exact oracle (WF-13), per-pair base commits and grouped splits with a final held-out set (WF-14–15), BM25 baseline and Wilson intervals (WF-28). Load protocol with open-arrival and cold profiles and an independent oracle (WF-16); capacity restated as a hypothesis with a background reservation (WF-17); three recovery tiers (WF-18); hostile-ingestion bounds (WF-19); two source modes (WF-20); threads deferred (WF-21); schedule replanned to 250 h + 30 h contingency over 8 weeks with protected evidence (WF-22); privileged-operation contracts (WF-23); chunking and retrieval determinism (WF-24–25); health and SLO math (WF-26); free-tier evidence (WF-27); release manifest (WF-29); all editorial contradictions resolved (WF-30) |
 | 0.3.1 | 2026-09-26 | §19.8 step 4 at G0: every phase moves 3 days (P0 ends Sep 30, launch review Thu Nov 19). P0 had 21 h open with a day left; nothing was cut |
 | 0.3.2 | 2026-09-27 | S5 results (ADR-0004): §9.3.3 accepted as designed. The prose uses schema v1's `claim_*` names, and §9.3.5 notes that a released (NULL) claim is not live |
-| 0.3.3 | 2026-10-04 | §19.8 step 4 at G0 again: every phase moves 11 days (P0 ends Oct 11, launch review Mon Nov 30), and the Weeks column now matches the dates. G0 did not close on Sep 30: 16 h were open (S1's remainder, S6, S2, S4) plus S3-6 unsized, with P0's 3 h contingency spent. The move was applied on Oct 4, four days late under ORIENT rule 5. Nothing was cut |
+| 0.3.3 | 2026-10-04 | §19.8 step 4 at G0 again: P0's end moves 11 days (Sep 30 → Oct 11), so P0 is three weeks long; P1–P5 keep their lengths and start 11 days later, and the launch review moves to Mon Nov 30. The plan is now 10 weeks (350 h at 35 h/week: 247 h planned, 33 h contingency, 70 h of P0 extension), restated in §6, A-1 and §19.1; the Weeks column matches the dates. G0 did not close on Sep 30: 16 h were open (S1's remainder, S6, S2, S4) plus S3-6 unsized, with P0's 3 h contingency spent. The move was applied on Oct 4, four days late under ORIENT rule 5. Nothing was cut |
