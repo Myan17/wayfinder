@@ -33,3 +33,13 @@ Docs only. Every path and document the README links or names exists (ORIENT.md, 
 ### 2026-10-05T03:45:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:9d28c1f
 docs(platform): README says what Wayfinder answers, where it stands and how to work on it
 2 files changed, 133 insertions(+), 13 deletions(-)
+
+### 2026-10-05T04:10:18Z · DECIDE · myan · claude-code/opus-5.5 · 35f77b6
+gupta958's review of #61, relayed by myan on 2026-10-04: rebase onto main 321c1db (no Update branch); S1 status is stale, because the git half landed in #59 and the GraphQL half is next; two overclaims: 'each property is a mechanism with tests behind it' implies all three are implemented, though the evaluation oracle is not built, and the 1,000-user target must be limited to locate and extractive answers, since DESIGN section 3 publishes generated-answer capacity as measured, not assumed. Everything else matched.
+
+### 2026-10-05T04:10:18Z · EDIT · myan · claude-code/opus-5.5 · 35f77b6
+README: the design-properties lead-in says they are mechanisms the gates require tests for, points to the status list and states that the evaluation oracle is not built; the 1,000-user target is limited to locate and extractive answers, with generated-answer capacity measured (DESIGN section 3 rows G-5 and the concurrency metrics); S1 status says the git half landed in #59 and the GraphQL half is next.
+
+### 2026-10-05T04:10:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:35f77b6
+docs(platform): README states implementation status and the capacity target's scope
+2 files changed, 13 insertions(+), 4 deletions(-)

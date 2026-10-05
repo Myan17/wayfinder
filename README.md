@@ -20,7 +20,8 @@ pull-request threads are out of v1 (DESIGN §9.13, WF-21).
 
 ## Design properties
 
-Each property is a mechanism with tests behind it, not an intention.
+Each is a design mechanism that the gates require tests for. What is implemented so far is listed
+under [Where the project is](#where-the-project-is); the evaluation oracle is not built yet.
 
 1. **Authorization is a lease, not a lookup.** Every fact that permits disclosure (the installation
    is active, the repository is selected, it is public, this user holds a grant) expires. A negative
@@ -34,8 +35,9 @@ Each property is a mechanism with tests behind it, not an intention.
    with exact search over the *authorized* rows. Locate quality is scored against mined issue→fix
    labels at each pair's own pre-fix commit (§15, ADR-0013).
 
-Target: 1,000 concurrent users on one Oracle Cloud Always Free Arm VM, with at most $25/month of
-variable spend (DESIGN §10, §11).
+Target: 1,000 concurrent users for locate and extractive answers, on one Oracle Cloud Always Free Arm
+VM with at most $25/month of variable spend. Generated-answer capacity is published as a measured
+number, not assumed to be 1,000 (DESIGN §3, §10, §11).
 
 ## Architecture
 
@@ -73,7 +75,8 @@ P0 was extended twice under DESIGN §19.8 step 4; evidence is never cut to hold 
 - S5: River scheduling at every crash boundary, accepted in ADR-0004.
 - S3 (local run): ParadeDB `pg_search` on arm64, ADR-0007. The run on the A1 VM is still to do.
 - S1 miner core: ADR-0016's file universe, pair filters, the temporal split, corpus selection and
-  the dataset landing checks (`eval/miners/s1/`). Acquisition is in review.
+  the dataset landing checks, and acquisition's git half with ADR-0016 Amendment 1 (`eval/miners/s1/`,
+  #59). Acquisition's GraphQL half is next.
 
 ## Repository layout
 
