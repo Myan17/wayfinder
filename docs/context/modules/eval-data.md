@@ -55,6 +55,9 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   recent as every test group, and every test group at least as recent as every dev group (D-5).
 - `selected` is `select.best`'s winner under ADR-0016's total order. The same inputs always give the
   same winner.
+- A pairs file is only used once `s1.dataset.problems` returns nothing for it: lines strictly in
+  (`github_repo_id`, `pr`, `issue`) order, so no duplicates; every line a valid `$defs/pair`; the
+  manifest's SHA-256; and total, strong and weak counts equal to the manifest's.
 
 ## What this module will never do
 
@@ -68,7 +71,7 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 |---|---|---|
 | No feasible corpus | `selected` empty, and the last round carries `no_feasible_reason` | Treat A-3 as failed; do not evaluate |
 | Fewer than 300 strong pairs | `pairs_file.strong_count` below 300 | Report intervals at the achieved size (ADR-0013) |
-| The manifest's SHA-256 does not match the file | — | Refuse the dataset |
+| `python -m s1.dataset <pairs.jsonl> <manifest.json>` (from `eval/miners`) exits 1 | Each problem on stderr, by line number | Refuse the dataset |
 
 ## Data owned
 
@@ -85,6 +88,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
 | `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
+| `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks; `…::test_the_validator_matches_the_schemas_pair_definition` keeps the stdlib validator and `$defs/pair` in step |
 
 ## Fake
 
@@ -105,3 +109,4 @@ build against it before the full dataset exists.
 - 2026-09-28: first contract, with the manifest schema and the pure core of the S1 miner.
 - 2026-09-28 (review of #50): gold labels are verified against the base snapshot; the pairs file has
   explicit total, strong and weak counts; the pairs file's location is decided.
+- 2026-10-04: the pairs file's four landing checks, `s1.dataset`, before the file.
