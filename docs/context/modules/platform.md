@@ -19,8 +19,8 @@ design_sections:
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
   "Makefile": "b05391f52d55e72d"
-  "pyproject.toml": "c661ca775eec5f61"
-verified_on: 2026-09-28
+  "pyproject.toml": "4effd0a732d4ad92"
+verified_on: 2026-10-04
 ---
 
 # platform
@@ -68,6 +68,8 @@ Plus the Python project definition:
   `pythonpath = ["apps/api", "eval/miners"]`
 - `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff and
   `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
+  and `jsonschema[format-nongpl]` (eval-data validates the S1 pairs file against `$defs/pair`; the
+  extra brings the date-time format checker without a GPL dependency)
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
 
 Not yet part of the interface (planned): `make up`, `make load`, `make deploy`, the Compose stack,
@@ -160,3 +162,4 @@ by CI on every pull request.
 | 2026-09-24 | Release-manifest format and cache keys; `make manifest-check`; `infra/manifest/tests` collected | — |
 | 2026-09-24 | Go `ingestd` scaffold: module, `cmd/ingestd`, `make go-test`/`go-build`, CI job `go` in the dispatcher | — |
 | 2026-09-28 | `eval/miners/tests` collected and `eval/miners` on the pythonpath, for the S1 miner's core (eval-data) | — |
+| 2026-10-04 | `jsonschema[format-nongpl]` added to the dev extra and locked, for eval-data's pairs-file checks (gupta958's review of #56) | — |

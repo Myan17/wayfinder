@@ -33,3 +33,10 @@ uv lock resolved jsonschema 4.26.0 and 17 new packages: arrow attrs fqdn idna is
 ### 2026-10-05T02:18:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:93efd94
 build(platform): add jsonschema[format-nongpl] to the dev extra
 3 files changed, 310 insertions(+)
+
+### 2026-10-05T02:19:11Z · EDIT · myan · claude-code/opus-5.5 · ea4aac7
+platform card: the dev-extra list names jsonschema[format-nongpl] and why; change-log row; verified hashes refreshed for pyproject.toml.
+
+### 2026-10-05T02:19:11Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea4aac7
+docs(platform): card lists jsonschema in the dev extra
+2 files changed, 8 insertions(+), 2 deletions(-)
