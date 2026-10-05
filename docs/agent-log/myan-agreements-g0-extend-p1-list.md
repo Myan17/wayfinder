@@ -1,0 +1,55 @@
+# Task log — myan-agreements-g0-extend-p1-list
+
+| Field | Value |
+|---|---|
+| Task | G0 extension under rule 5 and DESIGN 19.8 step 4, P1 ordered list under rule 6, phase-independent orient brief test (gupta958's ruling on #56/#57; ORIENT item 5) |
+| Module | agreements |
+| Branch | `myan/agreements/g0-extend-p1-list` |
+| Worktree | `../wayfinder-wt/myan-agreements-g0-extend-p1-list` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-10-05T02:47Z/93efd94 |
+| Started | 2026-10-05T02:47:46Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-10-05T02:47:46Z · DECIDE · myan · claude-code/opus-5.5 · 93efd94
+gupta958's ruling of 2026-10-04, relayed by myan: authorized a separate planning/CI repair PR that (1) applies ORIENT rule 5 and DESIGN 19.8 by extending the schedule, including all dependent phase and launch-review dates; (2) keeps P0 current until G0 actually closes rather than relabelling the project P1 because the calendar passed; (3) adds the ordered P1 list required by rule 6; (4) makes test_the_brief_renders_from_a_subdirectory phase-independent, still checking that a phase and CARDS render and that 'no phase table found' is absent, without another hard-coded phase; (5) stays separate from #57 and #56. #56 and #57 are accepted on their merits but wait for green unit and dispatcher.
+
+### 2026-10-05T02:47:46Z · PLAN · myan · claude-code/opus-5.5 · 93efd94
+Move every phase 11 days: P0 Sep 21 - Oct 11, P1 Oct 12 - 25, P2 Oct 26 - Nov 8, P3 Nov 9 - 15, P4 Nov 16 - 22, P5 Nov 23 - 29, launch review Mon Nov 30. P0 has 16 h sized open (items 5 remainder, 6, 7, 8) plus 9c unsized, and its 3 h contingency is spent; 7 days at DESIGN's 35 h/week is 35 h. The 11 days also put every phase back on week boundaries from Mon Sep 21, so the Weeks column becomes exact (P0 1-3 ... P5 10). DESIGN 0.3.3: header window, 19.1 table and a revision row; ORIENT: P0 header, the P1 table in Next phase (rule 6). Test: assert a rendered phase line by pattern (P<n> theme, ISO start to end) and the gate line, not a literal. Rejected: a 7-day move to Oct 7, which leaves under 1 day of slack against 16 h plus an unsized item and review latency; and making orient.py treat a phase as current until its gate report exists, which is new tooling the ruling did not ask for.
+
+### 2026-10-05T02:49:14Z · EDIT · myan · claude-code/opus-5.5 · 93efd94
+DESIGN 0.3.3: header window Mon 2026-09-21 to Sun 2026-11-29, launch review Mon 2026-11-30; 19.1 rows moved 11 days with Weeks 1-3, 4-5, 6-7, 8, 9, 10; a 19.1 note that P0 took step 4 twice; revision row 0.3.3 saying the move came four days late. ORIENT: P0 header Sep 21 - Oct 11 with both moves; Next phase holds the 9-item P1 list in dependency order (harness, authz predicate, grant refresh, ingestion, chunking, generation, webhooks, deletion, oracle suite), with early work (#4-#7, #10) and ADR-0004's obligations on their rows. The stale-date grep finds only the 0.3.1 history row.
+
+### 2026-10-05T02:49:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:93efd94
+docs(agreements): extend G0 to Oct 11 under rule 5; P1's ordered list
+3 files changed, 63 insertions(+), 14 deletions(-)
+
+### 2026-10-05T02:49:14Z · TEST · myan · claude-code/opus-5.5 · 2e5b140
+uv run --extra dev pytest: 204 passed (main's failing test_orient case now passes). Mutation checks on test_the_brief_renders_from_a_subdirectory: ROOT relative to the caller (the original regression) fails it; phase rows that do not parse ('no phase table found') fail it; DESIGN dates moved so the calendar is in P1 pass it, with the brief reading P1. orient.py --no-network now prints P0 through 2026-10-11 and BUDGET G0 closes 2026-10-11, 8 days left. Known: the pace warning fires (1.5 h/day from 32 h over 21 days), the open budget-pace question; not changed here.
+
+### 2026-10-05T02:49:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e5b140
+test(agreements): the orient brief test no longer hard-codes a phase
+2 files changed, 8 insertions(+), 1 deletion(-)
+
+### 2026-10-05T02:56:14Z · DECIDE · myan · claude-code/opus-5.5 · 287d7c1
+gupta958's re-review of #58, relayed by myan on 2026-10-04: blocking, because DESIGN still stated 8 weeks (lines 312, 327), '35 h/week x 8 = 280 h' (1961), that every phase's length was unchanged (1965) though P0 was extended, and that every phase moves 11 days (revision 0.3.3) though P0's end was extended while P1-P5 moved. Current capacity and schedule statements must reflect the 10-week plan, and historical revision descriptions may stay. The test fix, the 11-day extension and the P1 order are approved; the pace-warning formula is a documented follow-up.
+
+### 2026-10-05T02:56:14Z · EDIT · myan · claude-code/opus-5.5 · 287d7c1
+DESIGN: section 6 Time row is 10 weeks; A-1 is 35 h/week for 10 weeks = 247 h planned + 33 h contingency + 70 h of P0 extension; 19.1 capacity is 35 x 10 = 350 h, with the 70 h attributed to P0 (one week planned, three now) and P1-P5 keeping their lengths; revision 0.3.3 says P0's end moved 11 days and P1-P5 shifted. The v0.3 review-response sentences (summary line 23, WF-22) stay historical, each with a pointer to the 10-week plan in 19.1. The arithmetic checks: 247 + 33 + 70 = 350, and P0 grew 3 + 11 = 14 days = 2 weeks = 70 h. A grep for '8 weeks', 'x 8' and '280 h' now finds only historical text.
+
+### 2026-10-05T02:56:14Z · TEST · myan · claude-code/opus-5.5 · 287d7c1
+uv run --extra dev pytest: 204 passed. orient.py --no-network still reads P0 to 2026-10-11, G0 closes 2026-10-11.
+
+### 2026-10-05T02:56:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:287d7c1
+docs(agreements): DESIGN states the 10-week plan wherever it states capacity
+2 files changed, 19 insertions(+), 8 deletions(-)
