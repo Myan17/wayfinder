@@ -40,3 +40,10 @@ uv run --extra dev pytest: 245 passed (3 new for Amendment 1: a linear PR is acc
 ### 2026-10-05T03:50:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:174ea52
 feat(eval-data): S1 resolve applies D-1 then ADR-0016 Amendment 1
 4 files changed, 48 insertions(+), 2 deletions(-)
+
+### 2026-10-05T03:50:56Z · HANDOFF · myan · claude-code/opus-5.5 · 7ab4f3d
+Paused for gupta958's review of #59 (rebuilt on main e717d4c after #60). Next, in order: (1) #59 merges; (2) the GraphQL half, a new eval-data task: merged PRs before as_of 2026-09-28T00:00Z with closingIssuesReferences to same-repo issues (S1-2 counts these before any filter), each PR's first commit and head oid, mergedAt, the issue's updatedAt for D-3, the license from the API to cross-check the clone's license file (S1-1), and a tally of GraphQL and REST calls (S1-5); tests use recorded fixtures, with no network in CI; (3) the runner, which uses repo.resolve, pairs.gold_files and keep, split.assign and select.best and writes eval/datasets/s1/{pairs.jsonl,manifest.json}, checked by python -m s1.dataset; (4) the results PR with the ADR-0016 Decision and ORIENT item 5 marked done. Bar: S1-1..S1-5 per candidate (S1-3 needs at least 95% of bases to resolve); A-3 needs at least 300 surviving strong pairs under D-1 to D-3 and Amendment 1. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD).
+
+### 2026-10-05T03:50:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:7ab4f3d
+docs(agents): handoff for the S1 git-acquire review pause
+1 file changed, 3 insertions(+)
