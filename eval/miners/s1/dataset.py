@@ -7,63 +7,38 @@ problem is refused (card: "the manifest's SHA-256 does not match the file").
 
 from __future__ import annotations
 
-import datetime as dt
 import hashlib
 import json
-import re
 import sys
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from .manifest import count_problem
 
-# `$defs/pair` of eval/datasets/manifest.schema.json; a test keeps the two in step.
-INT, STR, BOOL = "integer", "string", "boolean"
-PAIR = {
-    "github_repo_id": INT,
-    "issue": INT,
-    "pr": INT,
-    "base_commit": STR,
-    "gold": "array",
-    "strong": BOOL,
-    "group_id": STR,
-    "t_g": STR,
-    "split": STR,
-}
-SPLITS = ("dev", "test", "held_out")
-SHA1 = re.compile(r"[0-9a-f]{40}")
+SCHEMA = Path(__file__).parents[2] / "datasets" / "manifest.schema.json"
+# Format checks are off unless a FormatChecker is passed; date-time needs rfc3339-validator (#57).
+PAIR = Draft202012Validator(
+    json.loads(SCHEMA.read_text())["$defs"]["pair"], format_checker=Draft202012Validator.FORMAT_CHECKER
+)
 
 
-def _is(value: object, kind: str) -> bool:
-    if kind == INT:
-        return isinstance(value, int) and not isinstance(value, bool)
-    return isinstance(value, {STR: str, BOOL: bool, "array": list}[kind])
+def _no_constant(name: str) -> None:
+    raise ValueError(f"{name} is not JSON")
 
 
-def _date_time(value: str) -> bool:
-    try:
-        return dt.datetime.fromisoformat(value).tzinfo is not None
-    except ValueError:
-        return False
+def parse(line: bytes) -> object:
+    """One JSONL line; NaN, Infinity and -Infinity are refused, not read as floats."""
+    return json.loads(line, parse_constant=_no_constant)
 
 
 def pair_problem(pair: object) -> str | None:
-    """None when `pair` is a valid `$defs/pair`, else the first violation."""
-    if not isinstance(pair, dict):
-        return "not an object"
-    for key, kind in PAIR.items():
-        if key not in pair:
-            return f"{key} missing"
-        if not _is(pair[key], kind):
-            return f"{key} is not of type {kind}"
-    if not SHA1.fullmatch(pair["base_commit"]):
-        return "base_commit is not 40 lowercase hex characters"
-    if not pair["gold"] or not all(isinstance(g, str) for g in pair["gold"]):
-        return "gold is not a non-empty list of strings"
-    if not _date_time(pair["t_g"]):
-        return "t_g is not a date-time with an offset"
-    if pair["split"] not in SPLITS:
-        return f"split {pair['split']!r} is not one of {', '.join(SPLITS)}"
-    return None
+    """None when `pair` is a valid `$defs/pair`, else its first violation, with the field's path."""
+    error = next(iter(sorted(PAIR.iter_errors(pair), key=lambda e: list(map(str, e.path)))), None)
+    if error is None:
+        return None
+    where = ".".join(map(str, error.path))
+    return f"{where}: {error.message}" if where else error.message
 
 
 def problems(data: bytes, manifest: dict) -> list[str]:
@@ -80,7 +55,7 @@ def problems(data: bytes, manifest: dict) -> list[str]:
     previous = None
     for n, line in enumerate(data.splitlines(), start=1):
         try:
-            pair = json.loads(line)
+            pair = parse(line)
         except ValueError:
             found.append(f"line {n}: not JSON")
             continue

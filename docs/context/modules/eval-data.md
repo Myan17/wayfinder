@@ -57,7 +57,8 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   same winner.
 - A pairs file is only used once `s1.dataset.problems` returns nothing for it: lines strictly in
   (`github_repo_id`, `pr`, `issue`) order, so no duplicates; every line a valid `$defs/pair`; the
-  manifest's SHA-256; and total, strong and weak counts equal to the manifest's.
+  manifest's SHA-256; total, strong and weak counts equal to the manifest's; and a final newline.
+  `t_g` is an RFC 3339 date-time, and `NaN`/`Infinity` are refused as not JSON.
 
 ## What this module will never do
 
@@ -88,7 +89,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
 | `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
-| `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks; `…::test_the_validator_matches_the_schemas_pair_definition` keeps the stdlib validator and `$defs/pair` in step |
+| `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
 
 ## Fake
 

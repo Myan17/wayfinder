@@ -30,3 +30,16 @@ uv run --extra dev pytest eval/miners/tests: 60 passed (20 new in test_s1_datase
 ### 2026-10-05T01:55:11Z · COMMIT · myan · claude-code/opus-5.5 · parent:93efd94
 feat(eval-data): S1 pairs file landing checks — order, schema, SHA-256, counts
 4 files changed, 278 insertions(+), 1 deletion(-)
+
+### 2026-10-05T02:20:44Z · DECIDE · myan · claude-code/opus-5.5 · 8d55133
+gupta958's review of #56, relayed by myan on 2026-10-04: (1) jsonschema[format-nongpl] in a prerequisite dependency PR with the lock, which is #57; (2) validate $defs/pair with Draft202012Validator and an explicit FormatChecker, since format validation is off by default and date-time needs its optional validator; (3) reject NaN/Infinity in json.loads with a parse_constant that raises; (4) regression tests for invalid timestamps and non-standard numeric constants; (5) keep the final-newline requirement as part of canonical JSONL. This branch is now stacked on #57.
+
+### 2026-10-05T02:20:44Z · EDIT · myan · claude-code/opus-5.5 · 8d55133
+dataset.py: the stdlib pair validator (PAIR type map, SHA1, SPLITS, fromisoformat) is replaced by Draft202012Validator over the schema file's $defs/pair with FORMAT_CHECKER; problems name the field path and jsonschema's message; parse() uses parse_constant to refuse NaN, Infinity and -Infinity. Tests: the drift test is replaced by one asserting the validator holds the committed $defs/pair and a format checker; 8 invalid t_g values and 3 constants added. The old fromisoformat check accepted three of those t_g values: '2026-01-02 03:04:05Z', '20260102T030405Z' and '2026-01-02T03:04:05+05'. Card's invariant and test row updated.
+
+### 2026-10-05T02:20:44Z · TEST · myan · claude-code/opus-5.5 · 8d55133
+uv run --extra dev pytest eval/miners/tests: 69 passed. Mutation check on dataset.py, all killed: no format_checker (9 tests fail), plain json.loads (3 fail), order compare < instead of <=, SHA-256 check inverted, final-newline check removed, manifest count_problem dropped (1 fail each). ruff check and ruff format --check clean on both files.
+
+### 2026-10-05T02:20:44Z · COMMIT · myan · claude-code/opus-5.5 · parent:8d55133
+feat(eval-data): validate pairs with jsonschema; RFC 3339 t_g; refuse NaN
+4 files changed, 75 insertions(+), 66 deletions(-)
