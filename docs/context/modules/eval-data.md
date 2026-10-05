@@ -38,8 +38,10 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 - **The pairs file**, committed at exactly `eval/datasets/s1/pairs.jsonl` (JSONL, one `$defs/pair` per line): `github_repo_id`, `issue`, `pr`, `base_commit`
   (40 hex characters), `gold` (at least 1 source path), `strong`, `group_id`, `t_g` and `split`.
 - **The miner** (`eval/miners/s1/`): `universe.excluded / lines / chunks`, `pairs.gold_files / keep / weak`,
-  `split.assign` and `select.best`. These are pure functions, and the acquisition code (clone,
-  GraphQL) lands next. Callers use the dataset and manifest, not these functions.
+  `split.assign` and `select.best`. These are pure functions. `repo` is acquisition's git half, read-only against a mirror clone:
+  `mirror`, `as_of_commit`, `measure` (universe, chunk estimate, S1-4's Markdown counts), `base_commit`
+  (D-1, or the reason it did not resolve), `changed` (base..head as `pairs.Changed`) and `has_merges`.
+  The GraphQL half lands next. Callers use the dataset and manifest, not these functions.
 
 ## Invariants a caller may rely on
 
@@ -90,6 +92,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
 | `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
+| `eval/miners/tests/test_s1_repo.py` (all) | The git half, against a real mirror-cloned repository: fork commits via `refs/pull`, D-1 bases and their failure reasons, the first-parent as-of commit, the seven-step universe by path and by content, renames and added files at the base, merges inside a PR range, and no writes to the clone |
 
 ## Fake
 
@@ -111,3 +114,4 @@ build against it before the full dataset exists.
 - 2026-09-28 (review of #50): gold labels are verified against the base snapshot; the pairs file has
   explicit total, strong and weak counts; the pairs file's location is decided.
 - 2026-10-04: the pairs file's four landing checks, `s1.dataset`, before the file.
+- 2026-10-04: acquisition's git half, `s1.repo`.
