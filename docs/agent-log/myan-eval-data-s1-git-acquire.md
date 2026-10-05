@@ -30,3 +30,13 @@ uv run --extra dev pytest: 242 passed (8 new in test_s1_repo.py, all against a r
 ### 2026-10-05T03:23:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:9d28c1f
 feat(eval-data): S1 acquisition, git side — mirror, as-of, universe, D-1 bases
 4 files changed, 294 insertions(+), 2 deletions(-)
+
+### 2026-10-05T03:50:12Z · DECIDE · myan · claude-code/opus-5.5 · 174ea52
+ADR-0016 Amendment 1 merged as e717d4c (#60), as gupta958 required before implementing. Rebuilt on main. Adding repo.resolve(first_commit, head), which applies D-1 and then Amendment 1 in that order: the base or S1-3's unresolved reason first, then merge_commit_in_pr_history when base..head holds a multi-parent commit. Tests per the ruling: a linear PR is accepted, and an internal-merge PR is excluded.
+
+### 2026-10-05T03:50:56Z · TEST · myan · claude-code/opus-5.5 · 174ea52
+uv run --extra dev pytest: 245 passed (3 new for Amendment 1: a linear PR is accepted; a PR that merged main mid-way is excluded as merge_commit_in_pr_history; an unresolved base keeps its S1-3 reason ahead of the amendment). Mutation check on resolve, 3 mutants, all killed: the merge check removed, the exclusion returning no reason, and an unresolved base passed through. ruff clean.
+
+### 2026-10-05T03:50:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:174ea52
+feat(eval-data): S1 resolve applies D-1 then ADR-0016 Amendment 1
+4 files changed, 48 insertions(+), 2 deletions(-)

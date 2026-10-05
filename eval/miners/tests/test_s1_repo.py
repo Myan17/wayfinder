@@ -128,3 +128,21 @@ def test_reads_leave_the_clone_unchanged(clone):
     repo.changed(g, clone["c1"], clone["p2"])
     repo.base_commit(g, clone["p1"])
     assert subprocess.run(["git", "--git-dir", str(g), "show-ref"], capture_output=True).stdout == before
+
+
+def test_amendment_1_accepts_a_linear_pr(clone):
+    assert repo.resolve(clone["git"], clone["p1"], clone["p2"]) == (clone["c1"], None)
+
+
+def test_amendment_1_excludes_a_pr_with_an_internal_merge(clone):
+    g, work = clone["git"], clone["work"]
+    _run(work, "checkout", "-q", "-b", "pr9", clone["p2"])
+    _run(work, "merge", "-q", "--no-ff", "--no-edit", "main", date="2026-03-02T00:00:00Z")
+    tip = _commit(work, {"app/after.py": b"w = 4\n"}, "after the merge", "2026-03-03T00:00:00Z")
+    _run(work, "update-ref", "refs/pull/9/head", tip)
+    subprocess.run(["git", "--git-dir", str(g), "fetch", "-q", "origin", "+refs/*:refs/*"], check=True)
+    assert repo.resolve(g, clone["p1"], tip) == (clone["c1"], "merge_commit_in_pr_history")
+
+
+def test_an_unresolved_base_keeps_its_s1_3_reason_before_amendment_1(clone):
+    assert repo.resolve(clone["git"], "f" * 40, clone["p2"]) == (None, "first commit not in the clone")

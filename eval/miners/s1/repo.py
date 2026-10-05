@@ -53,6 +53,24 @@ def has_merges(git_dir: Path, base: str, head: str) -> bool:
     return bool(_git(git_dir, "rev-list", "--merges", "-1", f"{base}..{head}").stdout.strip())
 
 
+MERGE_IN_HISTORY = "merge_commit_in_pr_history"  # ADR-0016 Amendment 1
+
+
+def resolve(git_dir: Path, first_commit: str, head: str) -> tuple[str | None, str | None]:
+    """D-1, then ADR-0016 Amendment 1: (base, None) for a usable pair, else (base or None, reason).
+
+    An unresolved base keeps its S1-3 reason. A resolved base whose PR history (base..head) holds any
+    multi-parent commit is excluded as merge_commit_in_pr_history; the pair still counts for S1-2
+    and S1-3, but never reaches gold, the split or the strong and weak counts.
+    """
+    base, reason = base_commit(git_dir, first_commit)
+    if base is None:
+        return None, reason
+    if has_merges(git_dir, base, head):
+        return base, MERGE_IN_HISTORY
+    return base, None
+
+
 def _tree(git_dir: Path, commit: str, paths: list[str] | None = None) -> dict[str, tuple[str, str]]:
     """path -> (mode, object id) for the regular, symlink and submodule entries at `commit`."""
     args = ["ls-tree", "-r", "-z", commit] + (["--", *paths] if paths else [])
