@@ -1,0 +1,49 @@
+# Task log — myan-eval-data-s1-git-acquire
+
+| Field | Value |
+|---|---|
+| Task | S1 acquisition, git side: mirror clone with refs/pull, as-of commit, universe and S1-4 measurement, D-1 base commits, changed files at the base (ORIENT item 5) |
+| Module | eval-data |
+| Branch | `myan/eval-data/s1-git-acquire` |
+| Worktree | `../wayfinder-wt/myan-eval-data-s1-git-acquire` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-10-05T03:20Z/9d28c1f |
+| Started | 2026-10-05T03:20:59Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-10-05T03:21:33Z · PLAN · myan · claude-code/opus-5.5 · 9d28c1f
+New eval/miners/s1/repo.py, the git half of acquisition. It is read-only against a mirror clone (S1-5), which carries refs/pull/*/head so fork commits resolve (S1-3). Functions: mirror(url, dest); as_of_commit (the last first-parent commit on the default branch before as_of); measure(commit), which gives ADR-0016's seven-step universe file count, chunk estimate and S1-4's .md file and word counts, applying universe.excluded first by path and then with content; base_commit(first_commit), D-1's parent or the reason it did not resolve (not in the clone, or root commit); changed(base, head), the base..head name-status with -M as pairs.Changed carrying base mode and bytes; has_merges(base, head). Blobs are read with one cat-file --batch per call. Tests build a real git repo in tmp_path, add a refs/pull ref and mirror-clone it through file://, so there is no network. The GitHub API half (GraphQL pairs, license cross-check, call tally) and the runner are the next two PRs. Rejected: REST pulls/N/files for the changed files, which costs one call per PR and still needs the clone for base bytes. Open for review: base..head includes others' changes when a PR merged its base branch mid-way, so has_merges exposes it rather than this PR inventing an exclusion rule ADR-0013 does not name.
+
+### 2026-10-05T03:23:22Z · TEST · myan · claude-code/opus-5.5 · 9d28c1f
+uv run --extra dev pytest: 242 passed (8 new in test_s1_repo.py, all against a real repository mirror-cloned through file://). Mutation check on repo.py, 10 mutants, all killed: no --mirror (7 tests fail), no --first-parent, no content-based exclusion (two survived the first run, so the as-of merge test and the gen.go and blob.py fixtures were added), word count by spaces, --no-renames, root commit as its own base, chunks fixed at 1, and no --merges filter. ruff check and ruff format --check are clean on both files.
+
+### 2026-10-05T03:23:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:9d28c1f
+feat(eval-data): S1 acquisition, git side — mirror, as-of, universe, D-1 bases
+4 files changed, 294 insertions(+), 2 deletions(-)
+
+### 2026-10-05T03:50:12Z · DECIDE · myan · claude-code/opus-5.5 · 174ea52
+ADR-0016 Amendment 1 merged as e717d4c (#60), as gupta958 required before implementing. Rebuilt on main. Adding repo.resolve(first_commit, head), which applies D-1 and then Amendment 1 in that order: the base or S1-3's unresolved reason first, then merge_commit_in_pr_history when base..head holds a multi-parent commit. Tests per the ruling: a linear PR is accepted, and an internal-merge PR is excluded.
+
+### 2026-10-05T03:50:56Z · TEST · myan · claude-code/opus-5.5 · 174ea52
+uv run --extra dev pytest: 245 passed (3 new for Amendment 1: a linear PR is accepted; a PR that merged main mid-way is excluded as merge_commit_in_pr_history; an unresolved base keeps its S1-3 reason ahead of the amendment). Mutation check on resolve, 3 mutants, all killed: the merge check removed, the exclusion returning no reason, and an unresolved base passed through. ruff clean.
+
+### 2026-10-05T03:50:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:174ea52
+feat(eval-data): S1 resolve applies D-1 then ADR-0016 Amendment 1
+4 files changed, 48 insertions(+), 2 deletions(-)
+
+### 2026-10-05T03:50:56Z · HANDOFF · myan · claude-code/opus-5.5 · 7ab4f3d
+Paused for gupta958's review of #59 (rebuilt on main e717d4c after #60). Next, in order: (1) #59 merges; (2) the GraphQL half, a new eval-data task: merged PRs before as_of 2026-09-28T00:00Z with closingIssuesReferences to same-repo issues (S1-2 counts these before any filter), each PR's first commit and head oid, mergedAt, the issue's updatedAt for D-3, the license from the API to cross-check the clone's license file (S1-1), and a tally of GraphQL and REST calls (S1-5); tests use recorded fixtures, with no network in CI; (3) the runner, which uses repo.resolve, pairs.gold_files and keep, split.assign and select.best and writes eval/datasets/s1/{pairs.jsonl,manifest.json}, checked by python -m s1.dataset; (4) the results PR with the ADR-0016 Decision and ORIENT item 5 marked done. Bar: S1-1..S1-5 per candidate (S1-3 needs at least 95% of bases to resolve); A-3 needs at least 300 surviving strong pairs under D-1 to D-3 and Amendment 1. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD).
+
+### 2026-10-05T03:50:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:7ab4f3d
+docs(agents): handoff for the S1 git-acquire review pause
+1 file changed, 3 insertions(+)
