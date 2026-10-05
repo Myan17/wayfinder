@@ -1,7 +1,8 @@
 # ADR-0016 — Two source modes, and the acceptance rules for spike S1
 
 - **Status:** Proposed. **The decision is deliberately empty**; spike S1 fills it.
-- **Date written:** 2026-09-28, **before** S1 measures any candidate.
+- **Date written:** 2026-09-28, **before** S1 measures any candidate. **Amended** 2026-10-04, still
+  before any measurement (Amendment 1, below).
 - **Decides:** the public read-only corpus of `DESIGN` §14.1, assumption A-3 (§7.1), and risks R-03
   and R-14 (§20). DESIGN §12 lists this ADR as "Two source modes: installation and public
   read-only". The modes are already designed; this ADR records the evidence that makes the public
@@ -50,6 +51,29 @@ including failures, with the measured value.
 | S1-3 | **Base commits resolve** | For every S1-2 pair, the parent of the PR's first commit (ADR-0013 D-1) exists in the clone, including commits from fork PRs through `refs/pull/*/head`. The rule passes if **at least 95%** resolve. Unresolved pairs are excluded with the reason (D-6) |
 | S1-4 | **Real Markdown documentation** | At least 5 files in the chunk estimate's file universe (below) restricted to `.md`, meaning after all seven of its steps, test and generated exclusions included, with at least 2,000 whitespace-separated words among them, at the as-of commit |
 | S1-5 | **Acquisition works read-only** | Every S1 read comes from a read-only clone and REST/GraphQL as an ordinary authenticated user, with no App and no write scope. S1 records the API calls used, and the rule fails if any read needed more access |
+
+## Amendment 1 — pull requests with a merge commit in their history (2026-10-04)
+
+Ruled by gupta958 on #59, before the miner's runner exists and before any candidate is measured.
+
+A pair's gold files come from the diff between its D-1 base and the PR's head commit
+(`refs/pull/<n>/head`). If the PR merged another branch partway through, that diff also contains
+other people's changes, and the gold labels would be wrong. Reconstructing "the PR's own" changes
+is ambiguous, because merges, conflict resolutions, cherry-picks and rebases all blur it. So the
+rule is conservative and deterministic:
+
+- **The PR's commit history** is the set of commits reachable from its head commit and not from its
+  D-1 base (`git rev-list <base>..<head>`).
+- If that history contains **any commit with more than one parent**, the pair is **excluded** with
+  reason **`merge_commit_in_pr_history`**.
+- The check runs after D-1's base resolves and before D-2. A pair whose base did not resolve keeps
+  S1-3's unresolved reason instead.
+- The pair still counts toward **S1-2**'s linkable-pair total, which is taken before ADR-0013's
+  filters, and toward **S1-3**'s base-resolution rate.
+- It never enters the pairs file, gold labels, the D-5 split, the strong or weak counts, or A-3's
+  300-pair bar. Its exclusion is counted under D-6 in the manifest's `exclusions`.
+
+A linear PR, with no multi-parent commit in its history, is unaffected.
 
 ## The chunk estimate
 
