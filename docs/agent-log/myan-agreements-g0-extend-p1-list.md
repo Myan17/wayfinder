@@ -33,3 +33,10 @@ DESIGN 0.3.3: header window Mon 2026-09-21 to Sun 2026-11-29, launch review Mon 
 ### 2026-10-05T02:49:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:93efd94
 docs(agreements): extend G0 to Oct 11 under rule 5; P1's ordered list
 3 files changed, 63 insertions(+), 14 deletions(-)
+
+### 2026-10-05T02:49:14Z · TEST · myan · claude-code/opus-5.5 · 2e5b140
+uv run --extra dev pytest: 204 passed (main's failing test_orient case now passes). Mutation checks on test_the_brief_renders_from_a_subdirectory: ROOT relative to the caller (the original regression) fails it; phase rows that do not parse ('no phase table found') fail it; DESIGN dates moved so the calendar is in P1 pass it, with the brief reading P1. orient.py --no-network now prints P0 through 2026-10-11 and BUDGET G0 closes 2026-10-11, 8 days left. Known: the pace warning fires (1.5 h/day from 32 h over 21 days), the open budget-pace question; not changed here.
+
+### 2026-10-05T02:49:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e5b140
+test(agreements): the orient brief test no longer hard-codes a phase
+2 files changed, 8 insertions(+), 1 deletion(-)

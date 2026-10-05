@@ -6,6 +6,7 @@ instead of dying — `test_render_survives_everything_missing` pins that.
 """
 
 import datetime as dt
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -127,7 +128,10 @@ def test_the_brief_renders_from_a_subdirectory():
                          capture_output=True, text=True, timeout=60)
     assert out.returncode == 0, out.stderr
     assert "no phase table found" not in out.stdout
-    assert "P0" in out.stdout and "CARDS" in out.stdout
+    # Whichever phase the calendar is in: its line and gate came from DESIGN, found from scripts/.
+    assert re.search(r"^  P\d+ \S.* · \d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d", out.stdout, re.M), out.stdout
+    assert re.search(r"^  gate G\d+: \S", out.stdout, re.M), out.stdout
+    assert "CARDS" in out.stdout
 
 
 def test_last_handoff_is_clipped_at_a_sentence():
