@@ -33,3 +33,13 @@ Docs only, no code. uv run --extra dev pytest: 234 passed in 2.44s. The amendmen
 ### 2026-10-05T03:39:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:9d28c1f
 docs(agreements): ADR-0016 amendment 1 — exclude PRs with a merge in their history
 2 files changed, 56 insertions(+), 1 deletion(-)
+
+### 2026-10-05T03:46:20Z · DECIDE · myan · claude-code/opus-5.5 · a6949c0
+gupta958's review of #60, relayed by myan on 2026-10-04: not yet approved. Under 'Selecting the corpus', surviving strong pairs still meant only D-1/D-2 plus D-3's strong set, and the aggregate bar counted A-3 under D-1 to D-3 only, so both still technically included internal-merge pairs. Both must explicitly require surviving Amendment 1 as well. #59 is not to merge before #60 lands and #59 is rebuilt onto main.
+
+### 2026-10-05T03:46:20Z · EDIT · myan · claude-code/opus-5.5 · a6949c0
+ADR-0016: the selection key's 'surviving strong pairs' now requires not being excluded by Amendment 1 (merge_commit_in_pr_history), and A-3 counts under D-1 to D-3 and Amendment 1. R-03 step 2 and the Decision options use the defined term, so they inherit it. No other definition of surviving pairs remains in the ADR.
+
+### 2026-10-05T03:46:20Z · COMMIT · myan · claude-code/opus-5.5 · parent:a6949c0
+docs(agreements): ADR-0016 surviving pairs and A-3 require Amendment 1
+2 files changed, 9 insertions(+), 3 deletions(-)

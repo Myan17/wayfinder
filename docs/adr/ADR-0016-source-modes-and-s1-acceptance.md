@@ -107,8 +107,8 @@ Among qualifying candidates, S1 chooses **3 or 4** repositories. A subset is **f
 Among feasible subsets, S1 chooses by an exhaustive search over every 3- and 4-subset of qualifying
 candidates. The comparison is a **total order**, applied key by key:
 
-1. More **surviving strong pairs**: pairs that pass ADR-0013 D-1 and D-2 and are in D-3's strong
-   set.
+1. More **surviving strong pairs**: pairs that pass ADR-0013 D-1 and D-2, are not excluded by
+   Amendment 1 (`merge_commit_in_pr_history`), and are in D-3's strong set.
 2. More repositories.
 3. A smaller chunk estimate.
 4. The lexicographically smaller **sorted tuple of `github_repo_id`s**. IDs are unique, so no two
@@ -117,7 +117,7 @@ candidates. The comparison is a **total order**, applied key by key:
 ## The aggregate bar
 
 **A-3 passes** if the selected corpus has **at least 300 surviving strong pairs** under ADR-0013
-D-1 to D-3, before the temporal split (D-5). The weak set is always reported separately and never
+D-1 to D-3 and Amendment 1, before the temporal split (D-5). The weak set is always reported separately and never
 counted (D-3, and R-03's last clause).
 
 ### When the corpus falls short: R-03, in DESIGN's order
