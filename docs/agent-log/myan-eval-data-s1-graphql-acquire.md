@@ -33,3 +33,10 @@ S1-5's token (Myan, 2026-10-08): the S1 run uses a classic PAT with no scopes, s
 ### 2026-10-08T05:06:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:826c674
 feat(eval-data): S1 acquisition, API side — linkable pairs, S1-5 token check, call tally
 4 files changed, 306 insertions(+), 1 deletion(-)
+
+### 2026-10-08T05:07:31Z · HANDOFF · myan · claude-code/opus-5.5 · 8548fb6
+Paused for gupta958's review of #62 (s1/github.py). Next, in order: (1) #62 merges; (2) the S1-1 license PR, a new eval-data task: read the license file from the clone at the as-of commit, map it to an SPDX id by a rule fixed in that PR, compare with github.repo().api_spdx (a mismatch fails S1-1), allowed set MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC; (3) the runner: per candidate, github.repo, repo.mirror, repo.as_of_commit on the default branch, repo.measure (S1-4), github.linked_pairs (S1-2), repo.resolve per pair (S1-3 needs at least 95% of bases), repo.changed, pairs.gold_files and keep, pairs.weak, then split.assign and select.best, writing eval/datasets/s1/{pairs.jsonl,manifest.json} with Client.calls as api_calls, checked by python -m s1.dataset; the run needs Myan's no-scope classic PAT (DECIDE above); (4) the results PR with the ADR-0016 Decision and ORIENT item 5 marked done. Bar: S1-1..S1-5 per candidate; A-3 needs at least 300 surviving strong pairs under D-1 to D-3 and Amendment 1. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD) and GITHUB_HEAD_REF set for check_ownership.
+
+### 2026-10-08T05:07:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:8548fb6
+docs(agents): handoff for the S1 API-side review pause
+1 file changed, 3 insertions(+)
