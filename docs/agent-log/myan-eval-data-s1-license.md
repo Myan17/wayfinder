@@ -30,3 +30,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest → 263 passed (test_s1_lice
 ### 2026-10-08T17:15:48Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e86468
 feat(eval-data): S1-1 license cross-check — the clone's license file as an SPDX id
 4 files changed, 198 insertions(+), 2 deletions(-)
+
+### 2026-10-08T17:15:56Z · HANDOFF · myan · claude-code/opus-5.5 · f8df812
+Paused for gupta958's review of this PR (s1/license.py, code at f8df812). Next, in order: (1) it merges; (2) an agreements PR removing the dispatcher line from ORIENT's Owner actions (Myan made dispatcher required on 2026-10-08); (3) the S1 runner, a new eval-data task: per candidate github.repo, repo.mirror, repo.as_of_commit on the default branch, license.file_spdx and s1_1 (S1-1), repo.measure (S1-4), github.linked_pairs (S1-2), repo.resolve per pair (S1-3, at least 95% of bases), repo.changed, pairs.gold_files and keep, pairs.weak, then split.assign and select.best, writing eval/datasets/s1/{pairs.jsonl,manifest.json} with Client.calls as api_calls, checked by python -m s1.dataset; the run needs Myan's no-scope classic PAT; (4) the results PR with the ADR-0016 Decision and ORIENT item 5 done. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD), GITHUB_HEAD_REF set for check_ownership.
+
+### 2026-10-08T17:15:57Z · COMMIT · myan · claude-code/opus-5.5 · parent:f8df812
+docs(agents): handoff for the S1-1 license review pause
+1 file changed, 3 insertions(+)
