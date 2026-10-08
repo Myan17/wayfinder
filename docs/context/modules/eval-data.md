@@ -44,8 +44,10 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   Amendment 1).
   `github` is acquisition's API half, GraphQL only: `Client` (checks S1-5 on every response and keeps
   the call tally), `repo` (id, default branch, the API's SPDX id) and `linked_pairs` (S1-2's pairs,
-  with each PR's first commit, head, merge time and the issue's `updatedAt`). The clone-side license
-  read for S1-1's cross-check lands next. Callers use the dataset and manifest, not these functions.
+  with each PR's first commit, head, merge time and the issue's `updatedAt`). `license` is S1-1:
+  `file_spdx` (the one root-level LICENSE, LICENCE or COPYING file at a commit, as an SPDX id by
+  `spdx`'s phrase rules, or the reason it has none) and `s1_1` (the manifest entry). Callers use the
+  dataset and manifest, not these functions.
 
 ## Invariants a caller may rely on
 
@@ -100,6 +102,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
 | `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
 | `eval/miners/tests/test_s1_github.py` (all) | The API half, against replayed responses with no network: S1-5 accepts only a classic token with no scopes, and a scoped token stops the run; errors fail closed; every merged PR is paged; S1-2 keeps same-repository closing references merged strictly before the as-of time; a PR whose closing references or commits were not all read fails closed |
+| `eval/miners/tests/test_s1_license.py` (all) | S1-1: each allowed license recognised regardless of wrapping and case; 4-clause BSD, dual licenses, other licenses and partial texts recognised as none; only the one root-level regular license file is read, with a reason when there are none, several, non-UTF-8 or unrecognised; both sources must agree on an allowed id |
 | `eval/miners/tests/test_s1_repo.py` (all) | The git half, against a real mirror-cloned repository: fork commits via `refs/pull`, D-1 bases and their failure reasons, the first-parent as-of commit, the seven-step universe by path and by content, renames and added files at the base, merges inside a PR range, Amendment 1 (a linear PR accepted, an internal-merge PR excluded, an unresolved base keeping its reason), and no writes to the clone |
 
 ## Fake
@@ -124,3 +127,4 @@ build against it before the full dataset exists.
 - 2026-10-04: the pairs file's four landing checks, `s1.dataset`, before the file.
 - 2026-10-04: acquisition's git half, `s1.repo`.
 - 2026-10-08: acquisition's API half, `s1.github`, without the clone-side license read.
+- 2026-10-08: S1-1's license cross-check, `s1.license`.
