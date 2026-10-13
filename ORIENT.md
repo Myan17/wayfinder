@@ -61,8 +61,8 @@ experiment. 32 h planned, 3 h of contingency.
 These are `myan`'s or `gupta958`'s to do, not an agent's. `scripts/orient.py` prints them so every
 session can remind the owner. The pull request that follows up on one removes its line.
 
-- Add `dispatcher` as a required status check on main (only `guardrails` is required as of
-  2026-09-26): `gh api -X PATCH repos/Myan17/wayfinder/branches/main/protection/required_status_checks -F strict=true -f 'checks[][context]=guardrails' -f 'checks[][context]=dispatcher'`
+None open. Done: `myan` made `dispatcher` a required status check on main on 2026-10-08, alongside
+`guardrails` (strict).
 
 ## Next phase
 
