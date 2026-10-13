@@ -30,3 +30,10 @@ Each file was downloaded again from raw.githubusercontent.com/spdx/license-list-
 ### 2026-10-13T18:17:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:960ef5e
 build(eval-data): vendor SPDX templates for S1-1's whole-text license match
 7 files changed, 126 insertions(+)
+
+### 2026-10-13T18:17:28Z · HANDOFF · myan · claude-code/opus-5.5 · 1ea0446
+Paused for gupta958's review. This is data only, and #63 stacks on it. Next, in order: (1) this PR merges; (2) #63 is rebased onto main, retargeted, closed and reopened; (3) #65, then #66, the same way. Check: for each file, curl -fsSL https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/template/<id>.template.txt | cmp - eval/miners/s1/spdx/<id>.template.txt
+
+### 2026-10-13T18:17:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:1ea0446
+docs(agents): handoff for the SPDX templates review
+1 file changed, 3 insertions(+)
