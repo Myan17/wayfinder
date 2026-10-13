@@ -48,9 +48,8 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   `file_spdx` (the one root-level LICENSE, LICENCE or COPYING file at a commit, as an SPDX id by
   `spdx`'s phrase rules, or the reason it has none) and `s1_1` (the manifest entry). `corpus` is
   pure and turns measured candidates into the dataset: `survivors` (D-1, Amendment 1 and D-2, with
-  D-6 counts), `rounds` (ADR-0016's selection at `max_files` 10, then R-03 step 2 at 15 only when the
-  winner has fewer than 300 strong pairs; step 1, widening, is never automatic) and `build` (D-5 over
-  the final winner's pairs, the canonical pairs file and the manifest, refused unless the manifest
+  D-6 counts), `rounds` (ADR-0016's selection at `max_files` 10; R-03 in DESIGN's order, so a short winner on the original candidates stops there, and only a run over a widened list, named in its own pull request before measurement, that is still short runs step 2 at 15) and `build` (D-6 counts over
+  every measured candidate, D-5 over the final winner's pairs, the canonical pairs file and the manifest, refused unless the manifest
   passes its schema and `s1.dataset.problems` finds nothing). Callers use the dataset and manifest,
   not these functions.
 
@@ -108,7 +107,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
 | `eval/miners/tests/test_s1_github.py` (all) | The API half, against replayed responses with no network: S1-5 accepts only a classic token with no scopes, and a scoped token stops the run; errors fail closed; every merged PR is paged; S1-2 keeps same-repository closing references merged strictly before the as-of time; a PR whose closing references or commits were not all read fails closed |
 | `eval/miners/tests/test_s1_license.py` (all) | S1-1: each allowed license recognised regardless of wrapping and case; 4-clause BSD, dual licenses, other licenses and partial texts recognised as none; only the one root-level regular license file is read, with a reason when there are none, several, non-UTF-8 or unrecognised; both sources must agree on an allowed id |
-| `eval/miners/tests/test_s1_corpus.py` (all) | Each D-6 reason counted; one round when the winner meets A-3 (300 exactly), R-03 step 2 only when short, and the dataset following the last round when relaxing D-2 changes the winner; one failed rule disqualifies; no feasible corpus still writes every candidate's measurements with an empty pairs file; only the winner's pairs land, in (`github_repo_id`, `pr`, `issue`) order, weak pairs counted apart; a manifest failing its schema is refused |
+| `eval/miners/tests/test_s1_corpus.py` (all) | Each D-6 reason counted; one round when the winner meets A-3 (300 exactly), R-03 step 2 only on a widened list that is still short, D-6 counted over every measured candidate, and the dataset following the last round when relaxing D-2 changes the winner; one failed rule disqualifies; no feasible corpus still writes every candidate's measurements with an empty pairs file; only the winner's pairs land, in (`github_repo_id`, `pr`, `issue`) order, weak pairs counted apart; a manifest failing its schema is refused |
 | `eval/miners/tests/test_s1_repo.py` (all) | The git half, against a real mirror-cloned repository: fork commits via `refs/pull`, D-1 bases and their failure reasons, the first-parent as-of commit, the seven-step universe by path and by content, renames and added files at the base, merges inside a PR range, Amendment 1 (a linear PR accepted, an internal-merge PR excluded, an unresolved base keeping its reason), and no writes to the clone |
 
 ## Fake

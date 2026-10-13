@@ -66,14 +66,16 @@ def _round(measured: list[dict], max_files: int) -> dict:
     }
 
 
-def rounds(measured: list[dict]) -> list[dict]:
-    """ADR-0016 selection, then R-03 step 2 (D-2 at 15) only when a winner falls short of A-3.
+def rounds(measured: list[dict], widened: bool = False) -> list[dict]:
+    """ADR-0016's selection at D-2's 10 files, then R-03 step 2 (15 files) only after step 1.
 
-    Step 1 (widening the candidates) needs a new pull request naming them before measurement, so it
-    is never automatic, and relaxing D-2 cannot help when no subset is feasible.
+    R-03 runs in DESIGN's order (review of #65). A short winner on the original candidates stops
+    here, because step 1 comes first: a pull request names new candidates before they are measured.
+    Only a run over that widened list (`widened`) that is still short relaxes D-2. Relaxing cannot
+    help when no subset is feasible, since it changes neither qualification nor size.
     """
     first = _round(measured, 10)
-    if first["winner"] is None or first["strong"] >= A3_BAR:
+    if not widened or first["winner"] is None or first["strong"] >= A3_BAR:
         return [first]
     return [first, _round(measured, 15)]
 
@@ -83,16 +85,18 @@ def _utc(t: dt.datetime) -> str:
 
 
 def build(
-    measured: list[dict], miner_commit: str, calls: dict, as_of: dt.datetime = AS_OF
+    measured: list[dict], miner_commit: str, calls: dict, widened: bool = False, as_of: dt.datetime = AS_OF
 ) -> tuple[bytes, dict]:
     """The pairs file and manifest; raises if either fails its landing checks."""
-    done = rounds(measured)
+    done = rounds(measured, widened)
     final = done[-1]
-    chosen = [m for m in measured if final["winner"] and m["entry"]["github_repo_id"] in final["winner"]]
+    winner = set(final["winner"] or [])
     kept, excluded = [], Counter()
-    for m in chosen:
+    for m in measured:  # D-6 counts every measured candidate's exclusions (review of #65)
         k, e = survivors(m, final["max_files"])
-        kept, excluded = kept + k, excluded + e
+        excluded += e
+        if m["entry"]["github_repo_id"] in winner:
+            kept += k
     assigned = split.assign(kept)
     rows = sorted(assigned["pairs"], key=lambda p: (p["repo_id"], p["pr"], p["issue"]))
     lines = [

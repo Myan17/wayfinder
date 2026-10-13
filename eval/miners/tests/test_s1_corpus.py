@@ -70,11 +70,16 @@ def test_one_round_when_the_winner_meets_the_a3_bar():
     assert done[0]["winner"] == [1, 2, 3] and done[0]["strong"] == 300 and done[0]["max_files"] == 10
 
 
-def test_r03_step_2_relaxes_d2_only_when_the_winner_is_short():
+def test_r03_step_2_relaxes_d2_only_after_widening_and_only_when_short():
     wide = [_pair(1, 900 + i, gold=[f"f{j}.py" for j in range(12)]) for i in range(40)]
-    done = corpus.rounds([_cand(1, "py", 100, extra=wide), _cand(2, "go", 100), _cand(3, "go", 80)])
+    short = [_cand(1, "py", 100, extra=wide), _cand(2, "go", 100), _cand(3, "go", 80)]
+    original = corpus.rounds(short)  # step 1 comes first: the original list never relaxes D-2
+    assert [r["max_files"] for r in original] == [10] and original[0]["strong"] == 280
+    done = corpus.rounds(short, widened=True)
     assert [r["max_files"] for r in done] == [10, 15]
     assert done[0]["strong"] == 280 and done[1]["strong"] == 320
+    enough = [_cand(1, "py", 150), _cand(2, "go", 100), _cand(3, "go", 50)]
+    assert len(corpus.rounds(enough, widened=True)) == 1
 
 
 def test_no_feasible_corpus_names_the_constraint_and_still_writes_the_measurements():
@@ -100,7 +105,7 @@ def test_build_writes_a_dataset_that_passes_its_landing_checks():
         _cand(1, "py", 3, extra=[_pair(1, 5, issue=1), _pair(1, 60, reason=repo.MERGE_IN_HISTORY)]),
         _cand(2, "go", 2, extra=[weak]),
         _cand(3, "go", 1),
-        _cand(4, "py", 9, ok=False),
+        _cand(4, "py", 9, ok=False, extra=[_pair(4, 99, gold=())]),
     ]
     data, manifest = corpus.build(measured, SHA, {"graphql": 12, "rest": 0})
     rows = [json.loads(line) for line in data.splitlines()]
@@ -116,9 +121,10 @@ def test_build_writes_a_dataset_that_passes_its_landing_checks():
         "strong_count": 7,
         "weak_count": 1,
     }
-    assert manifest["selected"] == [1, 2, 3] and manifest["rules"]["max_files"] == 15  # 7 strong is short
+    assert manifest["selected"] == [1, 2, 3] and manifest["rules"]["max_files"] == 10  # short, not widened
     assert set(manifest["splits"]) == {"1", "2", "3"}
-    assert manifest["exclusions"] == {"merge_commit_in_pr_history": 1}
+    # D-6 counts every measured candidate, the unselected one included (review of #65)
+    assert manifest["exclusions"] == {"D-2: no source files": 1, "merge_commit_in_pr_history": 1}
     assert manifest["as_of"] == "2026-09-28T00:00:00Z" and manifest["api_calls"] == {"graphql": 12, "rest": 0}
 
 
@@ -134,6 +140,6 @@ def test_the_dataset_follows_the_last_round_when_relaxing_d2_changes_the_winner(
     four = [_cand(1, "py", 100), _cand(2, "go", 100), _cand(3, "go", 80), _cand(4, "py", 10, extra=wide)]
     for c in four:
         c["entry"]["chunk_estimate"] = 20_000  # no 4-subset fits the 60,000 bound
-    _, manifest = corpus.build(four, SHA, {"graphql": 1, "rest": 0})
+    _, manifest = corpus.build(four, SHA, {"graphql": 1, "rest": 0}, widened=True)
     assert [r["winner"] for r in manifest["selection_rounds"]] == [[1, 2, 3], [1, 2, 4]]
     assert manifest["selected"] == [1, 2, 4] and manifest["pairs_file"]["strong_count"] == 410

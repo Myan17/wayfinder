@@ -43,3 +43,13 @@ Paused for gupta958's review (s1/corpus.py, code at 1386020), stacked on #63. Ne
 ### 2026-10-13T05:29:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:1386020
 docs(agents): handoff for the S1 corpus review pause
 1 file changed, 3 insertions(+)
+
+### 2026-10-13T17:06:25Z · DECIDE · myan · claude-code/opus-5.5 · b058911
+Review from gupta958, relayed by Myan on 2026-10-13: "#65: Do not approve yet. It incorrectly runs R-03 step 2 immediately when the original corpus is short. ADR-0016 requires candidate widening first. D-6 exclusions should cover all measured candidates, not only the selected repositories. The proposed exclusion-key wording is acceptable." Fix: rounds and build take widened (default False). On the original candidates, a short winner is one round at 10 and stops there. Only a run over a widened list (step 1: a merged PR that names the new candidates before they are measured) that is still short runs step 2 at 15. The caller states widened explicitly; corpus does not infer it. build now counts D-6 exclusions over every measured candidate at the final max_files, while only the winner's pairs land.
+
+### 2026-10-13T17:06:25Z · TEST · myan · claude-code/opus-5.5 · b058911
+PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 275 passed. The R-03 test now covers three cases: the original list short (one round at 10), the widened list short (10 then 15), and the widened list meeting the bar (one round). The build test adds a D-2 exclusion in the unqualified candidate and expects it in exclusions. Mutation check used 5 mutants: the widened guard removed, widened not passed to rounds, exclusions counted only for winners, winner pairs dropped, and the A-3 boundary. All 5 were killed. ruff is clean.
+
+### 2026-10-13T17:06:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:b058911
+fix(eval-data): R-03 widens before relaxing D-2; D-6 counts every candidate
+4 files changed, 35 insertions(+), 20 deletions(-)
