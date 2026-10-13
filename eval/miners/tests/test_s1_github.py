@@ -46,12 +46,21 @@ def test_s1_5_accepts_only_a_classic_token_with_no_scopes():
     assert github.scope_problem({}) == "token scopes not reported (not a classic token)"
 
 
+def test_the_client_records_each_accepted_scope_header():
+    send, _ = _replay({"data": {}}, {"data": {}})
+    client = github.Client(send)
+    client.query("{ a }")
+    client.query("{ b }")
+    assert client.scopes_seen == ["", ""]
+
+
 def test_a_scoped_token_stops_the_run_and_the_call_is_still_tallied():
     send, _ = _replay({"data": {}}, headers={"x-oauth-scopes": "repo"})
     client = github.Client(send)
     with pytest.raises(PermissionError, match="S1-5: token has scopes: repo"):
         client.query("{ viewer { login } }")
     assert client.calls == {"graphql": 1, "rest": 0}
+    assert client.scopes_seen == []  # a refused response is never recorded as seen
 
 
 def test_graphql_errors_and_bad_status_fail_closed():
