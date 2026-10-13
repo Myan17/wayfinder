@@ -37,3 +37,10 @@ Paused for gupta958's review. This is data only, and #63 stacks on it. Next, in 
 ### 2026-10-13T18:17:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:1ea0446
 docs(agents): handoff for the SPDX templates review
 1 file changed, 3 insertions(+)
+
+### 2026-10-13T18:17:34Z · PLAN · myan · claude-code/opus-5.5 · 63c01eb
+Recorded late: the approach is in the DECIDE entry above, which was written before the files were committed. Copy the five upstream template files unchanged into eval/miners/s1/spdx/, add a nested .gitattributes for their whitespace, and verify each file byte for byte against a fresh download. Rejected: normalizing the whitespace, because the hashes would then no longer be upstream's and a reviewer could not check them with one command.
+
+### 2026-10-13T18:17:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:63c01eb
+docs(agents): plan entry for the SPDX templates task
+1 file changed, 3 insertions(+)
