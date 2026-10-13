@@ -12,6 +12,7 @@ file was read.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -34,8 +35,8 @@ _MARK = re.compile(r'<<beginOptional>>|<<endOptional>>|<<var;name="[^"]*";origin
 # The leading block a license file may carry outside its template (review of #63): blank lines,
 # copyright lines, and at most one title, which must name the license being tested. A copyright line
 # is "copyright" or "(c)" and then at most 120 characters of years and holders; one that makes an
-# offer (or, and/or, licen*, dual*, under, terms, alternativ*, spdx) is not a copyright line, stays
-# in the text, and fails the template. Apache-2.0's template carries its own title block.
+# offer (or, and/or, licen*, dual*, under, terms, alternativ*, spdx) or names any license is not a
+# copyright line, stays in the text, and fails the template. Apache-2.0's template carries its title.
 _COPYRIGHT = re.compile(r"(?:copyright\b|\(c\))(?:\s*\(c\))?(?P<rest>.{0,120})|all rights reserved\.?")
 _OFFER = re.compile(r"\b(or|licen\w*|dual\w*|under|terms|alternativ\w*|spdx)\b")
 _TITLES = {
@@ -45,6 +46,29 @@ _TITLES = {
     "BSD-3-Clause": r"(the )?(new |modified |revised )?bsd( 3-clause)? licen[cs]e( \(bsd-3-clause\))?",
 }
 _TITLE = {sid: re.compile(rf"\(?{title}\)?:?") for sid, title in _TITLES.items()}
+# Any license is named by SPDX's whole license list (review of #63: "MIT/BSD-2-Clause" or "Zlib" in a
+# copyright line), not by a list of spellings. json/licenses.json at license-list-data v3.29.0 is
+# 9,286 lines, so it is not vendored: the runner downloads it and `load_identifiers` checks it.
+LIST_URL = "https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/json/licenses.json"
+LIST_SHA256 = "47d1cc681abe31166b342b6cc4aab13a6ba8ea5c48794697fe3bf8b1dbaf509a"
+
+
+def identifiers(ids: list[str]) -> re.Pattern:
+    """Each license id, and each id's capitalised family (GPL, BSD, MPL, ...), as whole words, with an
+    optional version (GPLv3, MPL2.0). Apache is added: its id is not capitalised."""
+    families = {m.group(0) for i in ids if (m := re.match(r"[A-Z]{2,}(?=[-.\d]|$)", i))}
+    words = sorted({*ids, *families, "Apache"}, key=len, reverse=True)
+    alt = "|".join(re.escape(w.lower()) for w in words)
+    return re.compile(rf"(?<![a-z0-9])(?:{alt})(?:v?\d[\w.+]*)?(?![a-z0-9])")
+
+
+def load_identifiers(raw: bytes) -> re.Pattern:
+    """`identifiers` over SPDX's licenses.json, refused unless it is the pinned file."""
+    if hashlib.sha256(raw).hexdigest() != LIST_SHA256:
+        raise RuntimeError("SPDX licenses.json does not match its pinned SHA-256")
+    return identifiers([entry["licenseId"] for entry in json.loads(raw)["licenses"]])
+
+
 _QUOTES = str.maketrans(
     {c: '"' for c in "'`\u201c\u201d\u201e\u201f\u2033\u2018\u2019\u201a\u201b"}
     | {c: "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015"}
@@ -103,38 +127,39 @@ def _load() -> dict[str, re.Pattern]:
 TEMPLATES = _load()
 
 
-def _copyright(line: str) -> bool:
+def _copyright(line: str, ids: re.Pattern) -> bool:
     m = _COPYRIGHT.fullmatch(line)
-    return m is not None and not _OFFER.search(m.group("rest") or "")
+    return m is not None and not _OFFER.search(m.group("rest") or "") and not ids.search(line)
 
 
-def _lead(text: str, sid: str) -> str:
+def _lead(text: str, sid: str, ids: re.Pattern) -> str:
     """The text after its leading blank and copyright lines and at most one title naming `sid`."""
     lines, titled = text.splitlines(), False
     while lines:
         line = _norm(lines[0])
         if not titled and sid in _TITLE and _TITLE[sid].fullmatch(line):
             titled = True
-        elif line and not _copyright(line):
+        elif line and not _copyright(line, ids):
             break
         lines.pop(0)
     return "\n".join(lines)
 
 
-def spdx(text: str) -> str | None:
-    """The one allowed license whose SPDX template matches the whole text; else None.
+def spdx(text: str, ids: re.Pattern) -> str | None:
+    """The one allowed license whose SPDX template matches the whole text; else None. `ids` names
+    every license (`load_identifiers`); a copyright line that matches it is not stripped.
 
     No variable may hold the word "licen[cs]e", so a template's wildcard cannot carry another one.
     """
     hits = []
     for sid, pattern in TEMPLATES.items():
-        m = pattern.fullmatch(_norm(_lead(text, sid)))
+        m = pattern.fullmatch(_norm(_lead(text, sid, ids)))
         if m and not any(g and "licen" in g for g in m.groups()):
             hits.append(sid)
     return hits[0] if len(hits) == 1 else None
 
 
-def file_spdx(git_dir: Path, commit: str) -> tuple[str | None, str | None]:
+def file_spdx(git_dir: Path, commit: str, ids: re.Pattern) -> tuple[str | None, str | None]:
     """(SPDX id, None), or (None, reason): the root-level LICENSE, LICENCE or COPYING file at `commit`."""
     out = _git(git_dir, "ls-tree", "-z", commit).stdout.split(b"\0")
     files = []
@@ -147,7 +172,7 @@ def file_spdx(git_dir: Path, commit: str) -> tuple[str | None, str | None]:
         return None, f"{len(files)} license files at the root"
     blob = _git(git_dir, "cat-file", "blob", files[0][1]).stdout
     try:
-        sid = spdx(blob.decode("utf-8"))
+        sid = spdx(blob.decode("utf-8"), ids)
     except UnicodeDecodeError:
         return None, f"{files[0][0]} is not UTF-8"
     return (sid, None) if sid else (None, f"{files[0][0]} matches no single allowed license")
