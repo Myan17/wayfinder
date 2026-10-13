@@ -67,6 +67,43 @@ def test_a_dual_license_offer_is_unrecognised_whatever_the_other_license(other):
     assert license.spdx(f"Copyright (c) 2026 X, dual-licensed under MIT or {other}\n\n{MIT}") is None
 
 
+def test_the_leading_block_cannot_hide_a_second_license():
+    # Review of #63: both were named MIT while every leading title and copyright line was stripped.
+    body = MIT.split("\n", 1)[1]  # the MIT template without its own title line
+    assert license.spdx("MIT License\nBSD 2-Clause License\n" + MIT) is None  # two titles
+    assert license.spdx("BSD 2-Clause License\nMIT License\n" + body) is None
+    assert license.spdx("ISC License\n\n" + body) is None  # a title for another license
+    assert license.spdx("Copyright (c) 2026 X, MIT or Zlib\n\n" + body) is None
+    assert license.spdx("Copyright (c) 2026 X; use under the Zlib terms\n\n" + body) is None
+    assert license.spdx("Copyright (c) 2026 Y\nAll rights reserved.\nMIT License\n\n" + body) == "MIT"
+    assert license.spdx("BSD 3-Clause License\n\n" + BSD3) == "BSD-3-Clause"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Copyright (c) 2026 X, or Zlib",
+        "Copyright (c) 2026 X and/or Zlib",
+        "Copyright (c) 2026 X, licensed as Zlib",
+        "Copyright (c) 2026 X, dual Zlib",
+        "Copyright (c) 2026 X, under Zlib",
+        "Copyright (c) 2026 X, Zlib terms",
+        "Copyright (c) 2026 X, alternatively Zlib",
+        "Copyright (c) 2026 X, SPDX: Zlib",
+        "Copyright (c) 2026 " + "X" * 130,  # longer than a copyright line may be
+    ],
+)
+def test_a_copyright_line_that_makes_an_offer_is_not_metadata(line):
+    assert license.spdx(line + "\n\n" + MIT.split("\n", 1)[1]) is None
+    assert license.spdx("Copyright (c) 2026 X\n\n" + MIT.split("\n", 1)[1]) == "MIT"
+
+
+def test_at_most_one_leading_title_is_stripped():
+    body = MIT.split("\n", 1)[1]
+    assert license.spdx("MIT License\n" + body) == "MIT"
+    assert license.spdx("MIT License\nMIT License\nMIT License\n" + body) is None
+
+
 def test_anything_but_exactly_one_whole_allowed_license_is_unrecognised():
     bsd4 = BSD3.replace(
         "3. Neither", "4. All advertising materials mentioning features must display it.\n3. Neither"

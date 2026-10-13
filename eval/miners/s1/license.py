@@ -20,7 +20,8 @@ from .repo import _git
 ALLOWED = ("MIT", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "ISC")
 NAME = re.compile(r"(licen[cs]e|copying)(\.[a-z0-9]+)?", re.IGNORECASE)
 
-# github.com/spdx/license-list-data, tag v3.29.0 (2026-09-16), template/<id>.template.txt
+# github.com/spdx/license-list-data, tag v3.29.0 (2026-09-16), template/<id>.template.txt, byte for byte
+# (whitespace included; see spdx/.gitattributes), so each hash is upstream's file's hash.
 SPDX_TEMPLATES = Path(__file__).parent / "spdx"
 SHA256 = {
     "MIT": "9b91e12dfe57d42e91ea96d2acb7624040bffc54182bd164d39d0fae33e77794",
@@ -30,13 +31,20 @@ SHA256 = {
     "Apache-2.0": "5567209d3a634ebd6ed122a7302563b9668ab141941149a4e30d9c7b887f41b9",
 }
 _MARK = re.compile(r'<<beginOptional>>|<<endOptional>>|<<var;name="[^"]*";original="(.*?)";match="(.*?)">>')
-# The leading block a license file may carry outside its template: blank lines, copyright lines that
-# name no license, and one plain title. "MIT or BSD-2-Clause" is neither, so it stays and fails.
-_COPYRIGHT = re.compile(r"(copyright\b|\(c\)|all rights reserved)(?!.*licen).*")
-# Apache-2.0's template carries its own title block, so that title is not stripped here.
-_TITLE = re.compile(
-    r"\(?(the )?(mit|isc|(new |simplified )?bsd( [23]-clause)?) licen[cs]e( \([a-z0-9.-]+\))?\)?:?"
-)
+# The leading block a license file may carry outside its template (review of #63): blank lines,
+# copyright lines, and at most one title, which must name the license being tested. A copyright line
+# is "copyright" or "(c)" and then at most 120 characters of years and holders; one that makes an
+# offer (or, and/or, licen*, dual*, under, terms, alternativ*, spdx) is not a copyright line, stays
+# in the text, and fails the template. Apache-2.0's template carries its own title block.
+_COPYRIGHT = re.compile(r"(?:copyright\b|\(c\))(?:\s*\(c\))?(?P<rest>.{0,120})|all rights reserved\.?")
+_OFFER = re.compile(r"\b(or|licen\w*|dual\w*|under|terms|alternativ\w*|spdx)\b")
+_TITLES = {
+    "MIT": r"(the )?mit licen[cs]e( \(mit\))?",
+    "ISC": r"(the )?isc licen[cs]e( \(iscl?\))?",
+    "BSD-2-Clause": r"(the )?(simplified |freebsd )?bsd( 2-clause)? licen[cs]e( \(bsd-2-clause\))?",
+    "BSD-3-Clause": r"(the )?(new |modified |revised )?bsd( 3-clause)? licen[cs]e( \(bsd-3-clause\))?",
+}
+_TITLE = {sid: re.compile(rf"\(?{title}\)?:?") for sid, title in _TITLES.items()}
 _QUOTES = str.maketrans(
     {c: '"' for c in "'`\u201c\u201d\u201e\u201f\u2033\u2018\u2019\u201a\u201b"}
     | {c: "-" for c in "\u2010\u2011\u2012\u2013\u2014\u2015"}
@@ -95,12 +103,20 @@ def _load() -> dict[str, re.Pattern]:
 TEMPLATES = _load()
 
 
-def _lead(text: str) -> str:
-    """The text after its leading blank, copyright and title lines."""
-    lines = text.splitlines()
-    while lines and (
-        not _norm(lines[0]) or _COPYRIGHT.fullmatch(_norm(lines[0])) or _TITLE.fullmatch(_norm(lines[0]))
-    ):
+def _copyright(line: str) -> bool:
+    m = _COPYRIGHT.fullmatch(line)
+    return m is not None and not _OFFER.search(m.group("rest") or "")
+
+
+def _lead(text: str, sid: str) -> str:
+    """The text after its leading blank and copyright lines and at most one title naming `sid`."""
+    lines, titled = text.splitlines(), False
+    while lines:
+        line = _norm(lines[0])
+        if not titled and sid in _TITLE and _TITLE[sid].fullmatch(line):
+            titled = True
+        elif line and not _copyright(line):
+            break
         lines.pop(0)
     return "\n".join(lines)
 
@@ -110,10 +126,9 @@ def spdx(text: str) -> str | None:
 
     No variable may hold the word "licen[cs]e", so a template's wildcard cannot carry another one.
     """
-    body = _norm(_lead(text))
     hits = []
     for sid, pattern in TEMPLATES.items():
-        m = pattern.fullmatch(body)
+        m = pattern.fullmatch(_norm(_lead(text, sid)))
         if m and not any(g and "licen" in g for g in m.groups()):
             hits.append(sid)
     return hits[0] if len(hits) == 1 else None
