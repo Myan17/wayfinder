@@ -36,3 +36,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest -> 270 passed (test_s1_corpu
 ### 2026-10-13T05:27:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:9552da2
 feat(eval-data): S1 corpus from measured candidates — survivors, selection rounds, the dataset
 4 files changed, 332 insertions(+), 2 deletions(-)
+
+### 2026-10-13T05:29:16Z · HANDOFF · myan · claude-code/opus-5.5 · 1386020
+Paused for gupta958's review (s1/corpus.py, code at 1386020), stacked on #63. Next, in order: (1) #63 merges, then rebase this branch onto main with rebase -X theirs and force-push with a lease, retarget the PR to main (close and reopen to re-run guardrails), refresh the body; (2) this PR merges; (3) myan/eval-data/s1-measure (s1/run.py) rebases the same way; (4) after it merges, Myan runs WAYFINDER_S1_TOKEN=<no-scope classic PAT> uv run --extra dev python -m s1.run from eval/miners on a clean checkout of main, then python -m s1.dataset eval/datasets/s1/pairs.jsonl eval/datasets/s1/manifest.json; (5) the results PR: the two files, the ADR-0016 Decision (every selection round, A-3 at 300 strong pairs), ORIENT item 5 done. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=<parent branch head> while stacked, GITHUB_HEAD_REF set for check_ownership.
+
+### 2026-10-13T05:29:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:1386020
+docs(agents): handoff for the S1 corpus review pause
+1 file changed, 3 insertions(+)
