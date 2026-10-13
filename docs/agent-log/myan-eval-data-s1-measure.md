@@ -81,3 +81,10 @@ feat(eval-data): the runner fetches SPDX's pinned license list for S1-1
 ### 2026-10-13T19:54:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:10babcc
 test(eval-data): a BytesIO stands in for the license-list download
 1 file changed, 3 insertions(+), 11 deletions(-)
+
+### 2026-10-13T20:15:27Z · HANDOFF · myan · claude-code/opus-5.5 · 59ad43c
+Paused for gupta958's final review. #63 (5ffe70d) and #65 (e7627d4) have merged, and this branch is rebased onto main with its base set to main. Next, in order: (1) this PR merges; (2) Myan runs the S1 measurement on a clean checkout of main: cd eval/miners && WAYFINDER_S1_TOKEN=<classic token with no scopes> uv run --extra dev python -m s1.run. It refuses a reordered or edited candidate list, uncommitted miner or schema changes, and an unpinned SPDX licenses.json. It downloads that list, mirrors the ten candidates into a temporary directory, and writes eval/datasets/s1/{pairs.jsonl,manifest.json}; (3) check the output with uv run --extra dev python -m s1.dataset ../datasets/s1/pairs.jsonl ../datasets/s1/manifest.json; (4) a results task: the two files, the ADR-0016 Decision quoting every candidate's S1-1 to S1-5, the selection rounds and A-3 against 300 strong pairs (if the winner is short, R-03 step 1 is a widening PR that names candidates before measuring them; it is never automatic), and ORIENT item 5 marked done. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD), GITHUB_HEAD_REF set.
+
+### 2026-10-13T20:15:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:59ad43c
+docs(agents): handoff for the S1 runner final review
+1 file changed, 3 insertions(+)
