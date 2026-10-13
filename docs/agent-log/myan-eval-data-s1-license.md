@@ -98,3 +98,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 290 passed (test_s1_li
 ### 2026-10-13T19:53:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:7e18c4c
 fix(eval-data): a copyright line naming any SPDX license is not metadata
 4 files changed, 106 insertions(+), 46 deletions(-)
+
+### 2026-10-13T19:53:43Z · COMMIT · myan · claude-code/opus-5.5 · parent:1fd9b20
+docs(eval-data): shorten the SPDX license-list comment
+1 file changed, 2 insertions(+), 3 deletions(-)

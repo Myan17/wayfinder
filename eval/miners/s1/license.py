@@ -46,9 +46,8 @@ _TITLES = {
     "BSD-3-Clause": r"(the )?(new |modified |revised )?bsd( 3-clause)? licen[cs]e( \(bsd-3-clause\))?",
 }
 _TITLE = {sid: re.compile(rf"\(?{title}\)?:?") for sid, title in _TITLES.items()}
-# Any license is named by SPDX's whole license list (review of #63: "MIT/BSD-2-Clause" or "Zlib" in a
-# copyright line), not by a list of spellings. json/licenses.json at license-list-data v3.29.0 is
-# 9,286 lines, so it is not vendored: the runner downloads it and `load_identifiers` checks it.
+# Licenses are named by SPDX's whole list (review of #63), not spellings. licenses.json is 9,286 lines,
+# so the runner downloads it and `load_identifiers` checks it against this hash.
 LIST_URL = "https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/json/licenses.json"
 LIST_SHA256 = "47d1cc681abe31166b342b6cc4aab13a6ba8ea5c48794697fe3bf8b1dbaf509a"
 
