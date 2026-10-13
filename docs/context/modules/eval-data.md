@@ -55,7 +55,7 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   candidate's S1-1 to S1-5, chunk estimate and linked pairs with base, reason, gold and strength;
   merge-excluded pairs count as resolved for S1-3; S1-1 keeps the clone's failure reason as `file_reason`; S1-5 records the scope headers and the number of responses checked for that candidate, and passes only if every one was empty) and `python -m s1.run [out_dir]`, which needs
   `WAYFINDER_S1_TOKEN` (a classic token with no scopes, never printed), refuses uncommitted changes in
-  `eval/miners` or `eval/datasets/manifest.schema.json`, relaxes D-2 only when `CANDIDATES` is `ADR_0016` with candidates appended (any other change to the list fails closed before the run starts), clones into a temporary directory removed after the run, and writes
+  `eval/miners` or `eval/datasets/manifest.schema.json`, downloads SPDX's `licenses.json` and refuses it unless it is the pinned file, relaxes D-2 only when `CANDIDATES` is `ADR_0016` with candidates appended (any other change to the list fails closed before the run starts), clones into a temporary directory removed after the run, and writes
   `eval/datasets/s1/{pairs.jsonl,manifest.json}`. Callers use the dataset and manifest, not these
   functions.
 

@@ -2,7 +2,7 @@
 
 import pytest
 from s1 import github, repo, run
-from test_s1_license import EXPRESS
+from test_s1_license import EXPRESS, IDS
 from test_s1_repo import _commit, _run
 
 MIT = EXPRESS.encode()  # a whole MIT text: S1-1 matches the full license (#63)
@@ -68,7 +68,7 @@ def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, mo
     headers = {"x-oauth-scopes": ""}
     client = github.Client(lambda body: (200, headers, queue.pop(0)))
 
-    got = run.measure(client, "o/r", "py", tmp_path)
+    got = run.measure(client, "o/r", "py", tmp_path, IDS)
     (tmp_path / "again").mkdir()
     rules = got["entry"]["rules"]
     assert rules["S1-1"] == {
@@ -103,10 +103,10 @@ def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, mo
     # A second candidate on the same client: its S1-5 counts only its own responses, and a clone
     # license failure keeps its reason.
     monkeypatch.setattr(
-        run.license, "file_spdx", lambda git_dir, commit: (None, "2 license files at the root")
+        run.license, "file_spdx", lambda git_dir, commit, ids: (None, "2 license files at the root")
     )
     queue.extend([meta, page])
-    again = run.measure(client, "o/r", "py", tmp_path / "again")
+    again = run.measure(client, "o/r", "py", tmp_path / "again", IDS)
     assert again["entry"]["rules"]["S1-1"]["value"]["file_reason"] == "2 license files at the root"
     assert again["entry"]["rules"]["S1-5"]["value"]["responses_checked"] == 2
 
@@ -115,7 +115,7 @@ def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, mo
     headers["x-oauth-scopes"] = "public_repo"
     queue.extend([meta, page])
     (tmp_path / "third").mkdir()
-    third = run.measure(client, "o/r", "py", tmp_path / "third")["entry"]["rules"]["S1-5"]
+    third = run.measure(client, "o/r", "py", tmp_path / "third", IDS)["entry"]["rules"]["S1-5"]
     assert third == {
         "value": {"x_oauth_scopes": ["public_repo"], "responses_checked": 2, "clone": "https"},
         "pass": False,
@@ -173,4 +173,23 @@ def test_main_checks_the_candidate_list_before_any_network_call(monkeypatch):
     monkeypatch.setattr(run, "CANDIDATES", run.ADR_0016[::-1])
     monkeypatch.setattr(run, "_miner_commit", lambda: pytest.fail("ran past the candidate check"))
     with pytest.raises(ValueError):
+        run.main([])
+
+
+def test_main_refuses_an_unpinned_license_list_before_measuring(monkeypatch):
+    class Body:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"licenses": []}'
+
+    monkeypatch.setenv("WAYFINDER_S1_TOKEN", "unused")
+    monkeypatch.setattr(run, "_miner_commit", lambda: "0" * 40)
+    monkeypatch.setattr(run.urllib.request, "urlopen", lambda url, timeout: Body())
+    monkeypatch.setattr(run, "measure", lambda *a: pytest.fail("measured with an unchecked list"))
+    with pytest.raises(RuntimeError, match="pinned SHA-256"):
         run.main([])

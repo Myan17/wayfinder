@@ -67,3 +67,13 @@ After rebasing onto #63's template match, test_s1_run's two-line MIT fixture was
 ### 2026-10-13T17:56:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:8430f41
 test(eval-data): the runner's license fixture is a whole MIT text
 2 files changed, 5 insertions(+), 4 deletions(-)
+
+### 2026-10-13T19:54:29Z · DECIDE · myan · claude-code/opus-5.5 · 29accff
+This follows #63's fourth review fix: S1-1 now needs SPDX's license list (license.LIST_URL, pinned by license.LIST_SHA256). main downloads it once, after the candidate and miner-commit checks and before any candidate is measured, and passes the pattern from load_identifiers to measure. measure passes it to license.file_spdx. An unpinned list raises before anything is measured.
+
+### 2026-10-13T19:54:29Z · TEST · myan · claude-code/opus-5.5 · 29accff
+PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 305 passed. The measure tests pass test_s1_license.IDS, the seven-id slice. New test: main refuses a downloaded list that is not the pinned file, before measure is called. ruff is clean.
+
+### 2026-10-13T19:54:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:29accff
+feat(eval-data): the runner fetches SPDX's pinned license list for S1-1
+4 files changed, 43 insertions(+), 9 deletions(-)

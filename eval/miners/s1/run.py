@@ -11,9 +11,11 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 
 from . import corpus, github, license, pairs, repo
@@ -51,7 +53,12 @@ MIN_MD_FILES, MIN_MD_WORDS = 5, 2000  # S1-4
 
 
 def measure(
-    client: github.Client, slug: str, lang: str, workdir: Path, as_of: dt.datetime = corpus.AS_OF
+    client: github.Client,
+    slug: str,
+    lang: str,
+    workdir: Path,
+    ids: re.Pattern,
+    as_of: dt.datetime = corpus.AS_OF,
 ) -> dict:
     """One candidate's S1-1 to S1-5 and chunk estimate, and its linked pairs with gold files."""
     owner, name = slug.split("/")
@@ -61,7 +68,7 @@ def measure(
     commit = repo.as_of_commit(git_dir, meta.default_branch, as_of)
     if commit is None:
         raise RuntimeError(f"{slug}: no commit on {meta.default_branch} before {as_of.isoformat()}")
-    file_id, file_reason = license.file_spdx(git_dir, commit)
+    file_id, file_reason = license.file_spdx(git_dir, commit, ids)
     size = repo.measure(git_dir, commit)
     linked = list(github.linked_pairs(client, owner, name, meta.github_repo_id, as_of))
     found, gold_by_pr = [], {}
@@ -147,10 +154,12 @@ def main(argv: list[str]) -> int:
     wide = widened(CANDIDATES)  # before any network call
     commit = _miner_commit()
     client = github.Client(github.urllib_transport(token))
+    with urllib.request.urlopen(license.LIST_URL, timeout=60) as resp:  # SPDX's list, hash-checked
+        ids = license.load_identifiers(resp.read())
     with tempfile.TemporaryDirectory(prefix="s1-") as tmp:  # the clones never outlive the run
         measured = []
         for slug, lang in CANDIDATES:
-            measured.append(measure(client, slug, lang, Path(tmp)))
+            measured.append(measure(client, slug, lang, Path(tmp), ids))
             e = measured[-1]["entry"]
             print(f"{slug}: {json.dumps({k: v['pass'] for k, v in e['rules'].items()})}", file=sys.stderr)
     data, manifest = corpus.build(measured, commit, client.calls, widened=wide)
