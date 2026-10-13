@@ -60,3 +60,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 282 passed. New tests:
 ### 2026-10-13T17:34:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:4f7bd82
 fix(eval-data): only an append to ADR-0016's list counts as widening
 4 files changed, 48 insertions(+), 3 deletions(-)
+
+### 2026-10-13T17:56:49Z · TEST · myan · claude-code/opus-5.5 · 8430f41
+After rebasing onto #63's template match, test_s1_run's two-line MIT fixture was no longer a whole MIT text, so S1-1 named no license and the test failed. The fixture now reuses test_s1_license.EXPRESS, the hand-written full MIT file. PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 285 passed.
+
+### 2026-10-13T17:56:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:8430f41
+test(eval-data): the runner's license fixture is a whole MIT text
+2 files changed, 5 insertions(+), 4 deletions(-)

@@ -2,12 +2,10 @@
 
 import pytest
 from s1 import github, repo, run
+from test_s1_license import EXPRESS
 from test_s1_repo import _commit, _run
 
-MIT = (
-    b"Permission is hereby granted, free of charge, to any person obtaining a copy of this software.\n"
-    b"The above copyright notice and this permission notice shall be included in all copies.\n"
-)
+MIT = EXPRESS.encode()  # a whole MIT text: S1-1 matches the full license (#63)
 
 
 def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, monkeypatch):
