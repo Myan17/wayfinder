@@ -28,15 +28,39 @@ RULES: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         (),
     ),
     "ISC": (("distribute this software for any purpose with or without fee is hereby granted",), ()),
-    "Apache-2.0": (("apache license", "version 2.0"), ()),
+    # The title alone also opens every Apache-2.0 file header and other licenses' compatibility notes
+    # (review of #63), so the license's own sections are required too.
+    "Apache-2.0": (
+        (
+            "apache license version 2.0, january 2004",
+            "terms and conditions for use, reproduction, and distribution",
+            "grant of patent license",
+        ),
+        (),
+    ),
     "BSD-3-Clause": ((_BSD, _ENDORSE), (_ADVERTISING,)),
     "BSD-2-Clause": ((_BSD,), (_ENDORSE, _ADVERTISING)),
 }
+# A text naming any other license, or a dual-license offer, is not one allowed license, even when an
+# allowed license's phrases are present (review of #63: "MIT or GPL-2.0" is not MIT).
+OTHER = (
+    "general public license",
+    "gpl",
+    "mozilla public license",
+    "eclipse public license",
+    "common development and distribution license",
+    "creative commons",
+    "dual licen",
+    "dual-licen",
+)
 
 
 def spdx(text: str) -> str | None:
-    """The one allowed license whose phrases match `text`; None if none or several match."""
+    """The one allowed license whose phrases match `text`; None if none or several match, or if the
+    text names any other license."""
     norm = " ".join(text.lower().split())
+    if any(p in norm for p in OTHER):
+        return None
     hits = [
         sid
         for sid, (need, forbid) in RULES.items()

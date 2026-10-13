@@ -19,7 +19,12 @@ purpose with or without fee is hereby granted, provided that the above
 copyright notice and this permission notice appear in all copies."""
 APACHE = """                                 Apache License
                            Version 2.0, January 2004
-                        http://www.apache.org/licenses/"""
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,"""
 BSD2 = """Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice."""
@@ -50,6 +55,25 @@ def test_anything_but_exactly_one_allowed_license_is_unrecognised():
     assert license.spdx(MIT + "\n\n" + APACHE) is None  # dual licensed: two matches
     assert license.spdx("GNU GENERAL PUBLIC LICENSE Version 3") is None
     assert license.spdx(MIT.split("The above")[0]) is None  # half an MIT text
+
+
+def test_an_apache_header_or_mention_is_not_the_apache_license():
+    header = 'Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file'
+    assert license.spdx(header) is None
+    assert license.spdx(APACHE.split("TERMS")[0]) is None  # the title page alone
+    assert license.spdx(APACHE.split("3. Grant")[0]) is None  # without the patent grant
+    assert (
+        license.spdx("This license is compatible with the Apache License, Version 2.0, January 2004") is None
+    )
+
+
+@pytest.mark.parametrize(
+    "other",
+    ["GNU General Public License v2", "GPL-3.0-or-later", "Mozilla Public License 2.0", "dual licensed"],
+)
+def test_an_allowed_text_that_names_another_license_is_unrecognised(other):
+    assert license.spdx(f"This project is offered under MIT or the {other}.\n\n{MIT}") is None
+    assert license.spdx(APACHE + "\n\n" + other) is None
 
 
 def test_s1_1_needs_both_sources_to_agree_on_an_allowed_id():
