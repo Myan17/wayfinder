@@ -50,3 +50,13 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 280 passed. New assert
 ### 2026-10-13T17:08:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:68711da
 fix(eval-data): S1-5 records what it saw; the run pins the schema and keeps S1-1's reason
 6 files changed, 97 insertions(+), 19 deletions(-)
+
+### 2026-10-13T17:34:28Z · DECIDE · myan · claude-code/opus-5.5 · 4f7bd82
+Second review from gupta958, relayed by Myan on 2026-10-13: "One remaining issue: CANDIDATES != ADR_0016 treats any difference, including reordering, removal, or replacement, as widened. It should require a strict append/superset and fail closed for any other change. Add regression tests for reordering and removal." Fix: widened(candidates) returns False for exactly ADR_0016 and True when ADR_0016 is a prefix with new candidates appended. It raises ValueError for anything else: a reordering, a removal, a replacement, or a repeated slug. main calls it first, before the miner-commit check and before any network call.
+
+### 2026-10-13T17:34:28Z · TEST · myan · claude-code/opus-5.5 · 4f7bd82
+PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 282 passed. New tests: an append is a widening, and six bad lists raise (reversed, first removed, last replaced, last removed, a repeated original, a repeated appended candidate). main raises on a reordered list before _miner_commit runs. Mutation check used 4 mutants: the prefix check removed (killed), the duplicate check removed (killed), main reverting to CANDIDATES != ADR_0016 (killed), and the return written as candidates != ADR_0016. The last one survived, and it is equivalent: once the prefix check passes, being different means being longer. ruff is clean.
+
+### 2026-10-13T17:34:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:4f7bd82
+fix(eval-data): only an append to ADR-0016's list counts as widening
+4 files changed, 48 insertions(+), 3 deletions(-)

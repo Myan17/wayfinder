@@ -152,3 +152,27 @@ def test_the_clean_input_guard_covers_the_manifest_schema(monkeypatch):
 
 def test_the_runner_measures_adr_0016s_list_unwidened():
     assert len(run.CANDIDATES) == 10 and run.CANDIDATES == run.ADR_0016
+    assert run.widened(run.CANDIDATES) is False
+
+
+def test_only_an_append_to_adr_0016s_list_is_a_widening():
+    ten = run.ADR_0016
+    assert run.widened((*ten, ("new/repo", "go"))) is True
+    for bad in (
+        ten[::-1],  # reordered
+        ten[1:],  # removal
+        (*ten[:-1], ("new/repo", "go")),  # replacement
+        ten[:9],  # removal from the end
+        (*ten, ten[0]),  # a candidate repeated
+        (*ten, ("new/repo", "go"), ("new/repo", "go")),  # an appended candidate repeated
+    ):
+        with pytest.raises(ValueError, match="ADR-0016's ten, in order"):
+            run.widened(bad)
+
+
+def test_main_checks_the_candidate_list_before_any_network_call(monkeypatch):
+    monkeypatch.setenv("WAYFINDER_S1_TOKEN", "unused")
+    monkeypatch.setattr(run, "CANDIDATES", run.ADR_0016[::-1])
+    monkeypatch.setattr(run, "_miner_commit", lambda: pytest.fail("ran past the candidate check"))
+    with pytest.raises(ValueError):
+        run.main([])

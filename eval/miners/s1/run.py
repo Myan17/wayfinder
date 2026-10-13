@@ -32,6 +32,20 @@ ADR_0016 = (
 )
 # R-03 step 1 appends here, in a pull request that names the new candidates before they are measured.
 CANDIDATES = ADR_0016
+
+
+def widened(candidates: tuple[tuple[str, str], ...]) -> bool:
+    """False for ADR-0016's list, True for it with new candidates appended after it (R-03 step 1).
+
+    Any other change (a reordering, removal, replacement or a repeated candidate) is not a widening
+    and fails closed (review of #66), since ADR-0016's list is closed and only grows by appending.
+    """
+    slugs = [slug for slug, _ in candidates]
+    if tuple(candidates[: len(ADR_0016)]) != ADR_0016 or len(set(slugs)) != len(slugs):
+        raise ValueError("CANDIDATES must be ADR-0016's ten, in order, with any new candidates appended")
+    return len(candidates) > len(ADR_0016)
+
+
 MIN_LINKED, MIN_RESOLVED = 100, 0.95  # S1-2, S1-3
 MIN_MD_FILES, MIN_MD_WORDS = 5, 2000  # S1-4
 
@@ -130,6 +144,7 @@ def main(argv: list[str]) -> int:
             "WAYFINDER_S1_TOKEN is not set (a classic token with no scopes, ADR-0016 S1-5)", file=sys.stderr
         )
         return 2
+    wide = widened(CANDIDATES)  # before any network call
     commit = _miner_commit()
     client = github.Client(github.urllib_transport(token))
     with tempfile.TemporaryDirectory(prefix="s1-") as tmp:  # the clones never outlive the run
@@ -138,7 +153,7 @@ def main(argv: list[str]) -> int:
             measured.append(measure(client, slug, lang, Path(tmp)))
             e = measured[-1]["entry"]
             print(f"{slug}: {json.dumps({k: v['pass'] for k, v in e['rules'].items()})}", file=sys.stderr)
-    data, manifest = corpus.build(measured, commit, client.calls, widened=CANDIDATES != ADR_0016)
+    data, manifest = corpus.build(measured, commit, client.calls, widened=wide)
     out.mkdir(parents=True, exist_ok=True)
     (out / "pairs.jsonl").write_bytes(data)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
