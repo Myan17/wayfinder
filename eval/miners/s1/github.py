@@ -50,12 +50,14 @@ class Client:
     def __init__(self, transport: Transport):
         self._send = transport
         self.calls = {"graphql": 0, "rest": 0}
+        self.scopes_seen: list[str] = []  # X-OAuth-Scopes of every response that passed S1-5, in order
 
     def query(self, query: str, **variables) -> dict:
         self.calls["graphql"] += 1
         status, headers, body = self._send(json.dumps({"query": query, "variables": variables}).encode())
         if problem := scope_problem(headers):
             raise PermissionError(f"S1-5: {problem}")
+        self.scopes_seen.append(headers["x-oauth-scopes"].strip())
         if status != 200 or body.get("errors"):
             raise RuntimeError(f"GraphQL failed ({status}): {body.get('errors') or body}")
         return body["data"]

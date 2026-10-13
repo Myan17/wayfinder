@@ -1,5 +1,6 @@
 """S1's runner: `measure` end to end against a local mirror and replayed GraphQL responses."""
 
+import pytest
 from s1 import github, repo, run
 from test_s1_repo import _commit, _run
 
@@ -66,11 +67,16 @@ def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, mo
         }
     }
     queue = [meta, page]
-    client = github.Client(lambda body: (200, {"x-oauth-scopes": ""}, queue.pop(0)))
+    headers = {"x-oauth-scopes": ""}
+    client = github.Client(lambda body: (200, headers, queue.pop(0)))
 
     got = run.measure(client, "o/r", "py", tmp_path)
+    (tmp_path / "again").mkdir()
     rules = got["entry"]["rules"]
-    assert rules["S1-1"] == {"value": {"file": "MIT", "api": "Apache-2.0"}, "pass": False}
+    assert rules["S1-1"] == {
+        "value": {"file": "MIT", "api": "Apache-2.0", "file_reason": None},
+        "pass": False,
+    }
     assert got["entry"]["spdx"] == "MIT"  # the clone's id, not the API's
     assert rules["S1-2"] == {"value": 3, "pass": False}
     assert rules["S1-3"] == {"value": {"resolved": 2, "of": 3}, "pass": False}  # the merge PR's base resolved
@@ -90,6 +96,32 @@ def test_measure_records_every_rule_and_gold_for_each_resolved_pair(tmp_path, mo
         False,
     )
     assert (nine["base"], nine["reason"], nine["gold"]) == (c1, repo.MERGE_IN_HISTORY, [])
+    # S1-5 records what was observed: the scope header of each of this candidate's responses
+    assert rules["S1-5"] == {
+        "value": {"x_oauth_scopes": [""], "responses_checked": 2, "clone": "https"},
+        "pass": True,
+    }
+
+    # A second candidate on the same client: its S1-5 counts only its own responses, and a clone
+    # license failure keeps its reason.
+    monkeypatch.setattr(
+        run.license, "file_spdx", lambda git_dir, commit: (None, "2 license files at the root")
+    )
+    queue.extend([meta, page])
+    again = run.measure(client, "o/r", "py", tmp_path / "again")
+    assert again["entry"]["rules"]["S1-1"]["value"]["file_reason"] == "2 license files at the root"
+    assert again["entry"]["rules"]["S1-5"]["value"]["responses_checked"] == 2
+
+    # S1-5 fails on a scope the record shows, even if the client's own check were bypassed
+    monkeypatch.setattr(github, "scope_problem", lambda h: None)
+    headers["x-oauth-scopes"] = "public_repo"
+    queue.extend([meta, page])
+    (tmp_path / "third").mkdir()
+    third = run.measure(client, "o/r", "py", tmp_path / "third")["entry"]["rules"]["S1-5"]
+    assert third == {
+        "value": {"x_oauth_scopes": ["public_repo"], "responses_checked": 2, "clone": "https"},
+        "pass": False,
+    }
 
 
 def _mirror(work, dest):
@@ -101,3 +133,22 @@ def test_main_refuses_to_start_without_the_token(monkeypatch, capsys):
     monkeypatch.delenv("WAYFINDER_S1_TOKEN", raising=False)
     assert run.main([]) == 2
     assert "WAYFINDER_S1_TOKEN is not set" in capsys.readouterr().err
+
+
+def test_the_clean_input_guard_covers_the_manifest_schema(monkeypatch):
+    asked = []
+
+    def fake(args, **kwargs):
+        asked.append(args)
+        return type(
+            "Out", (), {"stdout": " M datasets/manifest.schema.json\n" if "status" in args else "x"}
+        )()
+
+    monkeypatch.setattr(run.subprocess, "run", fake)
+    with pytest.raises(RuntimeError, match="uncommitted changes"):
+        run._miner_commit()
+    assert asked[0][-2:] == ["miners", "datasets/manifest.schema.json"]
+
+
+def test_the_runner_measures_adr_0016s_list_unwidened():
+    assert len(run.CANDIDATES) == 10 and run.CANDIDATES == run.ADR_0016

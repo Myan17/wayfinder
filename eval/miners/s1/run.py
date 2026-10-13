@@ -18,7 +18,7 @@ from pathlib import Path
 
 from . import corpus, github, license, pairs, repo
 
-CANDIDATES = (
+ADR_0016 = (
     ("pallets/flask", "py"),
     ("pallets/click", "py"),
     ("encode/httpx", "py"),
@@ -30,6 +30,8 @@ CANDIDATES = (
     ("gin-gonic/gin", "go"),
     ("charmbracelet/bubbletea", "go"),
 )
+# R-03 step 1 appends here, in a pull request that names the new candidates before they are measured.
+CANDIDATES = ADR_0016
 MIN_LINKED, MIN_RESOLVED = 100, 0.95  # S1-2, S1-3
 MIN_MD_FILES, MIN_MD_WORDS = 5, 2000  # S1-4
 
@@ -39,12 +41,13 @@ def measure(
 ) -> dict:
     """One candidate's S1-1 to S1-5 and chunk estimate, and its linked pairs with gold files."""
     owner, name = slug.split("/")
+    first_response = len(client.scopes_seen)
     meta = github.repo(client, owner, name)
     git_dir = repo.mirror(f"https://github.com/{slug}.git", workdir / f"{owner}__{name}.git")
     commit = repo.as_of_commit(git_dir, meta.default_branch, as_of)
     if commit is None:
         raise RuntimeError(f"{slug}: no commit on {meta.default_branch} before {as_of.isoformat()}")
-    file_id, _ = license.file_spdx(git_dir, commit)
+    file_id, file_reason = license.file_spdx(git_dir, commit)
     size = repo.measure(git_dir, commit)
     linked = list(github.linked_pairs(client, owner, name, meta.github_repo_id, as_of))
     found, gold_by_pr = [], {}
@@ -68,10 +71,13 @@ def measure(
                 "merged_at": p.merged_at,
             }
         )
+    seen = client.scopes_seen[first_response:]
+    s1_1 = license.s1_1(file_id, meta.api_spdx)
+    s1_1["value"]["file_reason"] = file_reason  # why the clone gave no id (review of #66)
     resolved = sum(f["base"] is not None for f in found)
     rate = resolved / len(found) if found else 0.0
     rules = {
-        "S1-1": license.s1_1(file_id, meta.api_spdx),
+        "S1-1": s1_1,
         "S1-2": {"value": len(found), "pass": len(found) >= MIN_LINKED},
         "S1-3": {
             "value": {"resolved": resolved, "of": len(found)},
@@ -81,10 +87,10 @@ def measure(
             "value": {"md_files": size.md_files, "md_words": size.md_words},
             "pass": size.md_files >= MIN_MD_FILES and size.md_words >= MIN_MD_WORDS,
         },
-        # Every read above went through Client, which raises on any token scope before a result exists.
+        # What was observed (review of #66): every response's scope header, and how many were checked.
         "S1-5": {
-            "value": "mirror clone over https; GraphQL with a classic token without scopes",
-            "pass": True,
+            "value": {"x_oauth_scopes": sorted(set(seen)), "responses_checked": len(seen), "clone": "https"},
+            "pass": bool(seen) and set(seen) == {""},
         },
     }
     entry = {
@@ -100,13 +106,17 @@ def measure(
     return {"entry": entry, "pairs": found}
 
 
+# The miner and the schema that validates its output (review of #66), relative to eval/.
+INPUTS = ("miners", "datasets/manifest.schema.json")
+
+
 def _miner_commit() -> str:
-    """HEAD, refused if the miner has uncommitted changes, since the manifest pins the miner by commit."""
-    here = Path(__file__).parents[1]  # eval/miners
+    """HEAD, refused if any input has uncommitted changes, since the manifest pins the miner by commit."""
+    here = Path(__file__).parents[2]  # eval
     if subprocess.run(
-        ["git", "status", "--porcelain", "--", "."], cwd=here, capture_output=True, text=True
+        ["git", "status", "--porcelain", "--", *INPUTS], cwd=here, capture_output=True, text=True
     ).stdout:
-        raise RuntimeError("eval/miners has uncommitted changes; commit before running")
+        raise RuntimeError("uncommitted changes in eval/miners or the manifest schema; commit before running")
     return subprocess.run(
         ["git", "rev-parse", "HEAD"], cwd=here, capture_output=True, text=True, check=True
     ).stdout.strip()
@@ -128,7 +138,7 @@ def main(argv: list[str]) -> int:
             measured.append(measure(client, slug, lang, Path(tmp)))
             e = measured[-1]["entry"]
             print(f"{slug}: {json.dumps({k: v['pass'] for k, v in e['rules'].items()})}", file=sys.stderr)
-    data, manifest = corpus.build(measured, commit, client.calls)
+    data, manifest = corpus.build(measured, commit, client.calls, widened=CANDIDATES != ADR_0016)
     out.mkdir(parents=True, exist_ok=True)
     (out / "pairs.jsonl").write_bytes(data)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")

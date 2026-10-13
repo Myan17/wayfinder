@@ -40,3 +40,13 @@ Paused for gupta958's review (s1/run.py), stacked on myan/eval-data/s1-runner, w
 ### 2026-10-13T05:29:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:4404dec
 docs(agents): handoff for the S1 runner review pause
 1 file changed, 3 insertions(+)
+
+### 2026-10-13T17:08:24Z · DECIDE · myan · claude-code/opus-5.5 · 68711da
+Review from gupta958, relayed by Myan on 2026-10-13: "#66: Do not approve yet. Merge-excluded pairs correctly count as resolved for S1-3. S1-5 should record the observed empty scope header and verified response count, rather than a fixed assertion. The clean-input guard must include manifest.schema.json, which directly affects validation. Preserve the license-file failure reason instead of discarding it at line 47." Fixes: (1) github.Client appends each accepted response's X-OAuth-Scopes to scopes_seen. measure slices the candidate's own responses and records {x_oauth_scopes: the distinct values, responses_checked: n, clone: https}, passing only if n > 0 and every value is empty. (2) _miner_commit checks git status for eval/miners and eval/datasets/manifest.schema.json. (3) S1-1's value gains file_reason from license.file_spdx. (4) This follows from #65's R-03 fix: ADR_0016 holds the ten candidates, CANDIDATES equals it until a widening PR appends to it, and main passes widened=CANDIDATES != ADR_0016 to corpus.build. github.py changes inside this module, so no BCR is needed.
+
+### 2026-10-13T17:08:24Z · TEST · myan · claude-code/opus-5.5 · 68711da
+PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 280 passed. New assertions: S1-5's recorded value for one candidate; a second candidate on the same client counts only its own 2 responses and keeps a license failure reason; a third candidate with the client check bypassed records public_repo and fails S1-5; the guard's git status covers the schema path; the candidate list is the ten; the client records accepted headers and not refused ones. Mutation check used 7 mutants: no per-candidate slice, S1-5 forced to pass, file_reason dropped, the schema left out of INPUTS, a shortened candidate list, and the header not recorded in Client. All 7 were killed. ruff check and ruff format --check are clean on all four files.
+
+### 2026-10-13T17:08:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:68711da
+fix(eval-data): S1-5 records what it saw; the run pins the schema and keeps S1-1's reason
+6 files changed, 97 insertions(+), 19 deletions(-)
