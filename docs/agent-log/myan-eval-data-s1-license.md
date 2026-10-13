@@ -64,3 +64,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 271 passed (test_s1_li
 ### 2026-10-13T17:56:11Z · COMMIT · myan · claude-code/opus-5.5 · parent:5d7287a
 fix(eval-data): S1-1 matches the whole license text against SPDX templates
 9 files changed, 277 insertions(+), 102 deletions(-)
+
+### 2026-10-13T17:56:22Z · HANDOFF · myan · claude-code/opus-5.5 · cc420ee
+Paused for gupta958's third review: S1-1 is now a whole-text SPDX template match (code at the commit before this one). Correction to the last TEST entry: 12 mutants were run, not 13. 11 were killed and 1, the one-hit rule, is equivalent. Next, in order: (1) this PR merges; (2) #65 and then #66 are each rebased onto main, retargeted, closed and reopened, and their bodies refreshed (#66's measure test uses a full MIT text, since a partial one is no longer MIT); (3) after #66 merges, the live run with Myan's no-scope classic PAT; (4) the results PR. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD), GITHUB_HEAD_REF set.
+
+### 2026-10-13T17:56:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:cc420ee
+docs(agents): handoff for the S1-1 template-match review
+1 file changed, 3 insertions(+)
