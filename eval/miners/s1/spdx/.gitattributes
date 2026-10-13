@@ -1,0 +1,4 @@
+# Byte-identical copies of spdx/license-list-data v3.29.0 template/*.template.txt, pinned by
+# SHA-256 in s1/license.py. Upstream has trailing spaces and blank lines at EOF; they stay, so the
+# hashes match upstream, and git diff --check is told so here.
+*.template.txt -whitespace
