@@ -33,3 +33,10 @@ Correction to the previous TEST entry: 9 distinct mutants, not 11 (two were re-r
 ### 2026-10-13T05:28:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:1386020
 feat(eval-data): S1 runner — measure each candidate, write the dataset
 4 files changed, 288 insertions(+), 2 deletions(-)
+
+### 2026-10-13T05:29:16Z · HANDOFF · myan · claude-code/opus-5.5 · 4404dec
+Paused for gupta958's review (s1/run.py), stacked on myan/eval-data/s1-runner, which is stacked on #63. Next, in order: (1) #63 and then the corpus PR merge, each followed by a rebase of this branch onto the new main with rebase -X theirs, a lease force-push, retarget to main, close and reopen, refreshed body; (2) this PR merges; (3) Myan runs WAYFINDER_S1_TOKEN=<no-scope classic PAT> uv run --extra dev python -m s1.run from eval/miners on a clean checkout of main (the miner refuses uncommitted changes), then python -m s1.dataset eval/datasets/s1/pairs.jsonl eval/datasets/s1/manifest.json; (4) the results PR with the two files, the ADR-0016 Decision (every selection round, A-3 at 300 strong pairs; if no subset is feasible, R-03 step 1 needs a widening PR naming candidates before measurement) and ORIENT item 5 done. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=<parent branch head>, GITHUB_HEAD_REF set.
+
+### 2026-10-13T05:29:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:4404dec
+docs(agents): handoff for the S1 runner review pause
+1 file changed, 3 insertions(+)
