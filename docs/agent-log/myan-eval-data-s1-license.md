@@ -81,3 +81,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 282 passed (test_s1_li
 ### 2026-10-13T18:16:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:880071c
 fix(eval-data): S1-1's leading block cannot hide a second license
 5 files changed, 80 insertions(+), 18 deletions(-)
+
+### 2026-10-13T18:17:48Z · HANDOFF · myan · claude-code/opus-5.5 · 44aa7e3
+Paused for gupta958's fourth review (the leading-block fix, 44aa7e3). This PR is now stacked on myan/eval-data/spdx-templates, the vendored templates split out to stay under 400 lines, because it was 445 with them. Next, in order: (1) the templates PR merges; (2) this PR is rebased onto main, retargeted, closed and reopened, and its body refreshed; (3) it merges; (4) #65, then #66, the same way; (5) the live run with Myan's no-scope classic PAT; (6) the results PR. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=<parent head> while stacked, GITHUB_HEAD_REF set.
+
+### 2026-10-13T18:17:48Z · COMMIT · myan · claude-code/opus-5.5 · parent:44aa7e3
+docs(agents): handoff for the S1-1 leading-block review
+1 file changed, 3 insertions(+)
