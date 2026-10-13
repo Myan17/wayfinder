@@ -77,3 +77,7 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 305 passed. The measur
 ### 2026-10-13T19:54:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:29accff
 feat(eval-data): the runner fetches SPDX's pinned license list for S1-1
 4 files changed, 43 insertions(+), 9 deletions(-)
+
+### 2026-10-13T19:54:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:10babcc
+test(eval-data): a BytesIO stands in for the license-list download
+1 file changed, 3 insertions(+), 11 deletions(-)

@@ -1,5 +1,7 @@
 """S1's runner: `measure` end to end against a local mirror and replayed GraphQL responses."""
 
+import io
+
 import pytest
 from s1 import github, repo, run
 from test_s1_license import EXPRESS, IDS
@@ -177,19 +179,9 @@ def test_main_checks_the_candidate_list_before_any_network_call(monkeypatch):
 
 
 def test_main_refuses_an_unpinned_license_list_before_measuring(monkeypatch):
-    class Body:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *exc):
-            return False
-
-        def read(self):
-            return b'{"licenses": []}'
-
     monkeypatch.setenv("WAYFINDER_S1_TOKEN", "unused")
     monkeypatch.setattr(run, "_miner_commit", lambda: "0" * 40)
-    monkeypatch.setattr(run.urllib.request, "urlopen", lambda url, timeout: Body())
+    monkeypatch.setattr(run.urllib.request, "urlopen", lambda url, timeout: io.BytesIO(b'{"licenses": []}'))
     monkeypatch.setattr(run, "measure", lambda *a: pytest.fail("measured with an unchecked list"))
     with pytest.raises(RuntimeError, match="pinned SHA-256"):
         run.main([])
