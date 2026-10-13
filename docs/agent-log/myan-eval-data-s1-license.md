@@ -47,3 +47,10 @@ PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest gives 268 passed (test_s1_li
 ### 2026-10-13T17:05:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:9552da2
 fix(eval-data): S1-1 refuses Apache headers, mentions and dual-license texts
 4 files changed, 59 insertions(+), 5 deletions(-)
+
+### 2026-10-13T17:08:34Z · HANDOFF · myan · claude-code/opus-5.5 · b241d99
+Paused for gupta958's re-review after the Apache and dual-license fix (code at b241d99, rebased onto main 960ef5e after #64 merged). This replaces the previous HANDOFF: its step (2), the dispatcher PR, merged as #64. Next, in order: (1) this PR merges; (2) #65 (s1/corpus.py) and then #66 (s1/run.py) are each rebased onto main, retargeted to main, closed and reopened, and their bodies refreshed; (3) after #66 merges, the live run with Myan's no-scope classic PAT; (4) the results PR. Test: PYTHONDONTWRITEBYTECODE=1 uv run --extra dev pytest; guardrails with B=$(git merge-base origin/main HEAD), GITHUB_HEAD_REF set.
+
+### 2026-10-13T17:08:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:b241d99
+docs(agents): handoff for the S1-1 license re-review
+1 file changed, 3 insertions(+)
