@@ -48,3 +48,10 @@ docs(agent-log): s1-widen handoff
 ### 2026-10-14T03:06:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:cd24712
 docs(agreements): s1-widen task log — TEST and HANDOFF
 1 file changed, 14 insertions(+)
+
+### 2026-10-14T04:09:27Z · EDIT · myan · claude-code/opus-5.5 · 3a0683b
+Review of #68: Decision placeholder no longer says 'Empty until S1 runs'; now points to Amendment 2 for round 1 and stays empty until R-03 finishes. PR body: Closes -> Advances ORIENT item 5.
+
+### 2026-10-14T04:09:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:3a0683b
+docs(agreements): ADR-0016 Decision placeholder points to round 1 in Amendment 2
+2 files changed, 4 insertions(+), 1 deletion(-)

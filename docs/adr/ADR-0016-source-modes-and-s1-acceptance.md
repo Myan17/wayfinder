@@ -197,7 +197,7 @@ consequences:
 
 ## Decision
 
-*Empty until S1 runs.* It will be completed with one of:
+*Round 1 is recorded in Amendment 2. The final Decision stays empty until the R-03 fallback sequence finishes.* It will be completed with one of:
 
 - **Accept the corpus:** name the 3–4 repositories, quote each candidate's S1-1 to S1-5 results,
   the chunk estimate and the surviving-pair count, and state A-3 as passed.
