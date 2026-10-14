@@ -2,7 +2,8 @@
 
 - **Status:** Proposed. **The decision is deliberately empty**; spike S1 fills it.
 - **Date written:** 2026-09-28, **before** S1 measures any candidate. **Amended** 2026-10-04, still
-  before any measurement (Amendment 1, below).
+  before any measurement (Amendment 1, below), and 2026-10-13 after round 1 fell short, before
+  the added candidates are measured (Amendment 2, below).
 - **Decides:** the public read-only corpus of `DESIGN` §14.1, assumption A-3 (§7.1), and risks R-03
   and R-14 (§20). DESIGN §12 lists this ADR as "Two source modes: installation and public
   read-only". The modes are already designed; this ADR records the evidence that makes the public
@@ -74,6 +75,42 @@ rule is conservative and deterministic:
   300-pair bar. Its exclusion is counted under D-6 in the manifest's `exclusions`.
 
 A linear PR, with no multi-parent commit in its history, is unaffected.
+
+## Amendment 2 — R-03 step 1: ten added candidates (2026-10-13)
+
+Written after S1's first run and before any added candidate is measured.
+
+**Why (round 1).** S1 ran on 2026-10-13 at miner commit `331abcc`, over the ten candidates above.
+At D-2's 10 files, 14 subsets were feasible. The winner was `urfave/cli`, `gin-gonic/gin`,
+`python-attrs/attrs` and `encode/httpx`, with a chunk estimate of 997. It had **156 surviving strong
+pairs, 144 short of A-3's 300** (urfave/cli 38, gin 11, attrs 19, httpx 88), plus 240 weak pairs,
+which are never counted. R-03 step 1 therefore applies. Step 2 (D-2 at 15 files) does not apply
+yet.
+
+Two observations from round 1 shaped the choice. Neither is a measurement of the new candidates.
+
+- **Size does not bind.** The winner uses 997 of the 60,000-chunk bound. Larger repositories fit.
+- **Strong yield binds.** More pairs were weak than strong (240 against 156, D-3). A subset holds at
+  most 4 repositories, so it needs about 75 strong pairs per repository. The added candidates are
+  large, permissively licensed projects with long histories of pull requests that close issues.
+
+**Added candidates.** As before, each was checked only to exist and be unarchived, on 2026-10-13.
+
+| Language | Repositories |
+|---|---|
+| Python | `pytest-dev/pytest`, `pydantic/pydantic`, `psf/black`, `Textualize/rich`, `tox-dev/tox` |
+| Go | `cli/cli`, `stretchr/testify`, `gofiber/fiber`, `prometheus/prometheus`, `spf13/viper` |
+
+**Unchanged:**
+- the as-of time (2026-09-28T00:00:00Z);
+- S1-1 to S1-5;
+- the chunk estimate;
+- feasibility, the selection order, and A-3's 300 bar.
+
+The runner appends these ten to its candidate list, after the original ten and in this order. That
+is the only widening it accepts. Selection then re-runs from scratch over every qualifying
+candidate, old and new. If that round is still short, R-03 step 2 runs over the same widened list.
+The Decision records round 1 above together with every later round.
 
 ## The chunk estimate
 
@@ -160,7 +197,7 @@ consequences:
 
 ## Decision
 
-*Empty until S1 runs.* It will be completed with one of:
+*Round 1 is recorded in Amendment 2. The final Decision stays empty until the R-03 fallback sequence finishes.* It will be completed with one of:
 
 - **Accept the corpus:** name the 3–4 repositories, quote each candidate's S1-1 to S1-5 results,
   the chunk estimate and the surviving-pair count, and state A-3 as passed.
