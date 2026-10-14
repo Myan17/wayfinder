@@ -38,8 +38,10 @@ def _exists(git_dir: Path, rev: str) -> bool:
     return _git(git_dir, "cat-file", "-e", f"{rev}^{{commit}}", ok=(0, 1, 128)).returncode == 0
 
 
-def base_commit(git_dir: Path, first_commit: str) -> tuple[str | None, str | None]:
+def base_commit(git_dir: Path, first_commit: str | None) -> tuple[str | None, str | None]:
     """ADR-0013 D-1: the parent of the PR's first commit, or None and the reason it did not resolve."""
+    if first_commit is None:
+        return None, "PR lists no commits"
     if not _exists(git_dir, first_commit):
         return None, "first commit not in the clone"
     parent = _git(git_dir, "rev-parse", "--verify", "--quiet", f"{first_commit}^", ok=(0, 1)).stdout
@@ -56,7 +58,7 @@ def has_merges(git_dir: Path, base: str, head: str) -> bool:
 MERGE_IN_HISTORY = "merge_commit_in_pr_history"  # ADR-0016 Amendment 1
 
 
-def resolve(git_dir: Path, first_commit: str, head: str) -> tuple[str | None, str | None]:
+def resolve(git_dir: Path, first_commit: str | None, head: str) -> tuple[str | None, str | None]:
     """D-1, then ADR-0016 Amendment 1: (base, None) for a usable pair, else (base or None, reason).
 
     An unresolved base keeps its S1-3 reason. A resolved base whose PR history (base..head) holds any

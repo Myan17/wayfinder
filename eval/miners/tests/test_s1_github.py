@@ -123,14 +123,19 @@ def test_linked_pairs_pages_every_merged_pr_and_keeps_s1_2s_pairs():
     assert client.calls == {"graphql": 2, "rest": 0}
 
 
-def test_a_pr_with_unread_closing_references_or_no_commits_fails_closed():
+def test_a_pr_with_unread_closing_references_fails_closed():
     send, _ = _replay(
         _page([_pr(20, "2026-01-01T00:00:00Z", [(1, "2026-01-01T00:00:00Z", CLICK)], total=51)])
     )
     with pytest.raises(RuntimeError, match="PR 20 closes more than 50 issues"):
         list(github.linked_pairs(github.Client(send), "pallets", "click", CLICK, AS_OF))
+
+
+def test_a_pr_listing_no_commits_still_counts_with_no_first_commit():
+    # cli/cli#7228: merged from a fork, closes #7229, and GitHub lists 0 commits. S1-2 counts it;
+    # D-1 then cannot resolve its base, so it counts against S1-3 and never reaches gold.
     send, _ = _replay(
         _page([_pr(21, "2026-01-01T00:00:00Z", [(1, "2026-01-01T00:00:00Z", CLICK)], first=None)])
     )
-    with pytest.raises(RuntimeError, match="PR 21 lists no commits"):
-        list(github.linked_pairs(github.Client(send), "pallets", "click", CLICK, AS_OF))
+    got = list(github.linked_pairs(github.Client(send), "pallets", "click", CLICK, AS_OF))
+    assert [(p.pr, p.issue, p.first_commit) for p in got] == [(21, 1, None)]

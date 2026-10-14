@@ -106,7 +106,7 @@ class Linked:
 
     issue: int
     pr: int
-    first_commit: str  # D-1's base is this commit's parent (`s1.repo.resolve`)
+    first_commit: str | None  # D-1's base is its parent (`s1.repo.resolve`); None if the PR lists none
     head: str
     merged_at: dt.datetime
     issue_updated_at: dt.datetime  # D-3
@@ -132,9 +132,9 @@ def linked_pairs(client: Client, owner: str, name: str, repo_id: int, as_of: dt.
                 continue
             if refs["totalCount"] > len(refs["nodes"]):
                 raise RuntimeError(f"PR {pr['number']} closes more than {MAX_CLOSING} issues")
-            if not pr["commits"]["nodes"]:
-                raise RuntimeError(f"PR {pr['number']} lists no commits")
-            first = pr["commits"]["nodes"][0]["commit"]["oid"]
+            # Empty for some merged fork PRs (cli/cli#7228); D-1 then reports the base as unresolved.
+            commits = pr["commits"]["nodes"]
+            first = commits[0]["commit"]["oid"] if commits else None
             for issue in sorted(refs["nodes"], key=lambda i: i["number"]):
                 if issue["repository"]["databaseId"] == repo_id:
                     updated = _time(issue["updatedAt"])
