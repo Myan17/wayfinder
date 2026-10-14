@@ -33,7 +33,19 @@ ADR_0016 = (
     ("charmbracelet/bubbletea", "go"),
 )
 # R-03 step 1 appends here, in a pull request that names the new candidates before they are measured.
-CANDIDATES = ADR_0016
+AMENDMENT_2 = (  # ADR-0016 Amendment 2 (#68), in its table's order
+    ("pytest-dev/pytest", "py"),
+    ("pydantic/pydantic", "py"),
+    ("psf/black", "py"),
+    ("Textualize/rich", "py"),
+    ("tox-dev/tox", "py"),
+    ("cli/cli", "go"),
+    ("stretchr/testify", "go"),
+    ("gofiber/fiber", "go"),
+    ("prometheus/prometheus", "go"),
+    ("spf13/viper", "go"),
+)
+CANDIDATES = ADR_0016 + AMENDMENT_2
 
 
 def widened(candidates: tuple[tuple[str, str], ...]) -> bool:
