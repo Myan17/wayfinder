@@ -33,3 +33,13 @@ Ready for gupta958. After merge Myan re-runs s1.run (20 candidates, widened=True
 ### 2026-10-14T04:14:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:8c097e4
 feat(eval-data): S1 measures ADR-0016 Amendment 2's ten added candidates (R-03 step 1)
 4 files changed, 56 insertions(+), 5 deletions(-)
+
+### 2026-10-14T06:10:39Z · EDIT · myan · claude-code/opus-5.5 · fc1bc6b
+Review of #69: run.py docstring said 'ADR-0016's ten candidates'; now 'ADR-0016's candidate list' (20 with Amendment 2). The widened() error text 'ADR-0016's ten, in order' stays, since it describes the required prefix.
+
+### 2026-10-14T06:10:39Z · TEST · myan · claude-code/opus-5.5 · fc1bc6b
+ruff check/format clean; pytest -> 140 passed
+
+### 2026-10-14T06:10:40Z · COMMIT · myan · claude-code/opus-5.5 · parent:fc1bc6b
+docs(eval-data): S1 runner docstring names ADR-0016's candidate list, not ten
+2 files changed, 7 insertions(+), 1 deletion(-)

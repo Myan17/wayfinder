@@ -1,4 +1,4 @@
-"""S1's runner: measure ADR-0016's ten candidates, select the corpus, write the pairs file and manifest.
+"""S1's runner: measure ADR-0016's candidate list, select the corpus, write the pairs file and manifest.
 
 `measure` is the only part that touches the network (GraphQL through `github.Client`, a mirror clone
 through `repo.mirror`). Everything after it is `s1.corpus`, which is pure.
