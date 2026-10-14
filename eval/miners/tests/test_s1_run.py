@@ -1,6 +1,8 @@
 """S1's runner: `measure` end to end against a local mirror and replayed GraphQL responses."""
 
 import io
+import re
+from pathlib import Path
 
 import pytest
 from s1 import github, repo, run
@@ -150,9 +152,15 @@ def test_the_clean_input_guard_covers_the_manifest_schema(monkeypatch):
     assert asked[0][-2:] == ["miners", "datasets/manifest.schema.json"]
 
 
-def test_the_runner_measures_adr_0016s_list_unwidened():
-    assert len(run.CANDIDATES) == 10 and run.CANDIDATES == run.ADR_0016
-    assert run.widened(run.CANDIDATES) is False
+def test_the_runner_measures_adr_0016s_list_widened_by_amendment_2():
+    adr = (Path(__file__).parents[3] / "docs/adr/ADR-0016-source-modes-and-s1-acceptance.md").read_text()
+    table = adr.split("## Amendment 2", 1)[1].split("**Unchanged:**", 1)[0]
+    rows = [r for r in table.splitlines() if r.startswith(("| Python |", "| Go |"))]
+    named = [
+        (s, "py" if r.startswith("| Python") else "go") for r in rows for s in re.findall(r"`([^`]+)`", r)
+    ]
+    assert run.CANDIDATES == run.ADR_0016 + run.AMENDMENT_2 and list(run.AMENDMENT_2) == named
+    assert len(run.CANDIDATES) == 20 and run.widened(run.CANDIDATES) is True
 
 
 def test_only_an_append_to_adr_0016s_list_is_a_widening():
