@@ -8,12 +8,17 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import time
+import urllib.error
 import urllib.request
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 ENDPOINT = "https://api.github.com/graphql"
 MAX_CLOSING = 50  # closing references read per PR; a PR with more fails closed rather than undercount
+ATTEMPTS = 4  # per query; only GitHub's transient failures are retried, after waits of 2, 4 and 8 s
+TRANSIENT_STATUS = (502, 503, 504)
+TRANSIENT_ERROR = "Something went wrong while executing your query"
 
 # (body) -> (status, headers with lower-case names, parsed JSON)
 Transport = Callable[[bytes], tuple[int, dict[str, str], dict]]
@@ -24,9 +29,12 @@ def urllib_transport(token: str) -> Transport:
         req = urllib.request.Request(ENDPOINT, data=body, method="POST")
         req.add_header("Authorization", f"bearer {token}")
         req.add_header("Content-Type", "application/json")
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            headers = {k.lower(): v for k, v in resp.headers.items()}
-            return resp.status, headers, json.load(resp)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                headers = {k.lower(): v for k, v in resp.headers.items()}
+                return resp.status, headers, json.load(resp)
+        except urllib.error.HTTPError as e:  # a status, so Client decides whether it is transient
+            return e.code, {k.lower(): v for k, v in e.headers.items()}, {"message": e.reason}
 
     return send
 
@@ -47,20 +55,43 @@ def scope_problem(headers: dict[str, str]) -> str | None:
 class Client:
     """Posts GraphQL queries, checks S1-5 on every response, and keeps S1-5's call tally."""
 
-    def __init__(self, transport: Transport):
+    def __init__(self, transport: Transport, sleep: Callable[[float], None] = time.sleep):
         self._send = transport
+        self._sleep = sleep
         self.calls = {"graphql": 0, "rest": 0}
         self.scopes_seen: list[str] = []  # X-OAuth-Scopes of every response that passed S1-5, in order
 
     def query(self, query: str, **variables) -> dict:
-        self.calls["graphql"] += 1
-        status, headers, body = self._send(json.dumps({"query": query, "variables": variables}).encode())
+        payload = json.dumps({"query": query, "variables": variables}).encode()
+        for attempt in range(1, ATTEMPTS + 1):
+            self.calls["graphql"] += 1  # S1-5's tally counts every attempt
+            try:
+                status, headers, body = self._send(payload)
+            except (TimeoutError, urllib.error.URLError) as e:
+                status, headers, body = 0, {}, {"message": str(e)}
+            if "x-oauth-scopes" in headers and (problem := scope_problem(headers)):
+                raise PermissionError(f"S1-5: {problem}")  # even on a response that will be retried
+            if not _transient(status, body):
+                break
+            if attempt == ATTEMPTS:
+                raise RuntimeError(
+                    f"GraphQL failed {ATTEMPTS} times ({status}): {body.get('errors') or body}"
+                )
+            self._sleep(2**attempt)
         if problem := scope_problem(headers):
             raise PermissionError(f"S1-5: {problem}")
         self.scopes_seen.append(headers["x-oauth-scopes"].strip())
         if status != 200 or body.get("errors"):
             raise RuntimeError(f"GraphQL failed ({status}): {body.get('errors') or body}")
         return body["data"]
+
+
+def _transient(status: int, body: dict) -> bool:
+    """GitHub's own failures, which a retry can cure; never a refusal, a bad query or a rate limit."""
+    if status in (0, *TRANSIENT_STATUS):
+        return True
+    errors = body.get("errors") or []
+    return status == 200 and bool(errors) and all(TRANSIENT_ERROR in e.get("message", "") for e in errors)
 
 
 REPO_QUERY = """query($owner: String!, $name: String!) {

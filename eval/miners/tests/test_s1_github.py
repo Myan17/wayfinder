@@ -72,6 +72,61 @@ def test_graphql_errors_and_bad_status_fail_closed():
         github.Client(send).query("{ x }")
 
 
+GONE_WRONG = {
+    "errors": [{"message": f"{github.TRANSIENT_ERROR} on 2026-10-15T03:18:57Z. Please include `D013`"}]
+}
+
+
+def _script(*replies):
+    """A transport answering each POST with the next (status, headers, body), or raising it."""
+    queue = list(replies)
+
+    def send(body):
+        reply = queue.pop(0)
+        if isinstance(reply, BaseException):
+            raise reply
+        return reply
+
+    return send
+
+
+def test_githubs_transient_failures_are_retried_and_every_attempt_is_tallied():
+    waits = []
+    send = _script(
+        (200, NO_SCOPES, GONE_WRONG),  # the run-2 failure on stretchr/testify
+        (502, {}, {"message": "Bad Gateway"}),
+        TimeoutError("timed out"),
+        (200, NO_SCOPES, {"data": {"ok": 1}}),
+    )
+    client = github.Client(send, sleep=waits.append)
+    assert client.query("{ x }") == {"ok": 1}
+    assert waits == [2, 4, 8]
+    assert client.calls == {"graphql": 4, "rest": 0}
+    assert client.scopes_seen == [""]  # only the accepted response is recorded
+
+
+def test_a_fourth_transient_failure_fails_closed():
+    client = github.Client(_script(*[(200, NO_SCOPES, GONE_WRONG)] * 4), sleep=lambda s: None)
+    with pytest.raises(RuntimeError, match="failed 4 times"):
+        client.query("{ x }")
+    assert client.calls["graphql"] == 4
+
+
+def test_only_githubs_own_failures_are_retried():
+    for reply in (
+        (200, NO_SCOPES, {"errors": [{"message": "rate limited"}]}),
+        (200, NO_SCOPES, {"errors": [GONE_WRONG["errors"][0], {"message": "Field 'x' doesn't exist"}]}),
+        (401, NO_SCOPES, {"message": "Bad credentials"}),
+        (403, NO_SCOPES, {"message": "secondary rate limit"}),
+    ):
+        client = github.Client(_script(reply), sleep=lambda s: pytest.fail("retried a permanent failure"))
+        with pytest.raises(RuntimeError, match="GraphQL failed"):
+            client.query("{ x }")
+    client = github.Client(_script((200, {"x-oauth-scopes": "repo"}, GONE_WRONG)), sleep=lambda s: None)
+    with pytest.raises(PermissionError, match="S1-5: token has scopes: repo"):
+        client.query("{ x }")
+
+
 def test_repo_metadata_and_a_missing_license():
     meta = {"databaseId": CLICK, "isArchived": False, "defaultBranchRef": {"name": "main"}}
     send, sent = _replay(
