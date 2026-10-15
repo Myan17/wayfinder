@@ -71,6 +71,7 @@ def test_the_mirror_carries_pull_refs_so_fork_commits_resolve(clone):
 def test_an_unresolvable_base_is_a_reason_not_a_guess(clone):
     assert repo.base_commit(clone["git"], "f" * 40) == (None, "first commit not in the clone")
     assert repo.base_commit(clone["git"], clone["c1"]) == (None, "first commit has no parent")
+    assert repo.resolve(clone["git"], None, clone["p2"]) == (None, "PR lists no commits")
 
 
 def test_the_as_of_commit_is_the_last_one_before_the_instant(clone):
