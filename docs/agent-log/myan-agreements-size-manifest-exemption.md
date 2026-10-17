@@ -37,3 +37,10 @@ chore(agreements): exempt eval/datasets/s1/manifest.json from the size limit by 
 ### 2026-10-17T20:27:40Z · COMMIT · myan · human · parent:c2c94cc
 docs(agreements): AGENTS.md §2.2 lists the S1 manifest as the fourth exact-path size exemption
 1 file changed, 11 insertions(+), 2 deletions(-)
+
+### 2026-10-17T20:28:07Z · HANDOFF · myan · claude-code/opus-5.5 · e07acd0
+Ready for gupta958. Two commits: c2c94cc (agent) adds the exact-path exemption and tests; e07acd0 (myan, human-authored) is the AGENTS.md §2.2 wording the reviewer supplied plus the size-table row. No manifest.json in this PR. After merge: the results PR (ORIENT item 5) commits pairs.jsonl and manifest.json with the mechanical manifest checks, ADR-0016's Decision, and item 5 set to done.
+
+### 2026-10-17T20:28:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:e07acd0
+docs(agreements): record the size-manifest-exemption handoff in its task log
+1 file changed, 3 insertions(+)
