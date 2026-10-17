@@ -36,3 +36,10 @@ pytest eval/miners/tests -> 170 passed (test_s1_landing: 26); make test -> 348 p
 ### 2026-10-17T23:12:40Z · COMMIT · myan · claude-code/opus-5.5 · parent:023b6ae
 feat(eval-data): the S1 manifest's mechanical checks, s1.landing, before the manifest lands
 4 files changed, 378 insertions(+)
+
+### 2026-10-17T23:12:50Z · HANDOFF · myan · claude-code/opus-5.5 · 0fc0d02
+Ready for gupta958. s1.landing and its tests, and the eval-data card. No dataset files in this PR. After merge: the follow-up task commits pairs.jsonl and manifest.json with a test running s1.landing on them, ADR-0016's Decision (accept with fallback, R-03 step 1) and ORIENT item 5 done.
+
+### 2026-10-17T23:12:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:0fc0d02
+docs(eval-data): record the s1-results handoff in its task log
+1 file changed, 3 insertions(+)
