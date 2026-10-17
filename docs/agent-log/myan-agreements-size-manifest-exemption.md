@@ -44,3 +44,10 @@ Ready for gupta958. Two commits: c2c94cc (agent) adds the exact-path exemption a
 ### 2026-10-17T20:28:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:e07acd0
 docs(agreements): record the size-manifest-exemption handoff in its task log
 1 file changed, 3 insertions(+)
+
+### 2026-10-17T20:46:16Z · EDIT · myan · claude-code/opus-5.5 · 2d0509d
+Reviewer found docs/team/WORKING-AGREEMENT.md:43 still listing three exempt paths. Now four, with the manifest clause matching AGENTS.md's wording. Swept the repo for count words (two/three/four exceptions, 'still counts', 'every other generated'): no other contradiction; AGENTS.md:105 'every other generated file' stays correct. My first sweep matched only path strings, which is why this was missed.
+
+### 2026-10-17T20:46:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:2d0509d
+docs(agreements): WORKING-AGREEMENT §2 lists the S1 manifest as the fourth size exemption
+2 files changed, 4 insertions(+), 1 deletion(-)
