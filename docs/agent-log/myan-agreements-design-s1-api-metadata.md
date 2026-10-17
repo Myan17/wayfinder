@@ -30,3 +30,13 @@ Docs only. grep 'REST metadata' docs/DESIGN.md -> no match. Guardrails run befor
 ### 2026-10-17T23:50:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:bf0e8e2
 docs(agreements): DESIGN §14.1 — the public corpus reads GitHub API metadata, GraphQL or REST
 2 files changed, 31 insertions(+), 2 deletions(-)
+
+### 2026-10-17T23:50:45Z · PLAN · myan · claude-code/opus-5.5 · ed050a1
+Recorded after the edit, which was missed before it: one wording change in §14.1, rewrapped to the file's width, and a 0.3.4 revision row, as earlier DESIGN edits did. Rejected: also changing line 874's 'token-limited REST' (not in the ruling; flagged instead).
+
+### 2026-10-17T23:50:45Z · HANDOFF · myan · claude-code/opus-5.5 · ed050a1
+Ready for gupta958. One sentence in §14.1 and a revision row. Open question: line 874 (public_readonly row) still says 'token-limited REST'.
+
+### 2026-10-17T23:50:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:ed050a1
+docs(agreements): record the DESIGN §14.1 plan and handoff in the task log
+1 file changed, 6 insertions(+)
