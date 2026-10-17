@@ -4,8 +4,9 @@ The manifest is exempt from the line limit because these checks review it instea
 
 - it is valid against the committed schema, and its bytes are the miner's canonical encoding;
 - each selection round's candidate set and feasible subsets are rebuilt from the candidates' recorded
-  qualification, language and chunk estimate, independently of `s1.select`, and must equal the
-  recorded ones (or the recorded `no_feasible_reason` must be the constraint that fails);
+  qualification, language and chunk estimate, independently of `s1.select` (even the chunk bound is
+  ADR-0016's 60,000, pinned here), and must equal the recorded ones (or the recorded
+  `no_feasible_reason` must be the constraint that fails);
 - the selected corpus equals the final round's winner, and the winner is feasible;
 - the pairs file passes `s1.dataset`'s four checks (SHA-256 and counts included), holds only selected
   repositories, and its per-repository split counts equal the manifest's `splits`.
@@ -23,7 +24,11 @@ from collections import Counter
 from itertools import combinations
 from pathlib import Path
 
-from . import corpus, dataset, select
+from . import corpus, dataset
+
+# ADR-0016's chunk bound, pinned here and not imported from `s1.select`: a check that read the
+# producer's constant would accept whatever bound the producer used (review of #73).
+ADR_MAX_CHUNKS = 60_000
 
 
 def encoded(manifest: object) -> str:
@@ -40,7 +45,7 @@ def _feasible(candidates: list[dict]) -> tuple[list[list[int]], str | None]:
     mixed = [s for s in subsets if {c["lang"] for c in s} >= {"py", "go"}]
     if not mixed:
         return [], "language mix"
-    fit = [s for s in mixed if sum(c["chunk_estimate"] for c in s) <= select.MAX_CHUNKS]
+    fit = [s for s in mixed if sum(c["chunk_estimate"] for c in s) <= ADR_MAX_CHUNKS]
     if not fit:
         return [], "chunk bound"
     return sorted(sorted(c["github_repo_id"] for c in s) for s in fit), None

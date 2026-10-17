@@ -5,7 +5,7 @@ import hashlib
 import json
 
 import pytest
-from s1 import corpus, landing
+from s1 import corpus, landing, select
 
 T0 = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
 SHA = "0123456789abcdef" * 2 + "01234567"
@@ -132,6 +132,35 @@ def test_a_changed_candidate_record_no_longer_matches_the_recorded_rounds(tamper
     data, manifest = _built()
     tamper(manifest["candidates"])
     assert any("feasible subsets differ" in p for p in _check(data, manifest))
+
+
+@pytest.mark.parametrize(
+    "chunks, want",
+    [
+        ((20_000, 20_000, 20_000), ([[1, 2, 3]], None)),  # exactly ADR-0016's 60,000 is feasible
+        ((20_000, 20_000, 20_001), ([], "chunk bound")),  # 60,001 is not
+    ],
+)
+def test_the_chunk_bound_is_adr_0016s_60000_inclusive(chunks, want):
+    langs = ("py", "go", "py")
+    cands = [
+        _cand(rid, lang, 1, chunks=c)["entry"] for rid, lang, c in zip((1, 2, 3), langs, chunks, strict=True)
+    ]
+    assert landing._feasible(cands) == want
+
+
+def test_the_chunk_bound_does_not_follow_the_producers_constant(monkeypatch):
+    # If s1.select's bound drifted from ADR-0016's, the producer would accept 60,001; the check must not.
+    loose = select.best  # its default bound is bound at definition, so the call is patched too
+    monkeypatch.setattr(select, "MAX_CHUNKS", 60_001)
+    monkeypatch.setattr(select, "best", lambda cands: loose(cands, max_chunks=60_001))
+    data, manifest = _built(
+        [_cand(1, "py", 120, 20_000), _cand(2, "go", 90, 20_000), _cand(3, "py", 100, 20_001)]
+    )
+    assert manifest["selected"] == [1, 2, 3]
+    found = _check(data, manifest)
+    assert any("feasible subsets differ" in p for p in found)
+    assert any("rebuilt 'chunk bound'" in p for p in found)
 
 
 def test_round_candidates_must_be_the_measured_ids():

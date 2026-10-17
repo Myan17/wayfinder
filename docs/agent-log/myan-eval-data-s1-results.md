@@ -43,3 +43,13 @@ Ready for gupta958. s1.landing and its tests, and the eval-data card. No dataset
 ### 2026-10-17T23:12:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:0fc0d02
 docs(eval-data): record the s1-results handoff in its task log
 1 file changed, 3 insertions(+)
+
+### 2026-10-17T23:26:15Z · EDIT · myan · claude-code/opus-5.5 · 3f5e494
+Review of #73 (gupta958, blocking): landing._feasible used select.MAX_CHUNKS, so a drifted producer bound would be accepted by the check too. landing.py no longer imports s1.select; ADR_MAX_CHUNKS = 60_000 is pinned in landing.py and used in _feasible. Tests: exactly 60,000 across a py/go subset is feasible; 60,001 gives ([], 'chunk bound'); and with s1.select's bound patched to 60,001 (constant and best's default) the producer's manifest is refused. Card guarantee and tests row updated. Dataset untouched, no re-run.
+
+### 2026-10-17T23:26:15Z · TEST · myan · claude-code/opus-5.5 · 3f5e494
+pytest eval/miners/tests/test_s1_landing.py -> 29 passed; eval/miners/tests -> 173 passed; make test -> 350 passed (before the last test change; eval/miners re-run after it). ruff check and format --check clean. python -m s1.landing on run 3's files -> exit 0. Mutants, all killed: ADR_MAX_CHUNKS 60_001 (2 failed), 59_999 (1), < for <= (1), reading select.MAX_CHUNKS (1; it survived the first version of the drift test, which patched only best, so the test now patches the constant as well).
+
+### 2026-10-17T23:26:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:3f5e494
+fix(eval-data): s1.landing pins ADR-0016's 60,000-chunk bound instead of reading s1.select's
+4 files changed, 48 insertions(+), 7 deletions(-)
