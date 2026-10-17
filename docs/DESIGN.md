@@ -1560,8 +1560,8 @@ metadata per repository.
 ### 14.1 Corpus
 
 - **Public corpus (mode `public_readonly`)**: 3–4 permissively licensed upstream repositories (Python
-  and Go) selected by spike S1 against the criteria below. Read-only clone plus REST metadata; no App
-  installation on organizations the author does not control (WF-20).
+  and Go) selected by spike S1 against the criteria below. Read-only clone plus GitHub API metadata
+  (GraphQL or REST); no App installation on organizations the author does not control (WF-20).
 - **Private demonstration corpus (mode `installation`)**: repositories in the author's own
   organization, including one private repository and one synthetic repository that carries the
   injection fixtures.
@@ -2291,3 +2291,4 @@ wayfinder/
 | 0.3.1 | 2026-09-26 | §19.8 step 4 at G0: every phase moves 3 days (P0 ends Sep 30, launch review Thu Nov 19). P0 had 21 h open with a day left; nothing was cut |
 | 0.3.2 | 2026-09-27 | S5 results (ADR-0004): §9.3.3 accepted as designed. The prose uses schema v1's `claim_*` names, and §9.3.5 notes that a released (NULL) claim is not live |
 | 0.3.3 | 2026-10-04 | §19.8 step 4 at G0 again: P0's end moves 11 days (Sep 30 → Oct 11), so P0 is three weeks long; P1–P5 keep their lengths and start 11 days later, and the launch review moves to Mon Nov 30. The plan is now 10 weeks (350 h at 35 h/week: 247 h planned, 33 h contingency, 70 h of P0 extension), restated in §6, A-1 and §19.1; the Weeks column matches the dates. G0 did not close on Sep 30: 16 h were open (S1's remainder, S6, S2, S4) plus S3-6 unsized, with P0's 3 h contingency spent. The move was applied on Oct 4, four days late under ORIENT rule 5. Nothing was cut |
+| 0.3.4 | 2026-10-17 | §14.1: the public corpus reads GitHub API metadata (GraphQL or REST), not REST alone. S1's acquisition used the GraphQL API only (ADR-0016 S1-5); gupta958's ruling |
