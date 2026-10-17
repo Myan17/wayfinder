@@ -36,3 +36,10 @@ pytest eval/miners/tests -> 187 passed (test_s1_d3_probe: 14). ruff check eval/m
 ### 2026-10-17T23:55:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:bf0e8e2
 feat(eval-data): s1.d3_probe, a read-only diagnostic of D-3 over 48 sampled S1 pairs
 4 files changed, 431 insertions(+)
+
+### 2026-10-17T23:55:33Z · HANDOFF · myan · claude-code/opus-5.5 · e9367f2
+Ready for gupta958. The probe and its tests, no results. Myan runs it (4 GraphQL calls with WAYFINDER_S1_TOKEN) from this worktree; the report eval/datasets/s1-d3-probe.json and its reading land in a follow-up PR, with an ADR-0013 amendment proposal if the closure accounts for the weak class.
+
+### 2026-10-17T23:55:33Z · COMMIT · myan · claude-code/opus-5.5 · parent:e9367f2
+docs(eval-data): record the s1-d3-probe handoff in its task log
+1 file changed, 3 insertions(+)
