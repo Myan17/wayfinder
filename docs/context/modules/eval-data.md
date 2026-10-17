@@ -155,3 +155,5 @@ build against it before the full dataset exists.
 - 2026-10-13: the runner, `s1.run`: `measure` and the command that writes the dataset.
 - 2026-10-17: the manifest's mechanical checks, `s1.landing`, before the manifest (gupta958's ruling
   of 2026-10-17; the manifest is exempt from the line limit by exact path, #72).
+- 2026-10-17: `s1.d3_probe`, a read-only D-3 diagnostic over 48 sampled pairs (gupta958's ruling of
+  2026-10-17). The runner never calls it, and it writes no dataset; its report lands separately.
