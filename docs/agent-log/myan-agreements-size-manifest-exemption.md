@@ -33,3 +33,7 @@ uv run --extra dev pytest scripts/tests -> 105 passed (test_check_pr_size: 37). 
 ### 2026-10-17T18:35:32Z · COMMIT · myan · claude-code/opus-5.5 · parent:af7685e
 chore(agreements): exempt eval/datasets/s1/manifest.json from the size limit by exact path
 3 files changed, 98 insertions(+), 7 deletions(-)
+
+### 2026-10-17T20:27:40Z · COMMIT · myan · human · parent:c2c94cc
+docs(agreements): AGENTS.md §2.2 lists the S1 manifest as the fourth exact-path size exemption
+1 file changed, 11 insertions(+), 2 deletions(-)
