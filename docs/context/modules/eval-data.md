@@ -80,6 +80,14 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
   (`github_repo_id`, `pr`, `issue`) order, so no duplicates; every line a valid `$defs/pair`; the
   manifest's SHA-256; total, strong and weak counts equal to the manifest's; and a final newline.
   `t_g` is an RFC 3339 date-time, and `NaN`/`Infinity` are refused as not JSON.
+- A manifest is only used once `s1.landing.problems` returns nothing for it and its pairs file: it is
+  valid against the schema and byte-equal to the miner's encoding (indent 2, sorted keys, final
+  newline); every round's candidate set is the candidates' sorted ids, and its feasible subsets equal
+  those rebuilt from each candidate's recorded pass flags, language and chunk estimate, or its
+  `no_feasible_reason` is the constraint that fails; the max_files steps are `[10]` or `[10, 15]`;
+  the winner is feasible and `selected` equals the final round's; the pairs file passes
+  `s1.dataset.problems`, holds only selected repositories, and matches `splits` per repository. The
+  winner is not recomputed, since non-selected candidates' strong counts are not recorded.
 
 ## What this module will never do
 
@@ -94,6 +102,7 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 | No feasible corpus | `selected` empty, and the last round carries `no_feasible_reason` | Treat A-3 as failed; do not evaluate |
 | Fewer than 300 strong pairs | `pairs_file.strong_count` below 300 | Report intervals at the achieved size (ADR-0013) |
 | `python -m s1.dataset <pairs.jsonl> <manifest.json>` (from `eval/miners`) exits 1 | Each problem on stderr, by line number | Refuse the dataset |
+| `python -m s1.landing <pairs.jsonl> <manifest.json>` (from `eval/miners`) exits 1 | Each problem on stderr | Refuse the dataset and manifest |
 
 ## Data owned
 
@@ -111,6 +120,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
 | `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
+| `eval/miners/tests/test_s1_landing.py` (all) | The manifest's mechanical checks: what `corpus.build` writes passes (one round, two rounds, no feasible corpus); only the canonical encoding; NaN and schema violations refused; a dropped, added or reordered feasible subset, or a changed pass flag, language or chunk estimate, is caught; round candidates, repeated ids, an infeasible winner, `selected` differing from the final winner, R-03's max_files steps; pairs from unselected repositories; per-repository split counts |
 | `eval/miners/tests/test_s1_github.py` (all) | The API half, against replayed responses with no network: S1-5 accepts only a classic token with no scopes, and a scoped token stops the run; GitHub's transient failures (HTTP 502, 503 or 504, a 200 whose every error is 'Something went wrong while executing your query', a timeout) are retried up to 4 attempts after waits of 2, 4 and 8 s, every attempt tallied and scope-checked; any other error, or a 4th transient failure, fails closed; every merged PR is paged; S1-2 keeps same-repository closing references merged strictly before the as-of time; a PR whose closing references were not all read fails closed; a merged PR listing no commits (cli/cli#7228) still counts for S1-2, with no first commit |
 | `eval/miners/tests/test_s1_license.py` (all) | S1-1: each allowed license recognised regardless of wrapping and case; 4-clause BSD, dual licenses, other licenses and partial texts recognised as none; only the one root-level regular license file is read, with a reason when there are none, several, non-UTF-8 or unrecognised; both sources must agree on an allowed id |
 | `eval/miners/tests/test_s1_corpus.py` (all) | Each D-6 reason counted; one round when the winner meets A-3 (300 exactly), R-03 step 2 only when short, and the dataset following the last round when relaxing D-2 changes the winner; one failed rule disqualifies; no feasible corpus still writes every candidate's measurements with an empty pairs file; only the winner's pairs land, in (`github_repo_id`, `pr`, `issue`) order, weak pairs counted apart; a manifest failing its schema is refused |
@@ -142,3 +152,5 @@ build against it before the full dataset exists.
 - 2026-10-08: S1-1's license cross-check, `s1.license`.
 - 2026-10-13: the corpus from measured candidates, `s1.corpus`: survivors, selection rounds, the dataset.
 - 2026-10-13: the runner, `s1.run`: `measure` and the command that writes the dataset.
+- 2026-10-17: the manifest's mechanical checks, `s1.landing`, before the manifest (gupta958's ruling
+  of 2026-10-17; the manifest is exempt from the line limit by exact path, #72).
