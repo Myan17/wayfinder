@@ -47,3 +47,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-17T23:50:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:02cd3d8
 docs(agents): close task log for myan-agreements-design-s1-api-metadata
 1 file changed, 3 insertions(+)
+
+### 2026-10-18T00:44:23Z · DECIDE · myan · claude-code/opus-5.5 · 0a880f2
+Review of #74 (gupta958, relayed by myan, 2026-10-17): '§9.3.1 still says public_readonly uses token-limited REST. Please update that row to say: "read-only git clone and GitHub API reads, unauthenticated where supported or using a no-write-scope token (GraphQL or REST)". Also update the 0.3.4 revision row to say both §9.3.1 and §14.1 were corrected.' Entries after the earlier TASK CLOSED reopen the log for this fix; end-task.sh closes it again.
+
+### 2026-10-18T00:44:23Z · EDIT · myan · claude-code/opus-5.5 · 0a880f2
+§9.3.1's public_readonly row now has the reviewer's wording verbatim; the 0.3.4 row names §9.3.1 and §14.1. grep for 'REST metadata' and 'token-limited REST' -> no match.
+
+### 2026-10-18T00:44:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:0a880f2
+docs(agreements): DESIGN §9.3.1 — public_readonly reads GitHub API metadata, GraphQL or REST
+2 files changed, 8 insertions(+), 2 deletions(-)
