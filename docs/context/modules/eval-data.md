@@ -157,3 +157,5 @@ build against it before the full dataset exists.
   of 2026-10-17; the manifest is exempt from the line limit by exact path, #72).
 - 2026-10-17: `s1.d3_probe`, a read-only D-3 diagnostic over 48 sampled pairs (gupta958's ruling of
   2026-10-17). The runner never calls it, and it writes no dataset; its report lands separately.
+- 2026-10-18: the D-3 probe's report, `eval/datasets/s1-d3-probe.json`, as the probe wrote it from
+  run 3's pairs file; a test pins it to the probe's own encoding, rows and summary.

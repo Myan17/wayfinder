@@ -1,0 +1,99 @@
+{
+  "api_calls": {"graphql": 4, "rest": 0},
+  "pairs_sha256": "d5ae8d34a7f0d13c2fbbbe12bc298d5827104d7f605bff249de86ffe9fcb3fcc",
+  "queried_at": "2026-10-18T19:26:48Z",
+  "rows": [
+    {"closed_at": "2023-06-30T15:55:05Z", "closed_minus_merged_s": 2, "github_repo_id": 90194616, "issue": 4887, "merged_at": "2023-06-30T15:55:03Z", "pr": 6319, "split": "dev", "strong_in_run_3": false, "updated_at": "2023-06-30T15:55:05Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2023-08-14T21:40:48Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 6812, "merged_at": "2023-08-14T21:40:47Z", "pr": 6950, "split": "dev", "strong_in_run_3": false, "updated_at": "2025-01-27T10:43:39Z", "updated_minus_merged_s": 45925372, "weak_now": true},
+    {"closed_at": "2023-09-12T13:24:23Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 7407, "merged_at": "2023-09-12T13:24:22Z", "pr": 7415, "split": "dev", "strong_in_run_3": false, "updated_at": "2025-01-27T10:39:42Z", "updated_minus_merged_s": 43449320, "weak_now": true},
+    {"closed_at": "2020-03-21T17:08:09Z", "closed_minus_merged_s": 0, "github_repo_id": 90194616, "issue": 1317, "merged_at": "2020-03-21T17:08:09Z", "pr": 1321, "split": "dev", "strong_in_run_3": true, "updated_at": "2020-03-21T17:08:09Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2024-02-14T16:27:24Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 8266, "merged_at": "2024-02-14T16:27:23Z", "pr": 8807, "split": "test", "strong_in_run_3": false, "updated_at": "2024-02-14T16:27:25Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2023-10-25T19:42:12Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 7896, "merged_at": "2023-10-25T19:42:11Z", "pr": 7927, "split": "test", "strong_in_run_3": false, "updated_at": "2023-10-25T19:42:12Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2025-01-08T15:56:30Z", "closed_minus_merged_s": 2, "github_repo_id": 90194616, "issue": 11211, "merged_at": "2025-01-08T15:56:28Z", "pr": 11227, "split": "test", "strong_in_run_3": false, "updated_at": "2025-01-08T15:56:30Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2024-03-12T15:03:29Z", "closed_minus_merged_s": -1808652, "github_repo_id": 90194616, "issue": 8905, "merged_at": "2024-04-02T13:27:41Z", "pr": 9135, "split": "test", "strong_in_run_3": true, "updated_at": "2024-03-29T18:36:42Z", "updated_minus_merged_s": -327059, "weak_now": false},
+    {"closed_at": "2026-06-29T09:49:42Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 13257, "merged_at": "2026-06-29T09:49:41Z", "pr": 13339, "split": "held_out", "strong_in_run_3": false, "updated_at": "2026-07-04T20:55:53Z", "updated_minus_merged_s": 471972, "weak_now": true},
+    {"closed_at": "2025-04-29T07:12:34Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 11768, "merged_at": "2025-04-29T07:12:33Z", "pr": 11769, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-05-28T07:50:38Z", "updated_minus_merged_s": 2507885, "weak_now": true},
+    {"closed_at": "2025-03-26T17:24:25Z", "closed_minus_merged_s": 1, "github_repo_id": 90194616, "issue": 11624, "merged_at": "2025-03-26T17:24:24Z", "pr": 11626, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-03-26T17:24:25Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2023-09-05T16:14:23Z", "closed_minus_merged_s": -67808113, "github_repo_id": 90194616, "issue": 7331, "merged_at": "2025-10-29T11:49:36Z", "pr": 12451, "split": "held_out", "strong_in_run_3": true, "updated_at": "2025-10-26T09:10:14Z", "updated_minus_merged_s": -268762, "weak_now": false},
+    {"closed_at": "2019-08-04T09:03:20Z", "closed_minus_merged_s": 0, "github_repo_id": 125266328, "issue": 922, "merged_at": "2019-08-04T09:03:20Z", "pr": 948, "split": "dev", "strong_in_run_3": false, "updated_at": "2020-06-02T18:46:14Z", "updated_minus_merged_s": 26214174, "weak_now": true},
+    {"closed_at": "2022-01-21T16:54:57Z", "closed_minus_merged_s": 0, "github_repo_id": 125266328, "issue": 2774, "merged_at": "2022-01-21T16:54:57Z", "pr": 2791, "split": "dev", "strong_in_run_3": false, "updated_at": "2022-08-19T14:05:05Z", "updated_minus_merged_s": 18133808, "weak_now": true},
+    {"closed_at": "2021-08-20T23:54:54Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 2359, "merged_at": "2021-08-20T23:54:53Z", "pr": 2414, "split": "dev", "strong_in_run_3": false, "updated_at": "2021-08-20T23:54:54Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2021-12-02T22:35:03Z", "closed_minus_merged_s": 0, "github_repo_id": 125266328, "issue": 2623, "merged_at": "2021-12-02T22:35:03Z", "pr": 2663, "split": "dev", "strong_in_run_3": true, "updated_at": "2021-12-02T22:35:03Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2023-11-06T22:30:06Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 4027, "merged_at": "2023-11-06T22:30:05Z", "pr": 4028, "split": "test", "strong_in_run_3": false, "updated_at": "2023-11-06T22:30:06Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2022-10-04T20:10:12Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 3255, "merged_at": "2022-10-04T20:10:11Z", "pr": 3257, "split": "test", "strong_in_run_3": false, "updated_at": "2022-10-04T20:10:12Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2023-09-09T01:51:28Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 3861, "merged_at": "2023-09-09T01:51:27Z", "pr": 3862, "split": "test", "strong_in_run_3": false, "updated_at": "2023-09-09T01:51:28Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2022-09-05T20:27:06Z", "closed_minus_merged_s": 0, "github_repo_id": 125266328, "issue": 3176, "merged_at": "2022-09-05T20:27:06Z", "pr": 3259, "split": "test", "strong_in_run_3": true, "updated_at": "2022-09-05T20:27:06Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2025-01-25T02:00:36Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 4522, "merged_at": "2025-01-25T02:00:35Z", "pr": 4558, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-01-25T02:00:36Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2026-07-21T00:54:33Z", "closed_minus_merged_s": 1, "github_repo_id": 125266328, "issue": 3701, "merged_at": "2026-07-21T00:54:32Z", "pr": 5241, "split": "held_out", "strong_in_run_3": false, "updated_at": "2026-07-21T00:54:33Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2026-04-27T14:36:01Z", "closed_minus_merged_s": 2, "github_repo_id": 125266328, "issue": 3616, "merged_at": "2026-04-27T14:35:59Z", "pr": 5080, "split": "held_out", "strong_in_run_3": false, "updated_at": "2026-04-27T14:36:01Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2025-06-30T01:55:30Z", "closed_minus_merged_s": 0, "github_repo_id": 125266328, "issue": 4677, "merged_at": "2025-06-30T01:55:30Z", "pr": 4680, "split": "held_out", "strong_in_run_3": true, "updated_at": "2025-06-30T01:55:30Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2019-10-03T08:18:11Z", "closed_minus_merged_s": 1, "github_repo_id": 179492861, "issue": 420, "merged_at": "2019-10-03T08:18:10Z", "pr": 423, "split": "dev", "strong_in_run_3": false, "updated_at": "2019-10-03T08:18:11Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2019-12-05T17:25:44Z", "closed_minus_merged_s": 1, "github_repo_id": 179492861, "issue": 588, "merged_at": "2019-12-05T17:25:43Z", "pr": 600, "split": "dev", "strong_in_run_3": false, "updated_at": "2019-12-05T19:09:43Z", "updated_minus_merged_s": 6240, "weak_now": true},
+    {"closed_at": "2019-07-24T15:28:17Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 113, "merged_at": "2019-07-24T15:28:17Z", "pr": 139, "split": "dev", "strong_in_run_3": false, "updated_at": "2019-09-15T12:28:44Z", "updated_minus_merged_s": 4568427, "weak_now": true},
+    {"closed_at": "2019-11-30T17:43:48Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 543, "merged_at": "2019-11-30T17:43:48Z", "pr": 574, "split": "dev", "strong_in_run_3": true, "updated_at": "2019-11-30T17:43:48Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2020-08-10T13:53:52Z", "closed_minus_merged_s": 1, "github_repo_id": 179492861, "issue": 1151, "merged_at": "2020-08-10T13:53:51Z", "pr": 1156, "split": "test", "strong_in_run_3": false, "updated_at": "2020-08-11T11:15:38Z", "updated_minus_merged_s": 76907, "weak_now": true},
+    {"closed_at": "2020-05-04T10:30:08Z", "closed_minus_merged_s": -185912, "github_repo_id": 179492861, "issue": 873, "merged_at": "2020-05-06T14:08:40Z", "pr": 934, "split": "test", "strong_in_run_3": false, "updated_at": "2020-05-10T16:44:02Z", "updated_minus_merged_s": 354922, "weak_now": true},
+    {"closed_at": "2020-01-14T09:00:52Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 756, "merged_at": "2020-01-14T09:00:52Z", "pr": 758, "split": "test", "strong_in_run_3": false, "updated_at": "2020-01-14T09:01:24Z", "updated_minus_merged_s": 32, "weak_now": true},
+    {"closed_at": "2020-08-26T11:05:05Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 1145, "merged_at": "2020-08-26T11:05:05Z", "pr": 1218, "split": "test", "strong_in_run_3": true, "updated_at": "2020-08-26T11:05:05Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2021-08-13T10:07:13Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 1798, "merged_at": "2021-08-13T10:07:13Z", "pr": 1799, "split": "held_out", "strong_in_run_3": false, "updated_at": "2021-08-13T10:07:26Z", "updated_minus_merged_s": 13, "weak_now": true},
+    {"closed_at": "2023-05-09T13:20:14Z", "closed_minus_merged_s": 2, "github_repo_id": 179492861, "issue": 2694, "merged_at": "2023-05-09T13:20:12Z", "pr": 2701, "split": "held_out", "strong_in_run_3": false, "updated_at": "2023-05-09T13:20:14Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2021-04-30T09:40:42Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 1490, "merged_at": "2021-04-30T09:40:42Z", "pr": 1619, "split": "held_out", "strong_in_run_3": false, "updated_at": "2021-05-05T16:14:22Z", "updated_minus_merged_s": 455620, "weak_now": true},
+    {"closed_at": "2022-02-09T11:18:21Z", "closed_minus_merged_s": 0, "github_repo_id": 179492861, "issue": 1850, "merged_at": "2022-02-09T11:18:21Z", "pr": 2074, "split": "held_out", "strong_in_run_3": true, "updated_at": "2022-02-09T11:18:21Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2021-03-02T14:14:16Z", "closed_minus_merged_s": 0, "github_repo_id": 212613049, "issue": 2290, "merged_at": "2021-03-02T14:14:16Z", "pr": 2991, "split": "dev", "strong_in_run_3": false, "updated_at": "2021-03-15T07:23:42Z", "updated_minus_merged_s": 1098566, "weak_now": true},
+    {"closed_at": "2022-05-03T07:48:25Z", "closed_minus_merged_s": 0, "github_repo_id": 212613049, "issue": 5501, "merged_at": "2022-05-03T07:48:25Z", "pr": 5562, "split": "dev", "strong_in_run_3": false, "updated_at": "2023-04-19T21:42:39Z", "updated_minus_merged_s": 30376454, "weak_now": true},
+    {"closed_at": "2021-08-04T13:23:37Z", "closed_minus_merged_s": 0, "github_repo_id": 212613049, "issue": 4065, "merged_at": "2021-08-04T13:23:37Z", "pr": 4079, "split": "dev", "strong_in_run_3": false, "updated_at": "2021-08-11T04:47:24Z", "updated_minus_merged_s": 573827, "weak_now": true},
+    {"closed_at": "2021-02-06T12:31:08Z", "closed_minus_merged_s": 0, "github_repo_id": 212613049, "issue": 2920, "merged_at": "2021-02-06T12:31:08Z", "pr": 2926, "split": "dev", "strong_in_run_3": true, "updated_at": "2021-02-06T12:31:08Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2023-02-15T22:15:01Z", "closed_minus_merged_s": 2, "github_repo_id": 212613049, "issue": 6989, "merged_at": "2023-02-15T22:14:59Z", "pr": 7007, "split": "test", "strong_in_run_3": false, "updated_at": "2023-02-15T22:15:01Z", "updated_minus_merged_s": 2, "weak_now": true},
+    {"closed_at": "2022-08-15T14:00:07Z", "closed_minus_merged_s": 1, "github_repo_id": 212613049, "issue": 5403, "merged_at": "2022-08-15T14:00:06Z", "pr": 6075, "split": "test", "strong_in_run_3": false, "updated_at": "2022-08-15T14:00:07Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2023-03-29T23:09:53Z", "closed_minus_merged_s": 1, "github_repo_id": 212613049, "issue": 7055, "merged_at": "2023-03-29T23:09:52Z", "pr": 7080, "split": "test", "strong_in_run_3": false, "updated_at": "2023-04-09T05:41:12Z", "updated_minus_merged_s": 887480, "weak_now": true},
+    {"closed_at": "2022-07-12T13:46:36Z", "closed_minus_merged_s": 0, "github_repo_id": 212613049, "issue": 5927, "merged_at": "2022-07-12T13:46:36Z", "pr": 5928, "split": "test", "strong_in_run_3": true, "updated_at": "2022-07-12T13:46:36Z", "updated_minus_merged_s": 0, "weak_now": false},
+    {"closed_at": "2025-04-11T09:39:08Z", "closed_minus_merged_s": 1, "github_repo_id": 212613049, "issue": 10551, "merged_at": "2025-04-11T09:39:07Z", "pr": 10740, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-04-13T20:45:07Z", "updated_minus_merged_s": 212760, "weak_now": true},
+    {"closed_at": "2025-06-17T07:55:16Z", "closed_minus_merged_s": 1, "github_repo_id": 212613049, "issue": 11119, "merged_at": "2025-06-17T07:55:15Z", "pr": 11134, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-06-17T07:55:16Z", "updated_minus_merged_s": 1, "weak_now": true},
+    {"closed_at": "2025-07-04T15:34:48Z", "closed_minus_merged_s": 1, "github_repo_id": 212613049, "issue": 11169, "merged_at": "2025-07-04T15:34:47Z", "pr": 11172, "split": "held_out", "strong_in_run_3": false, "updated_at": "2025-07-17T16:06:43Z", "updated_minus_merged_s": 1125116, "weak_now": true},
+    {"closed_at": "2025-01-02T23:29:25Z", "closed_minus_merged_s": -334512, "github_repo_id": 212613049, "issue": 10131, "merged_at": "2025-01-06T20:24:37Z", "pr": 10186, "split": "held_out", "strong_in_run_3": true, "updated_at": "2025-01-02T23:29:25Z", "updated_minus_merged_s": -334512, "weak_now": false}
+  ],
+  "ruling": "gupta958, 2026-10-17: bounded read-only D-3 diagnostic, not an S1 re-run",
+  "sample": {"key": "sha256(id:issue:pr)", "strong_per_cell": 1, "weak_per_cell": 3},
+  "summary": {
+    "closed_minus_merged_s": {
+      "all": {"<=1h": 0, "<=5s": 48, "<=60s": 0, ">1h": 0, "not closed": 0},
+      "by_repository": {
+        "125266328": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "179492861": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "212613049": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "90194616": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0}
+      },
+      "by_run_3_class": {
+        "strong": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "weak": {"<=1h": 0, "<=5s": 36, "<=60s": 0, ">1h": 0, "not closed": 0}
+      },
+      "by_split": {
+        "dev": {"<=1h": 0, "<=5s": 16, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "held_out": {"<=1h": 0, "<=5s": 16, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "test": {"<=1h": 0, "<=5s": 16, "<=60s": 0, ">1h": 0, "not closed": 0}
+      },
+      "negative": 4
+    },
+    "strong_controls": 12,
+    "strong_controls_now_weak": [],
+    "updated_minus_merged_s": {
+      "all": {"<=1h": 0, "<=5s": 29, "<=60s": 2, ">1h": 17, "not closed": 0},
+      "by_repository": {
+        "125266328": {"<=1h": 0, "<=5s": 10, "<=60s": 0, ">1h": 2, "not closed": 0},
+        "179492861": {"<=1h": 0, "<=5s": 5, "<=60s": 2, ">1h": 5, "not closed": 0},
+        "212613049": {"<=1h": 0, "<=5s": 6, "<=60s": 0, ">1h": 6, "not closed": 0},
+        "90194616": {"<=1h": 0, "<=5s": 8, "<=60s": 0, ">1h": 4, "not closed": 0}
+      },
+      "by_run_3_class": {
+        "strong": {"<=1h": 0, "<=5s": 12, "<=60s": 0, ">1h": 0, "not closed": 0},
+        "weak": {"<=1h": 0, "<=5s": 17, "<=60s": 2, ">1h": 17, "not closed": 0}
+      },
+      "by_split": {
+        "dev": {"<=1h": 0, "<=5s": 7, "<=60s": 0, ">1h": 9, "not closed": 0},
+        "held_out": {"<=1h": 0, "<=5s": 10, "<=60s": 1, ">1h": 5, "not closed": 0},
+        "test": {"<=1h": 0, "<=5s": 12, "<=60s": 1, ">1h": 3, "not closed": 0}
+      },
+      "negative": 3
+    }
+  }
+}
