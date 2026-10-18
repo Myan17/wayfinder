@@ -63,3 +63,10 @@ e777241 (parent:db237b4) docs(agents): close task log for myan-agreements-adr-00
 ### 2026-10-18T20:27:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:e777241
 docs(agents): log the adr-0013-d3-closure close commit the post-commit hook skipped
 1 file changed, 3 insertions(+)
+
+### 2026-10-18T20:37:26Z · TEST · myan · claude-code/opus-5.5 · 160a605
+Rebased onto origin/main c873906 (#76 merged, as gupta958 directed; no Update branch). Old head 60e9ac3; clean rebase, no conflicts, no content change. The amendment's evidence path eval/datasets/s1-d3-probe.json is now on main.
+
+### 2026-10-18T20:37:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:160a605
+docs(agreements): record the rebase of the ADR-0013 amendment onto #76
+1 file changed, 3 insertions(+)
