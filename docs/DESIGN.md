@@ -1579,8 +1579,9 @@ and a resolvable pre-fix base commit for each candidate pair.
    quarterly approximation. Content addressing makes this affordable: consecutive base commits differ
    by a small diff, so each additional snapshot costs only its changed chunks.
 4. **Query provenance**: the query is the issue title and body. Pairs where the issue's `updatedAt`
-   exceeds the PR merge time are quarantined into a separate "weak" set, because GitHub does not expose
-   issue edit history and a post-fix edit can name the answer.
+   exceeds the PR merge time by more than 60 s are quarantined into a separate "weak" set, because GitHub
+   does not expose issue edit history and a post-fix edit can name the answer. The 60 s window absorbs
+   merge-adjacent updates, such as the closure the merge triggers (ADR-0013 Amendment 1).
 5. **Scope isolation**: each base-commit snapshot is loaded as its **own pseudo-repository row** in the
    evaluation database, so `one_active_per_repo` holds unchanged and a query is scoped by passing only
    that pseudo-repository in the authorized set — the same predicate as production, with no special
@@ -2292,3 +2293,4 @@ wayfinder/
 | 0.3.2 | 2026-09-27 | S5 results (ADR-0004): §9.3.3 accepted as designed. The prose uses schema v1's `claim_*` names, and §9.3.5 notes that a released (NULL) claim is not live |
 | 0.3.3 | 2026-10-04 | §19.8 step 4 at G0 again: P0's end moves 11 days (Sep 30 → Oct 11), so P0 is three weeks long; P1–P5 keep their lengths and start 11 days later, and the launch review moves to Mon Nov 30. The plan is now 10 weeks (350 h at 35 h/week: 247 h planned, 33 h contingency, 70 h of P0 extension), restated in §6, A-1 and §19.1; the Weeks column matches the dates. G0 did not close on Sep 30: 16 h were open (S1's remainder, S6, S2, S4) plus S3-6 unsized, with P0's 3 h contingency spent. The move was applied on Oct 4, four days late under ORIENT rule 5. Nothing was cut |
 | 0.3.4 | 2026-10-17 | §9.3.1 and §14.1: `public_readonly` reads GitHub API metadata (GraphQL or REST), unauthenticated where supported or with a no-write-scope token, not REST alone. S1's acquisition used the GraphQL API only (ADR-0016 S1-5); gupta958's ruling |
+| 0.3.5 | 2026-10-18 | §14.2 item 4: a pair is weak when the issue's `updatedAt` is more than 60 s after the PR merge, so a merge-adjacent update such as the closure the merge triggers does not make it weak; W = 60 s is gupta958's decision (ADR-0013 Amendment 1; evidence in #76) |
