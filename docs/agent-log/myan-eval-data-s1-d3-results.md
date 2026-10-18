@@ -53,3 +53,10 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-18T19:30:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:54bc126
 docs(agents): close task log for myan-eval-data-s1-d3-results
 1 file changed, 3 insertions(+)
+
+### 2026-10-18T20:26:58Z · DECIDE · myan · claude-code/opus-5.5 · d30e2fa
+Review of #76 (gupta958, relayed by myan, 2026-10-18): 'The sample is stratified equally by repository... applies the unweighted split rates (3/12, 9/12, 7/12) to the full weak populations to estimate 736/513/266 strong pairs. That is not a valid population estimate... Please remove those projected totals, or calculate and clearly label a repository-stratum-weighted estimate.' Removed them. On #77 they also asked for 'merge-adjacent updates' where causation is not established; the same applies here, so the PR body and title no longer say the closure explains the weak class, and the DECIDE entry above, which says it 'accounts for' it, is superseded by this one: the timestamps show merge-adjacent updates, consistent with the split imbalance. Changes are to the PR body and title only; no file in the diff changes.
+
+### 2026-10-18T20:26:58Z · COMMIT · myan · claude-code/opus-5.5 · parent:d30e2fa
+docs(eval-data): record the review of #76 in its task log
+1 file changed, 3 insertions(+)
