@@ -70,8 +70,8 @@ selection. It never runs retrieval, and it never scores anything; that is `eval-
 - No pair whose PR history (`base..head`) holds a multi-parent commit is in the pairs file: it is
   excluded as `merge_commit_in_pr_history` (ADR-0016 Amendment 1), counted under D-6, and still
   counted for S1-2 and S1-3.
-- `strong` is false exactly when the issue was updated after the merge (D-3). Weak pairs are never
-  pooled into strong counts.
+- `strong` is false exactly when the issue was updated more than 60 s after the merge (D-3, as
+  amended by ADR-0013 Amendment 1). Weak pairs are never pooled into strong counts.
 - No `group_id` spans two splits, and within a repository every held-out group is at least as
   recent as every test group, and every test group at least as recent as every dev group (D-5).
 - `selected` is `select.best`'s winner under ADR-0016's total order. The same inputs always give the
@@ -117,7 +117,7 @@ None in Postgres. It owns the files under `eval/datasets/`.
 | `…::test_lines_and_chunks_are_byte_exact` | The line and chunk definitions |
 | `eval/miners/tests/test_s1_pairs.py::test_gold_files_are_source_files_in_the_universe`, `…::test_d2_drops_pairs_with_0_or_too_many_source_files` | D-2 |
 | `…::test_gold_labels_are_verified_against_the_base_snapshot` | D-2 labels at the base: added, renamed, symlink, generated, UTF-8, unread |
-| `…::test_d3_an_issue_edited_after_the_merge_is_weak` | D-3 |
+| `…::test_d3_an_issue_updated_more_than_60_s_after_the_merge_is_weak`, `…::test_d3s_window_is_adr_0013_amendment_1s_60_s` | D-3 and its 60 s window (60 s strong, 61 s weak) |
 | `eval/miners/tests/test_s1_split_select.py::test_d5_reproduces_adr_0013s_worked_example`, `…::test_d5_a_group_is_placed_by_its_latest_merge`, `…::test_d5_issue_numbers_are_per_repository` | D-5 |
 | `…::test_selection_is_the_total_order_of_adr_0016`, `…::test_the_last_key_is_the_sorted_id_tuple_not_a_sum`, `…::test_no_feasible_corpus_names_the_constraint_that_failed`, `…::test_selection_does_not_depend_on_candidate_input_order` | ADR-0016's selection, independent of input order |
 | `eval/miners/tests/test_s1_dataset.py` (all) | The four landing checks: each line is validated by `Draft202012Validator` against the committed `$defs/pair` with a `FormatChecker` (RFC 3339 `t_g`), and NaN or Infinity is not JSON |
@@ -159,3 +159,5 @@ build against it before the full dataset exists.
   2026-10-17). The runner never calls it, and it writes no dataset; its report lands separately.
 - 2026-10-18: the D-3 probe's report, `eval/datasets/s1-d3-probe.json`, as the probe wrote it from
   run 3's pairs file; a test pins it to the probe's own encoding, rows and summary.
+- 2026-10-18: `pairs.weak` allows ADR-0013 Amendment 1's 60 s window, `pairs.WEAK_WINDOW`; S1 runs again
+  under it.

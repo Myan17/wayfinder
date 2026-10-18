@@ -9,6 +9,7 @@ from pathlib import PurePosixPath
 from . import universe
 
 SOURCE = (".py", ".pyi", ".go")  # D-2's "source files" (reviewer ruling on #50, 2026-09-28)
+WEAK_WINDOW = dt.timedelta(seconds=60)  # D-3's allowance for merge-adjacent updates (ADR-0013 Amendment 1)
 
 
 @dataclass(frozen=True)
@@ -52,5 +53,9 @@ def keep(gold: list[str], max_files: int = 10) -> tuple[bool, str | None]:
 
 
 def weak(issue_updated_at: dt.datetime, pr_merged_at: dt.datetime) -> bool:
-    """D-3: an issue updated after the merge may name its answer."""
-    return issue_updated_at > pr_merged_at
+    """D-3: an issue updated more than 60 s after the merge may name its answer.
+
+    The window absorbs merge-adjacent updates such as the closure the merge triggers (ADR-0013
+    Amendment 1; W = 60 s is gupta958's decision on #77). An edit inside it counts as strong.
+    """
+    return issue_updated_at > pr_merged_at + WEAK_WINDOW
