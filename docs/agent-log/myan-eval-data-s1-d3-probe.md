@@ -76,3 +76,10 @@ Rebased onto origin/main 823a012 (#74 merged; #75 was approved but BEHIND). Old 
 
 ### 2026-10-18T19:23:13Z · HANDOFF · myan · claude-code/opus-5.5 · af683a1
 TASK CLOSED. Pull request open for review.
+
+### 2026-10-18T19:23:54Z · COMMIT · myan · claude-code/opus-5.5 · c258c00
+c258c00 (parent:af683a1) docs(agents): close task log for myan-eval-data-s1-d3-probe — 1 file changed. Logged by hand: .githooks/post-commit's idempotence check found the identical subject of the previous close commit in the log's last 20 lines and skipped this one, so check_agent_log saw 5 entries for 6 commits. That run's failure was hidden by a pipe to tail and the push went out; this commit fixes it.
+
+### 2026-10-18T19:23:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:c258c00
+docs(agents): log the s1-d3-probe close commit the post-commit hook skipped
+1 file changed, 3 insertions(+)
