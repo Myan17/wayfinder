@@ -56,3 +56,10 @@ docs(agreements): Amendment 1 says merge-adjacent updates, and records W = 60 s 
 
 ### 2026-10-18T20:27:40Z · HANDOFF · myan · claude-code/opus-5.5 · db237b4
 TASK CLOSED. Pull request open for review.
+
+### 2026-10-18T20:27:49Z · COMMIT · myan · claude-code/opus-5.5 · e777241
+e777241 (parent:db237b4) docs(agents): close task log for myan-agreements-adr-0013-d3-closure — 1 file changed. Logged by hand: .githooks/post-commit's idempotence check matched the earlier close commit's identical subject in the log's last 20 lines and skipped this one. Caught by check_agent_log before any push.
+
+### 2026-10-18T20:27:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:e777241
+docs(agents): log the adr-0013-d3-closure close commit the post-commit hook skipped
+1 file changed, 3 insertions(+)
