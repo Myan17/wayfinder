@@ -18,11 +18,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from . import github
+from . import github, landing
 
 WEAK_PER_CELL, STRONG_PER_CELL = 3, 1
 SPLITS = ("dev", "test", "held_out")
 BUCKETS = ("<=5s", "<=60s", "<=1h", ">1h", "not closed")
+SAMPLE = {"weak_per_cell": WEAK_PER_CELL, "strong_per_cell": STRONG_PER_CELL, "key": "sha256(id:issue:pr)"}
 EVAL = Path(__file__).parents[2]
 
 
@@ -41,9 +42,7 @@ def sample(rows: list[dict]) -> list[dict]:
             for strong, n in ((False, WEAK_PER_CELL), (True, STRONG_PER_CELL)):
                 cell = sorted(cells[repo, split, strong], key=key)
                 if len(cell) < n:
-                    raise ValueError(
-                        f"cell {repo} {split} {'strong' if strong else 'weak'} has {len(cell)} pairs"
-                    )
+                    raise ValueError(f"cell {repo} {split} strong={strong} has {len(cell)} pairs")
                 picked += cell[:n]
     return picked
 
@@ -146,12 +145,13 @@ def main(argv: list[str]) -> int:
     out = Path(argv[1]) if len(argv) > 1 else EVAL / "datasets" / "s1-d3-probe.json"
     token = os.environ.get("WAYFINDER_S1_TOKEN")
     if not token:
-        print(
-            "WAYFINDER_S1_TOKEN is not set (a classic token with no scopes, ADR-0016 S1-5)", file=sys.stderr
-        )
+        print("WAYFINDER_S1_TOKEN is not set (classic, no scopes; ADR-0016 S1-5)", file=sys.stderr)
         return 2
-    data = pairs_path.read_bytes()
-    manifest = json.loads((pairs_path.parent / "manifest.json").read_text())
+    data, text = pairs_path.read_bytes(), (pairs_path.parent / "manifest.json").read_text()
+    if found := landing.problems(data, text):  # before any request or report (review of #75)
+        print("refusing the dataset: " + "; ".join(found), file=sys.stderr)
+        return 1
+    manifest = json.loads(text)
     slugs = {c["github_repo_id"]: c["repo"] for c in manifest["candidates"]}
     picked = sample([json.loads(line) for line in data.splitlines()])
     client = github.Client(github.urllib_transport(token))
@@ -167,11 +167,7 @@ def main(argv: list[str]) -> int:
         "pairs_sha256": hashlib.sha256(data).hexdigest(),
         "queried_at": started,
         "api_calls": client.calls,
-        "sample": {
-            "weak_per_cell": WEAK_PER_CELL,
-            "strong_per_cell": STRONG_PER_CELL,
-            "key": "sha256(id:issue:pr)",
-        },
+        "sample": SAMPLE,
         "rows": measured,
         "summary": summary(measured),
     }

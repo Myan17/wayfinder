@@ -1,11 +1,13 @@
 """The D-3 diagnostic (gupta958, 2026-10-17): sample, query, buckets and report, with no network."""
 
+import datetime as dt
 import hashlib
+import itertools
 import json
 import random
 
 import pytest
-from s1 import d3_probe, github
+from s1 import corpus, d3_probe, github, landing
 
 NO_SCOPES = {"x-oauth-scopes": ""}
 
@@ -14,50 +16,31 @@ def _pair(repo, issue, pr, split="dev", strong=False):
     return {"github_repo_id": repo, "issue": issue, "pr": pr, "split": split, "strong": strong}
 
 
-def _corpus(repos=(1, 2), per_cell=6):
-    rows, n = [], 0
-    for repo in repos:
-        for split in d3_probe.SPLITS:
-            for strong in (False, True):
-                for _ in range(per_cell):
-                    n += 1
-                    rows.append(_pair(repo, n, 1000 + n, split, strong))
-    return rows
+def _corpus():  # 6 pairs in every (repository, split, strong) cell of 2 repositories
+    cells = itertools.product((1, 2), d3_probe.SPLITS, (False, True), range(6))
+    return [_pair(repo, n, 1000 + n, split, strong) for n, (repo, split, strong, _) in enumerate(cells)]
+
+
+def _in(rows, cell):
+    return [p for p in rows if (p["github_repo_id"], p["split"], p["strong"]) == cell]
 
 
 def _key(p):
     return hashlib.sha256(f"{p['github_repo_id']}:{p['issue']}:{p['pr']}".encode()).hexdigest()
 
 
-def test_the_sample_is_three_weak_and_one_strong_per_cell_by_lowest_sha256():
+def test_the_sample_is_three_weak_and_one_strong_per_cell_by_lowest_sha256_in_any_input_order():
     rows = _corpus()
     picked = d3_probe.sample(rows)
     assert len(picked) == 2 * 3 * 4
-    for repo in (1, 2):
-        for split in d3_probe.SPLITS:
-            for strong, n in ((False, 3), (True, 1)):
-                cell = [
-                    p for p in rows if (p["github_repo_id"], p["split"], p["strong"]) == (repo, split, strong)
-                ]
-                want = sorted(cell, key=_key)[:n]
-                got = [
-                    p
-                    for p in picked
-                    if (p["github_repo_id"], p["split"], p["strong"]) == (repo, split, strong)
-                ]
-                assert got == want
-
-
-def test_the_sample_does_not_depend_on_input_order():
-    rows = _corpus()
-    shuffled = rows[:]
-    random.Random(7).shuffle(shuffled)
-    assert d3_probe.sample(shuffled) == d3_probe.sample(rows)
+    for cell in itertools.product((1, 2), d3_probe.SPLITS, (False, True)):
+        assert _in(picked, cell) == sorted(_in(rows, cell), key=_key)[: 1 if cell[2] else 3]
+    assert d3_probe.sample(random.Random(7).sample(rows, len(rows))) == picked
 
 
 def test_a_cell_too_small_to_sample_fails_closed():
     rows = [p for p in _corpus() if not (p["github_repo_id"] == 2 and p["split"] == "test" and p["strong"])]
-    with pytest.raises(ValueError, match="cell 2 test strong has 0"):
+    with pytest.raises(ValueError, match="cell 2 test strong=True has 0"):
         d3_probe.sample(rows)
 
 
@@ -155,54 +138,77 @@ def _replay(bodies, headers=NO_SCOPES):
     return send, sent
 
 
-def _dataset(tmp_path, rows):
-    data = b"".join(json.dumps(r, sort_keys=True).encode() + b"\n" for r in rows)
+def _dataset(tmp_path):
+    """A valid pairs file and manifest from `corpus.build`: 3 repositories, 3+ weak and strong per cell."""
+    pair_keys = ("repo_id", "issue", "pr", "base", "reason", "gold", "strong", "merged_at")
+    entry_keys = (
+        "repo",
+        "github_repo_id",
+        "lang",
+        "as_of_commit",
+        "spdx",
+        "rules",
+        "file_count",
+        "chunk_estimate",
+    )
+    rules = {r: {"value": None, "pass": True} for r in ("S1-1", "S1-2", "S1-3", "S1-4", "S1-5")}
+    when, measured = dt.datetime(2024, 1, 1, tzinfo=dt.UTC), []
+    for rid, lang in ((1, "py"), (2, "go"), (3, "py")):
+        values = [
+            (rid, n, n, "a" * 40, None, ["a.py"], n % 2 == 0, when + dt.timedelta(days=n))
+            for n in range(1, 31)
+        ]
+        pairs = [dict(zip(pair_keys, v, strict=True)) for v in values]
+        entry = (f"o/r{rid}", rid, lang, "a" * 40, "MIT", rules, 1, 10)
+        measured.append({"entry": dict(zip(entry_keys, entry, strict=True)), "pairs": pairs})
+    data, manifest = corpus.build(measured, "abc1234", {"graphql": 0, "rest": 0})
     (tmp_path / "pairs.jsonl").write_bytes(data)
-    cands = [{"github_repo_id": 1, "repo": "o/one"}, {"github_repo_id": 2, "repo": "o/two"}]
-    (tmp_path / "manifest.json").write_text(json.dumps({"candidates": cands}))
-    return data
+    (tmp_path / "manifest.json").write_text(landing.encoded(manifest))
+    return data, [json.loads(line) for line in data.splitlines()]
 
 
 def _answers(picked, repo):
     out = {}
-    for p in picked:
-        if p["github_repo_id"] == repo:
-            out |= _repo_result(
-                p["issue"],
-                p["pr"],
-                "2024-01-01T00:00:00Z",
-                "2024-01-01T00:00:01Z",
-                "2024-01-01T00:00:01Z" if not p["strong"] else "2023-12-31T00:00:00Z",
-            )
+    for p in (p for p in picked if p["github_repo_id"] == repo):  # weak: +1 s; strong: before the merge
+        later = "2023-12-31T00:00:00Z" if p["strong"] else "2024-01-01T00:00:01Z"
+        out |= _repo_result(p["issue"], p["pr"], "2024-01-01T00:00:00Z", "2024-01-01T00:00:01Z", later)
     return {"repository": out}
 
 
-def test_the_command_makes_one_read_only_query_per_repository_and_writes_the_report(tmp_path, monkeypatch):
-    rows = _corpus()
-    data = _dataset(tmp_path, rows)
-    picked = d3_probe.sample(rows)
-    send, sent = _replay([_answers(picked, 1), _answers(picked, 2)])
+def _run(tmp_path, monkeypatch, send):
     monkeypatch.setattr(github, "urllib_transport", lambda token: send)
     monkeypatch.setenv("WAYFINDER_S1_TOKEN", "t")
-    out = tmp_path / "out.json"
-    assert d3_probe.main([str(tmp_path / "pairs.jsonl"), str(out)]) == 0
-    assert [s["variables"] for s in sent] == [{"owner": "o", "name": "one"}, {"owner": "o", "name": "two"}]
-    report = json.loads(out.read_text())
+    return d3_probe.main([str(tmp_path / "pairs.jsonl"), str(tmp_path / "out.json")])
+
+
+def test_the_command_makes_one_read_only_query_per_repository_and_writes_the_report(tmp_path, monkeypatch):
+    data, rows = _dataset(tmp_path)
+    picked = d3_probe.sample(rows)
+    send, sent = _replay([_answers(picked, r) for r in (1, 2, 3)])
+    assert _run(tmp_path, monkeypatch, send) == 0
+    assert [s["variables"]["name"] for s in sent] == ["r1", "r2", "r3"]
+    report = json.loads((tmp_path / "out.json").read_text())
     assert report["pairs_sha256"] == hashlib.sha256(data).hexdigest()
-    assert report["api_calls"] == {"graphql": 2, "rest": 0}
-    assert len(report["rows"]) == 24 and report["summary"]["strong_controls_now_weak"] == []
-    assert report["summary"]["updated_minus_merged_s"]["by_run_3_class"]["weak"]["<=5s"] == 18
-    assert out.read_text().endswith("}\n")
+    assert report["api_calls"] == {"graphql": 3, "rest": 0}
+    assert len(report["rows"]) == 36 and report["summary"]["strong_controls_now_weak"] == []
+    assert report["summary"]["updated_minus_merged_s"]["by_run_3_class"]["weak"]["<=5s"] == 27
+
+
+def test_a_tampered_pairs_file_is_refused_before_any_transport_or_report(tmp_path, monkeypatch, capsys):
+    data, _ = _dataset(tmp_path)
+    (tmp_path / "pairs.jsonl").write_bytes(data.replace(b'"strong": true', b'"strong": false', 1))
+    monkeypatch.setattr(github, "urllib_transport", lambda token: pytest.fail("transport created"))
+    monkeypatch.setattr(github.Client, "query", lambda *a, **k: pytest.fail("query made"))
+    monkeypatch.setenv("WAYFINDER_S1_TOKEN", "t")
+    assert d3_probe.main([str(tmp_path / "pairs.jsonl"), str(tmp_path / "out.json")]) == 1
+    assert "sha256 does not match the manifest" in capsys.readouterr().err
+    assert not (tmp_path / "out.json").exists()
 
 
 def test_a_scoped_token_stops_the_diagnostic(tmp_path, monkeypatch):
-    rows = _corpus()
-    _dataset(tmp_path, rows)
-    send, _ = _replay([{}], headers={"x-oauth-scopes": "repo"})
-    monkeypatch.setattr(github, "urllib_transport", lambda token: send)
-    monkeypatch.setenv("WAYFINDER_S1_TOKEN", "t")
+    _dataset(tmp_path)
     with pytest.raises(PermissionError, match="S1-5"):
-        d3_probe.main([str(tmp_path / "pairs.jsonl"), str(tmp_path / "out.json")])
+        _run(tmp_path, monkeypatch, _replay([{}], headers={"x-oauth-scopes": "repo"})[0])
     assert not (tmp_path / "out.json").exists()
 
 

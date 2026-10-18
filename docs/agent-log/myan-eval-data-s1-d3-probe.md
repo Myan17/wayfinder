@@ -50,3 +50,16 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-17T23:55:33Z · COMMIT · myan · claude-code/opus-5.5 · parent:9127ee8
 docs(agents): close task log for myan-eval-data-s1-d3-probe
 1 file changed, 3 insertions(+)
+
+### 2026-10-18T00:47:30Z · DECIDE · myan · claude-code/opus-5.5 · 29d06b7
+Review of #75 (gupta958, relayed by myan, 2026-10-17): 'Before sampling or making any network request, validate the pairs bytes and manifest text with s1.landing.problems. If it reports any problem, fail closed, make zero API calls and write no report. Add a regression test that tampers with the pairs file and proves the probe refuses it before creating or invoking the transport and leaves no output file.' Entries after the earlier TASK CLOSED reopen this log for the fix; end-task.sh closes it again.
+
+### 2026-10-18T00:47:30Z · EDIT · myan · claude-code/opus-5.5 · 29d06b7
+main reads the pairs bytes and manifest text, and refuses (exit 1, problems on stderr) if s1.landing.problems finds any, before urllib_transport or Client exist. The command tests now build a valid dataset with corpus.build (3 repositories), since a toy manifest fails landing. New test: one strong flag flipped in the pairs file, with urllib_transport and Client.query patched to fail the test if called, gives exit 1, the SHA-256 problem, and no output file. Lines kept within the limit by tightening test helpers and one error message, with no test removed (the input-order test is folded into the sample test).
+
+### 2026-10-18T00:47:30Z · TEST · myan · claude-code/opus-5.5 · 29d06b7
+pytest eval/miners/tests -> 187 passed (test_s1_d3_probe: 14). ruff check and format clean. Run 3's files pass s1.landing and still sample 48 pairs. Mutants, all killed: landing check bypassed (1 failed), refusal not returned (1), and the earlier 10 again (each 1-2).
+
+### 2026-10-18T00:47:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:29d06b7
+fix(eval-data): s1.d3_probe refuses a dataset that fails s1.landing before any request
+3 files changed, 90 insertions(+), 79 deletions(-)
