@@ -49,10 +49,24 @@ def test_d2_drops_pairs_with_0_or_too_many_source_files(n, cap, kept, why):
     assert pairs.keep([f"f{i}.py" for i in range(n)], max_files=cap) == (kept, why)
 
 
-def test_d3_an_issue_edited_after_the_merge_is_weak():
+@pytest.mark.parametrize(
+    "after, is_weak",
+    [
+        (dt.timedelta(seconds=-5), False),  # updated before the merge
+        (dt.timedelta(0), False),
+        (dt.timedelta(seconds=2), False),  # the merge's own closure, as in #76's sample
+        (dt.timedelta(seconds=60), False),  # the window is inclusive
+        (dt.timedelta(seconds=60, microseconds=1), True),
+        (dt.timedelta(seconds=61), True),
+    ],
+)
+def test_d3_an_issue_updated_more_than_60_s_after_the_merge_is_weak(after, is_weak):
     merged = dt.datetime(2026, 1, 1, tzinfo=dt.UTC)
-    assert pairs.weak(merged + dt.timedelta(seconds=1), merged)
-    assert not pairs.weak(merged, merged)
+    assert pairs.weak(merged + after, merged) is is_weak
+
+
+def test_d3s_window_is_adr_0013_amendment_1s_60_s():
+    assert dt.timedelta(seconds=60) == pairs.WEAK_WINDOW
 
 
 @pytest.mark.parametrize(
