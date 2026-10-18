@@ -22,7 +22,7 @@ Each rule restates §14.2 as a pass/fail check that the S1 manifest either satis
 |---|---|
 | D-1 | Every pair is indexed at its **own** pre-fix base commit: the parent of the PR's first commit |
 | D-2 | Gold labels are the PR's modified source files. Tests, docs, changelogs, lockfiles and generated paths are excluded. Pairs with 0 or more than 10 source files are dropped |
-| D-3 | A pair whose issue `updatedAt` is later than the PR merge time goes to the **weak** set. The weak set is reported separately and never pooled. **The comparison allows a 60 s window for the merge's own closure (Amendment 1)** |
+| D-3 | A pair whose issue `updatedAt` is later than the PR merge time goes to the **weak** set. The weak set is reported separately and never pooled. **The comparison allows a 60 s window for merge-adjacent updates (Amendment 1)** |
 | D-4 | Each base-commit snapshot is its own pseudo-repository row, scoped through the production authorization predicate. The future-snapshot sentinel (RETR-03) must never be retrieved |
 | D-5 | Pairs are grouped into connected components by shared issue or PR, then split **temporally by group**: dev 50%, test 30%, final held-out 20%. No group spans two splits. The algorithm is below |
 | D-6 | Every exclusion is recorded with its reason. The manifest carries exclusion counts by reason |
@@ -69,28 +69,30 @@ keeping groups whole, and the manifest reports it.
 **Size.** The target is at least 300 surviving pairs. Fewer does not lower any bar. The achieved
 intervals are published at whatever size S1 delivers.
 
-## Amendment 1 — D-3 allows for the issue closure the merge triggers (proposed 2026-10-18)
+## Amendment 1 — D-3 allows 60 s for merge-adjacent updates (2026-10-18)
 
 Proposed under gupta958's ruling of 2026-10-17, which asked for this amendment if the D-3 diagnostic
-showed that the closure triggered by the merge explains the weak classification. The evidence is
+showed that the closure triggered by the merge accounts for the weak classification. The evidence is
 `eval/datasets/s1-d3-probe.json` (#76). This amendment merges before any change to the miner and before S1 runs again.
 
 **The problem.** GitHub moves an issue's `updatedAt` for any change to it, including the closure that
-a merged PR's closing keyword triggers. That closure often lands a second or two after `mergedAt`, so
-D-3 as written calls an issue weak when nothing in it changed after the fix. In the probe's sample of
+a merged PR's closing keyword triggers. That closure can land a second or two after `mergedAt`, so
+D-3 as written can call an issue weak although no post-fix edit was made. In the probe's sample of
 S1 run 3 (48 pairs, 3 weak and 1 strong per repository and split):
 
 - all 12 strong pairs have `updatedAt` at or before `mergedAt`;
-- of the 36 weak pairs, 17 have their last update 1–2 s after the merge and 2 at 13 s and 32 s; the
-  other 17 were updated more than an hour later (the soonest at 6,240 s), and none fall between;
-- the closure-time cases make up 3 of 12 weak samples in dev, 9 of 12 in test and 7 of 12 in
-  held-out, which is why run 3 has 613, 64 and 22 strong pairs in those splits.
+- of the 36 weak pairs, 19 have merge-adjacent updates: 17 last updated 1–2 s after the merge, as the
+  closure would be, and 2 at 13 s and 32 s, which the timestamps alone cannot attribute to the
+  closure rather than another issue event. The other 17 were updated more than an hour later (the
+  soonest at 6,240 s), and none fall between;
+- merge-adjacent updates are 3 of 12 weak samples in dev, 9 of 12 in test and 7 of 12 in held-out,
+  which is consistent with the split imbalance: run 3 has 613, 64 and 22 strong pairs in those splits.
 
 **The rule.** A pair is **weak** when its issue's `updatedAt` is more than **W = 60 s** after its PR's
 `mergedAt`. A pair whose issue was last updated at most W after the merge is strong.
-**Reviewer decides W.** The sample would split identically for any W from 32 s to 6,239 s; 60 s is the
-smallest round value that clears the observed closure-time updates, and the smaller the window,
-the fewer genuine edits it can hide.
+**W = 60 s was decided by gupta958 on #77 (2026-10-18).** It is the smallest round boundary above the
+observed 32 s case and below the clean gap to 6,240 s; the sample would split identically for any W
+from 32 s to 6,239 s. The accepted risk is that genuine edits within 60 s of the merge become strong.
 
 **What does not change.**
 
@@ -103,7 +105,7 @@ the fewer genuine edits it can hide.
 
 **The cost.** An edit to the issue within W of the merge is classed as strong. Without the issue's
 edit history (which GitHub does not expose; DESIGN §14.2), it cannot be told apart from the
-closure. Two alternatives that would separate them were rejected:
+closure or another merge-adjacent event. Two alternatives that would separate them were rejected:
 
 - Comparing against `closedAt` instead. The 13 s and 32 s updates in the sample came 13 s and 32 s
   after `closedAt`, so it would not remove them, and it would add an API field.

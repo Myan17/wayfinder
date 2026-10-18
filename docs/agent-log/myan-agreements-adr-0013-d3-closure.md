@@ -43,3 +43,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-18T19:32:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:f44cc17
 docs(agents): close task log for myan-agreements-adr-0013-d3-closure
 1 file changed, 3 insertions(+)
+
+### 2026-10-18T20:27:40Z · DECIDE · myan · claude-code/opus-5.5 · 84547b8
+Review of #77 (gupta958, relayed by myan, 2026-10-18): 'replace causal wording such as "which is why run 3 has..." with "is consistent with the split imbalance." The timestamps establish merge-adjacent updates, but they cannot prove that the 13-second and 32-second updates were caused by closure rather than another issue event. Use "merge-adjacent updates" where causation is not established.' And: 'I accept W = 60 seconds as the reviewer decision: it is the smallest round boundary above the observed 32-second case and below the clean gap to 6,240 seconds, with the acknowledged risk that genuine edits within 60 seconds become strong.' Then: merge #76 first, rebase #77 onto main and send it back; do not use Update branch.
+
+### 2026-10-18T20:27:40Z · EDIT · myan · claude-code/opus-5.5 · 84547b8
+ADR-0013 Amendment 1: heading and D-3 row say merge-adjacent updates; 'which is why' becomes 'consistent with the split imbalance'; the 13 s and 32 s cases are stated as not attributable to the closure from timestamps alone; 'Reviewer decides W' becomes gupta958's decision of W = 60 s with their reason and the accepted risk; the cost names 'the closure or another merge-adjacent event'. DESIGN §14.2 item 4 and row 0.3.5 say merge-adjacent updates and record W as gupta958's decision.
+
+### 2026-10-18T20:27:40Z · COMMIT · myan · claude-code/opus-5.5 · parent:84547b8
+docs(agreements): Amendment 1 says merge-adjacent updates, and records W = 60 s as gupta958's decision
+3 files changed, 23 insertions(+), 15 deletions(-)
