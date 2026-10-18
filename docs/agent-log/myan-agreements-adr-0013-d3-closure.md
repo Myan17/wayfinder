@@ -73,3 +73,10 @@ docs(agreements): record the rebase of the ADR-0013 amendment onto #76
 
 ### 2026-10-18T20:37:26Z · HANDOFF · myan · claude-code/opus-5.5 · c83cfcb
 TASK CLOSED. Pull request open for review.
+
+### 2026-10-18T20:37:36Z · COMMIT · myan · claude-code/opus-5.5 · f9970ca
+f9970ca (parent:c83cfcb) docs(agents): close task log for myan-agreements-adr-0013-d3-closure — 1 file changed. Logged by hand: the post-commit hook's idempotence check matched an earlier identical close subject in the log's last 20 lines and skipped it. Caught by check_agent_log before the push.
+
+### 2026-10-18T20:37:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:f9970ca
+docs(agents): log the close commit after the rebase, which the post-commit hook skipped
+1 file changed, 3 insertions(+)
