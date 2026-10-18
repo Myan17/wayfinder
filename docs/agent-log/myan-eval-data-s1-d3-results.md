@@ -39,3 +39,10 @@ Reading of the report, for the PR body and the ADR-0013 amendment proposal: all 
 ### 2026-10-18T19:30:33Z · COMMIT · myan · claude-code/opus-5.5 · parent:961f943
 feat(eval-data): the S1 D-3 probe's report over 48 sampled pairs, pinned to the probe's own output
 3 files changed, 181 insertions(+)
+
+### 2026-10-18T19:30:42Z · EDIT · myan · claude-code/opus-5.5 · 9685eec
+The eval-data card's change-log line, which missed the first commit (the edit had not applied).
+
+### 2026-10-18T19:30:43Z · COMMIT · myan · claude-code/opus-5.5 · parent:9685eec
+docs(eval-data): the card records the D-3 probe's report
+2 files changed, 5 insertions(+)
