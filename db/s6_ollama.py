@@ -31,14 +31,14 @@ from conftest import MIGRATIONS, sections, seed_connection, seed_repo  # the CI 
 
 FIRST = "nomic-embed-text"
 SECOND = "snowflake-arctic-embed:110m"  # also 768-d, so the re-pointed alias still fits vector_d768
-ALIAS = "wayfinder-s6-embed"
+ALIAS_PREFIX = "wayfinder-s6-"  # a fresh alias each run: never re-point or delete one this run did not make
 TEMPLATE = "search_document: {header}\n{body}"
 OPTIONS: dict = {}  # identical for every call, including both repeatability calls
 REPORT = Path(__file__).resolve().parent / "evidence" / "s6-ollama.json"
 
 
 class Ollama:
-    """The five Ollama API calls S6-5 needs."""
+    """The Ollama API calls S6-5 needs."""
 
     def __init__(self, base: str = "http://localhost:11434"):
         self.base = base
@@ -61,6 +61,13 @@ class Ollama:
             if model["name"] == full:
                 return model["digest"]
         raise LookupError(f"{name} is not pulled")
+
+    def exists(self, name: str) -> bool:
+        try:
+            self.digest(name)
+        except LookupError:
+            return False
+        return True
 
     def copy(self, source: str, destination: str) -> None:
         self._call("POST", "/api/copy", {"source": source, "destination": destination})
@@ -106,17 +113,28 @@ def count(conn, table: str) -> int:
     return conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
 
 
-def run(client, conn) -> dict:
-    """S6-5's sequence on a fresh database. Returns the report; `passed` is every check."""
+def run(client, conn, alias: str | None = None) -> dict:
+    """S6-5's sequence on a fresh database. Returns the report; `passed` is every check. It refuses an
+    alias name that already exists, and deletes the alias only once its own copy created it."""
+    alias = alias or f"{ALIAS_PREFIX}{uuid.uuid4().hex[:8]}"
+    if client.exists(alias):
+        raise RuntimeError(f"{alias} already exists; refusing to re-point or delete it")
+    client.copy(FIRST, alias)  # if this raises, the run created nothing, so there is nothing to delete
+    try:
+        return sequence(client, conn, alias)
+    finally:
+        client.delete(alias)
+
+
+def sequence(client, conn, alias: str) -> dict:
     runtime = f"ollama/{client.version()}"
-    capture = {"model_ref": ALIAS, "runtime": runtime, "doc_template": TEMPLATE}
+    capture = {"model_ref": alias, "runtime": runtime, "doc_template": TEMPLATE}
     calls = {"calls": 0}
     embed = embedder(client, calls)
     checks = {}
 
-    client.copy(FIRST, ALIAS)
-    d1 = client.digest(ALIAS)
-    checks["digest_is_the_runtimes"] = d1 == client.digest(FIRST) and d1 not in (ALIAS, FIRST)
+    d1 = client.digest(alias)
+    checks["digest_is_the_runtimes"] = d1 == client.digest(FIRST) and d1 not in (alias, FIRST)
     a = s6.capture_spec(conn, model_digest=d1, **capture)
     checks["unchanged_alias_recaptures_the_existing_row"] = (
         s6.capture_spec(conn, model_digest=d1, **capture) == a and count(conn, "embedding_spec") == 1
@@ -129,8 +147,8 @@ def run(client, conn) -> dict:
     s6.activate(conn, repo_id=repo, new=gen_a, base=None, desired=desired, claim=claim)
     calls_a = calls["calls"]
 
-    client.copy(SECOND, ALIAS)
-    d2 = client.digest(ALIAS)
+    client.copy(SECOND, alias)
+    d2 = client.digest(alias)
     checks["alias_now_names_another_digest"] = d2 != d1 and d2 == client.digest(SECOND)
     b = s6.capture_spec(conn, model_digest=d2, **capture)
     checks["repointed_alias_is_a_new_spec"] = b.id != a.id and count(conn, "embedding_spec") == 2
@@ -155,13 +173,29 @@ def run(client, conn) -> dict:
         "checks": checks,
         "ollama": runtime,
         "models": {FIRST: d1, SECOND: d2},
-        "alias": ALIAS,
+        "alias": alias,
         "template": TEMPLATE,
         "options": OPTIONS,
         "dimension": s6.DIMENSION,
         "t_body_sha256": hashlib.sha256(s6.T_BODY.encode()).hexdigest(),
         "repeatability": {"model": FIRST, "digest": d1, **repeatability(client, FIRST, text)},
     }
+
+
+def on_temporary_database(dsn: str, client) -> dict:
+    """run() on a database made for it. The drop sits outside run(), whose own finally deletes the
+    alias, so a failing alias delete cannot skip it."""
+    name = f"wf_s6_{uuid.uuid4().hex[:12]}"
+    with psycopg.connect(dsn, autocommit=True) as admin:
+        admin.execute(f'CREATE DATABASE "{name}"')
+    try:
+        with psycopg.connect(psycopg.conninfo.make_conninfo(dsn, dbname=name), autocommit=True) as conn:
+            for m in MIGRATIONS:
+                conn.execute(sections(m)[0])
+            return run(client, conn)
+    finally:
+        with psycopg.connect(dsn, autocommit=True) as admin:
+            admin.execute(f'DROP DATABASE "{name}" WITH (FORCE)')
 
 
 def main(argv: list[str]) -> int:
@@ -173,19 +207,7 @@ def main(argv: list[str]) -> int:
     if subprocess.run([*git, "status", "--porcelain", "db"], capture_output=True, text=True).stdout:
         sys.exit("db/ has uncommitted changes; the report must name the commit that produced it")
     out = Path(argv[0]) if argv else REPORT
-    client = Ollama()
-    name = f"wf_s6_{uuid.uuid4().hex[:12]}"
-    with psycopg.connect(dsn, autocommit=True) as admin:
-        admin.execute(f'CREATE DATABASE "{name}"')
-    try:
-        with psycopg.connect(psycopg.conninfo.make_conninfo(dsn, dbname=name), autocommit=True) as conn:
-            for m in MIGRATIONS:
-                conn.execute(sections(m)[0])
-            report = run(client, conn)
-    finally:
-        client.delete(ALIAS)
-        with psycopg.connect(dsn, autocommit=True) as admin:
-            admin.execute(f'DROP DATABASE "{name}" WITH (FORCE)')
+    report = on_temporary_database(dsn, Ollama())
     report["commit"] = subprocess.run(
         [*git, "rev-parse", "HEAD"], capture_output=True, text=True
     ).stdout.strip()

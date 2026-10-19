@@ -1,9 +1,11 @@
 """db/s6_ollama.py's S6-5 sequence against a fake Ollama, so the logic is tested in CI. Only the real run
 (by Myan, with `ollama serve`) is evidence; this pins what that run checks."""
 
+import psycopg
 import pytest
 import s6_identity as s6
 import s6_ollama
+from conftest import DSN
 
 
 class FakeOllama:
@@ -14,6 +16,7 @@ class FakeOllama:
         self.models = dict(models)
         self.noise = noise
         self.calls = 0
+        self.deleted = []
 
     def version(self):
         return "0.0-fake"
@@ -21,10 +24,14 @@ class FakeOllama:
     def digest(self, name):
         return self.models[name]
 
+    def exists(self, name):
+        return name in self.models
+
     def copy(self, source, destination):
         self.models[destination] = self.models[source]
 
     def delete(self, name):
+        self.deleted.append(name)
         self.models.pop(name, None)
 
     def embed(self, model, text):
@@ -37,8 +44,11 @@ MODELS = {s6_ollama.FIRST: "d1" * 32, s6_ollama.SECOND: "d2" * 32}
 
 
 def test_s6_5_passes_when_the_alias_moves_to_another_digest(db):
-    report = s6_ollama.run(FakeOllama(MODELS), db)
+    client = FakeOllama(MODELS)
+    report = s6_ollama.run(client, db)
     assert report["passed"] and all(report["checks"].values())
+    assert report["alias"].startswith(s6_ollama.ALIAS_PREFIX)
+    assert client.deleted == [report["alias"]] and client.models == MODELS
     assert report["models"] == MODELS
     assert report["repeatability"]["byte_identical"] is True
     assert report["repeatability"]["max_abs_difference"] == 0
@@ -82,3 +92,47 @@ def test_s6_5_fails_when_capture_ignores_the_digest(db, monkeypatch):
     report = s6_ollama.run(FakeOllama(MODELS), db)
     assert not report["passed"]
     assert not report["checks"]["repointed_alias_is_a_new_spec"]
+
+
+def test_a_pre_existing_alias_is_refused_and_left_alone(db):
+    client = FakeOllama({**MODELS, "taken": "d9" * 32})
+    with pytest.raises(RuntimeError, match="already exists"):
+        s6_ollama.run(client, db, alias="taken")
+    assert client.models["taken"] == "d9" * 32 and client.deleted == [] and client.calls == 0
+
+
+def test_a_failed_initial_copy_deletes_nothing(db):
+    class CopyFails(FakeOllama):
+        def copy(self, source, destination):
+            raise OSError("copy refused")
+
+    client = CopyFails(MODELS)
+    with pytest.raises(OSError, match="copy refused"):
+        s6_ollama.run(client, db, alias="fresh")
+    assert client.deleted == [] and client.models == MODELS
+
+
+def test_the_alias_is_deleted_when_the_run_fails_midway(db):
+    client = FakeOllama({s6_ollama.FIRST: MODELS[s6_ollama.FIRST]})  # SECOND not pulled
+    with pytest.raises(KeyError):
+        s6_ollama.run(client, db, alias="fresh")
+    assert client.deleted == ["fresh"] and "fresh" not in client.models
+
+
+def test_the_database_is_dropped_when_alias_cleanup_fails():
+    if not DSN:
+        pytest.skip("WAYFINDER_TEST_DSN not set")
+
+    class DeleteFails(FakeOllama):
+        def delete(self, name):
+            raise OSError("delete refused")
+
+    def runs():
+        with psycopg.connect(DSN) as admin:
+            sql = "SELECT count(*) FROM pg_database WHERE datname LIKE 'wf_s6_%'"
+            return admin.execute(sql).fetchone()[0]
+
+    before = runs()
+    with pytest.raises(OSError, match="delete refused"):
+        s6_ollama.on_temporary_database(DSN, DeleteFails(MODELS))
+    assert runs() == before

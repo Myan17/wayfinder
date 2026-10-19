@@ -43,3 +43,19 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-19T20:22:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:c8c6df4
 docs(agents): close task log for myan-schema-s6-ollama
 1 file changed, 6 insertions(+)
+
+### 2026-10-19T21:22:20Z · READ · myan · claude-code/opus-5.5 · 2934edf
+gupta958 on #83 (relayed by Myan): refuse to start if the alias already exists or use a unique per-run alias; delete the alias only if this run created it; nest cleanup so the temporary database is dropped even if alias cleanup fails; add regressions for a pre-existing alias and an initial copy failure.
+
+### 2026-10-19T21:22:20Z · PLAN · myan · claude-code/opus-5.5 · 2934edf
+Both: a per-run alias wayfinder-s6-<8 hex>, and run() refuses if that name already exists (Ollama.exists via /api/tags). run() owns the alias: copy, then try/finally delete, so a failed copy deletes nothing and a pre-existing alias is never touched. main's database drop stays in its own outer finally, so a failing alias delete inside run() cannot skip it. Tests: pre-existing alias untouched and no copy; failed initial copy deletes nothing; alias deleted after a mid-run failure; main drops the database when alias delete raises.
+
+### 2026-10-19T21:24:09Z · EDIT · myan · claude-code/opus-5.5 · 2934edf
+db/s6_ollama.py: ALIAS replaced by ALIAS_PREFIX and a per-run alias; Ollama.exists; run() refuses an existing alias, copies, then deletes in its own finally; the rest moved to sequence(); main's database lifecycle moved to on_temporary_database(), whose finally drops the database outside run(). Tests: FakeOllama records deletes and has exists; four regressions.
+
+### 2026-10-19T21:24:09Z · TEST · myan · claude-code/opus-5.5 · 2934edf
+pytest db/tests against the pinned ParadeDB -> 58 passed (test_s6_ollama: 9). ruff clean. Mutants, each killed (1+ failed): refusal removed; initial copy moved inside try; alias delete removed (3 failed); database drop moved out of finally (the mutant leaked wf_s6_6fc44349d8a7, dropped by hand afterwards).
+
+### 2026-10-19T21:24:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:2934edf
+fix(schema): S6-5 runner owns its Ollama alias and always drops its database
+3 files changed, 112 insertions(+), 24 deletions(-)
