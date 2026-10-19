@@ -40,3 +40,10 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-19T19:10:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:22a463f
 docs(agents): close task log for myan-agreements-adr-0005-s6-rules
 1 file changed, 6 insertions(+)
+
+### 2026-10-19T19:10:45Z · TEST · myan · claude-code/opus-5.5 · 2a73775
+Docs only, no code. Checked every schema and CI name the ADR relies on: in the index migration model_digest, doc_template, input_hash and content_hash present, UNIQUE (repo_id, spec_id, input_hash) 1, UNIQUE (model_digest, runtime, doc_template, ...) 1, halfvec(768) 1, generation status 'retired' 1; CREATE VIEW retrieval_rows 1 (views migration); CI job 'pinned-extension integration' at .github/workflows/ci.yml:31. DESIGN anchors exist: §8.5 (line 454, the reuse step at 471), §9.2 (612), §9.3.5 (929), §9.5 (1052), §16.3.1 INDEX-01 (1750), §12.1 row 0005.
+
+### 2026-10-19T19:10:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:2a73775
+docs(agents): record the reference check for ADR-0005
+1 file changed, 3 insertions(+)
