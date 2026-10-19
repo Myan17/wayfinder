@@ -45,3 +45,7 @@ Committed run 4's pairs.jsonl and manifest.json unchanged. tests/test_s1_committ
 ### 2026-10-19T17:58:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:115bed8
 feat(eval-data): commit the S1 dataset and manifest from run 4, checked by s1.landing in CI
 5 files changed, 7139 insertions(+)
+
+### 2026-10-19T17:58:57Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea8ea54
+docs(agreements): ADR-0016 Decision — accept the S1 corpus with R-03 step 1; ORIENT item 5 done
+2 files changed, 83 insertions(+), 3 deletions(-)

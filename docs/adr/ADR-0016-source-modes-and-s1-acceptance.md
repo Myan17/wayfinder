@@ -1,6 +1,7 @@
 # ADR-0016 — Two source modes, and the acceptance rules for spike S1
 
-- **Status:** Proposed. **The decision is deliberately empty**; spike S1 fills it.
+- **Status:** Accepted 2026-10-19 (#79). Spike S1's run 4 filled the Decision below; until then it
+  was deliberately empty.
 - **Date written:** 2026-09-28, **before** S1 measures any candidate. **Amended** 2026-10-04, still
   before any measurement (Amendment 1, below), and 2026-10-13 after round 1 fell short, before
   the added candidates are measured (Amendment 2, below).
@@ -197,7 +198,86 @@ consequences:
 
 ## Decision
 
-*Round 1 is recorded in Amendment 2. The final Decision stays empty until the R-03 fallback sequence finishes.* It will be completed with one of:
+**Accept with fallback.** R-03 step 1 was used; step 2 was not needed. A-3 passes with **1,723
+surviving strong pairs** against the bar of 300.
+
+**The corpus.** It is `pydantic/pydantic` and `psf/black` (Python), and `cli/cli` and `gofiber/fiber` (Go).
+Its chunk estimate is 7,175, against the bound of 60,000. All four come from Amendment 2's widened
+list, so none of the original ten is selected.
+
+| Repository | `github_repo_id` | As-of commit | SPDX | Strong | Weak | Strong by split (dev / test / held-out) |
+|---|---|---|---|---|---|---|
+| `pydantic/pydantic` | 90194616 | `bb6da4cf` | MIT | 667 | 229 | 326 / 194 / 147 |
+| `psf/black` | 125266328 | `8d5a2d9f` | MIT | 215 | 46 | 107 / 64 / 44 |
+| `cli/cli` | 212613049 | `9b031151` | MIT | 670 | 244 | 349 / 203 / 118 |
+| `gofiber/fiber` | 234231371 | `e10bca73` | MIT | 171 | 86 | 95 / 51 / 25 |
+| **Total** | | | | **1,723** | **605** | **877 / 512 / 334** |
+
+The weak set (D-3, with ADR-0013 Amendment 1's 60 s window) is reported here and never counted.
+
+**The run of record.** Run 4 was made on 2026-10-18 at miner commit `1eaf94a`, the first commit
+carrying ADR-0013 Amendment 1's window (#78). It covered all twenty candidates: ADR-0016's ten
+followed by Amendment 2's ten. It used 859 GraphQL calls and 0 REST calls, all with a classic token
+with no scopes. The files are committed unchanged:
+
+- `eval/datasets/s1/pairs.jsonl`, SHA-256 `8ac8212dd39770daaf3833f0885b0cc521367efdd67ea8b9d34ede1d039c8231`,
+  with 2,328 pairs (1,723 strong, 605 weak);
+- `eval/datasets/s1/manifest.json`, SHA-256 `5cdde3400193009bdd8e9a87e5d14df44f30a2f986c5eff9fec051d0c51614c3`.
+
+Both pass `s1.dataset` and `s1.landing`.
+
+**Per-candidate results (run 4).** Twelve of twenty qualify. S1-2's value is its linkable pairs, S1-3's
+is resolved over linkable, S1-4's is the `.md` files and words in the file universe, and S1-5's is
+the responses checked for that candidate.
+
+| Repository | id | Lang | S1-1 | S1-2 | S1-3 | S1-4 | S1-5 | Chunks | Qualifies |
+|---|---|---|---|---|---|---|---|---|---|
+| `pallets/flask` | 596892 | Python | PASS BSD-3-Clause | PASS 223 | PASS 223/223 | **FAIL** 3 files, 392 words | PASS 34 | 189 | no |
+| `pallets/click` | 19103692 | Python | PASS BSD-3-Clause | PASS 360 | PASS 360/360 | PASS 38 files, 29,000 words | PASS 23 | 382 | yes |
+| `encode/httpx` | 179492861 | Python | PASS BSD-3-Clause | PASS 286 | PASS 286/286 | PASS 24 files, 16,434 words | PASS 27 | 237 | yes |
+| `psf/requests` | 1362490 | Python | PASS Apache-2.0 | PASS 130 | PASS 130/130 | **FAIL** 2 files, 8,702 words | PASS 35 | 164 | no |
+| `python-attrs/attrs` | 29918975 | Python | PASS MIT | PASS 117 | PASS 117/117 | PASS 24 files, 16,219 words | PASS 15 | 236 | yes |
+| `spf13/cobra` | 12574344 | Go | PASS Apache-2.0 | **FAIL** 95 | PASS 95/95 | PASS 17 files, 13,154 words | PASS 14 | 176 | no |
+| `go-chi/chi` | 44344606 | Go | PASS MIT | **FAIL** 30 | PASS 30/30 | PASS 5 files, 3,285 words | PASS 8 | 138 | no |
+| `urfave/cli` | 11393110 | Go | PASS MIT | PASS 278 | PASS 278/278 | PASS 56 files, 21,262 words | PASS 24 | 306 | yes |
+| `gin-gonic/gin` | 20904437 | Go | PASS MIT | PASS 132 | PASS 132/132 | PASS 7 files, 11,923 words | PASS 27 | 218 | yes |
+| `charmbracelet/bubbletea` | 233130089 | Go | PASS MIT | **FAIL** 84 | PASS 84/84 | PASS 42 files, 7,958 words | PASS 16 | 339 | no |
+| `pytest-dev/pytest` | 37489525 | Python | PASS MIT | PASS 938 | PASS 938/938 | **FAIL** 2 files, 529 words | PASS 125 | 1,015 | no |
+| `pydantic/pydantic` | 90194616 | Python | PASS MIT | PASS 1403 | PASS 1403/1403 | PASS 98 files, 116,215 words | PASS 86 | 1,633 | yes |
+| `psf/black` | 125266328 | Python | PASS MIT | PASS 620 | PASS 620/620 | PASS 32 files, 22,736 words | PASS 41 | 1,872 | yes |
+| `Textualize/rich` | 220809393 | Python | PASS MIT | PASS 169 | PASS 169/169 | PASS 41 files, 34,469 words | PASS 19 | 925 | yes |
+| `tox-dev/tox` | 68465360 | Python | PASS MIT | PASS 428 | PASS 428/428 | **FAIL** 2 files, 581 words | PASS 38 | 362 | no |
+| `cli/cli` | 212613049 | Go | PASS MIT | PASS 1366 | PASS 1365/1366 | PASS 35 files, 28,411 words | PASS 67 | 2,298 | yes |
+| `stretchr/testify` | 6247705 | Go | PASS MIT | PASS 109 | PASS 108/109 | PASS 5 files, 2,060 words | PASS 12 | 172 | yes |
+| `gofiber/fiber` | 234231371 | Go | PASS MIT | PASS 470 | PASS 470/470 | PASS 77 files, 117,468 words | PASS 52 | 1,372 | yes |
+| `prometheus/prometheus` | 6838921 | Go | PASS Apache-2.0 | PASS 933 | PASS 933/933 | PASS 65 files, 95,370 words | PASS 184 | 3,064 | yes |
+| `spf13/viper` | 18369373 | Go | PASS MIT | **FAIL** 66 | PASS 66/66 | **FAIL** 3 files, 3,345 words | PASS 12 | 90 | no |
+
+**Exclusions (D-6, every candidate):** `merge_commit_in_pr_history` 1,661 (Amendment 1); D-2 no
+source files 1,240; D-2 more than 10 source files 89; D-1 first commit has no parent 1; D-1 PR
+lists no commits 1.
+
+**Every selection round.**
+
+| Round | Miner commit | Candidates | D-2 files | Feasible subsets | Winner | Strong | Outcome |
+|---|---|---|---|---|---|---|---|
+| 1 (Amendment 2) | `331abcc` | ADR-0016's ten | 10 | 14 | `urfave/cli`, `gin-gonic/gin`, `python-attrs/attrs`, `encode/httpx` | 156 | Short by 144, so R-03 step 1 |
+| Run 4 | `1eaf94a` | all twenty | 10 | 645 | `pydantic/pydantic`, `psf/black`, `cli/cli`, `gofiber/fiber` | 1,723 | A-3 passes, so step 2 does not run |
+
+Two runs between these are not rounds of record.
+
+- **Run 2** at `5330f34` stopped before selection, in `stretchr/testify`, on one of GitHub's
+  transient GraphQL failures. #71 added bounded retries. An earlier attempt had stopped on
+  `cli/cli`#7228, a merged PR that lists no commits; that was fixed before `5330f34`.
+- **Run 3** at `af7685e` completed with 699 strong pairs. Only 22 of them were in held-out, and the
+  D-3 probe (#75, #76) found merge-adjacent updates in about half of the sampled weak class.
+  ADR-0013 Amendment 1 (#77) added the 60 s window and ordered a re-run, and its dataset was never
+  committed.
+
+Round 1 was measured before Amendment 1. It is recorded as the evidence that triggered R-03 step 1,
+not as a round under the final rules.
+
+Before this Decision was written, this section allowed one of four outcomes:
 
 - **Accept the corpus:** name the 3–4 repositories, quote each candidate's S1-1 to S1-5 results,
   the chunk estimate and the surviving-pair count, and state A-3 as passed.
