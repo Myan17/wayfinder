@@ -36,3 +36,10 @@ shasum -a 256 db/evidence/s6-ollama.json = fac58902da0829e705221ffe1d5abfd0a2ec8
 ### 2026-10-19T23:37:54Z · COMMIT · myan · claude-code/opus-5.5 · parent:874d13b
 docs(schema): S6 results — the S6-5 report, ADR-0005 accepted, ORIENT item 6 done
 5 files changed, 131 insertions(+), 8 deletions(-)
+
+### 2026-10-19T23:37:54Z · HANDOFF · myan · claude-code/opus-5.5 · c24a591
+PR for gupta958. Evidence only: the report as Myan produced it, ADR-0005's Decision, ORIENT item 6. Next in ORIENT: item 7, S2 whole-system CPU.
+
+### 2026-10-19T23:37:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:c24a591
+docs(agents): hand S6 results to gupta958
+1 file changed, 3 insertions(+)
