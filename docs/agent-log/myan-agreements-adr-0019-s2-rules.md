@@ -56,3 +56,10 @@ Choices the rulings left open, raised to gupta958 in the brief: max_parallel_wor
 ### 2026-10-19T23:57:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:a3c9f77
 docs(agreements): ADR-0019 per gupta958's review — pinned reranker, high-resolution accounting, separate cold passes, independent calibration
 2 files changed, 151 insertions(+), 61 deletions(-)
+
+### 2026-10-19T23:57:28Z · HANDOFF · myan · claude-code/opus-5.5 · f7d1f30
+Revised for gupta958's re-review of #85. After merge: item 9c's canonical two-leg query harness (ruling 5), then the S2 harness; only the A1 run is blocked (9b).
+
+### 2026-10-19T23:57:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:f7d1f30
+docs(agents): hand ADR-0019's revision back to gupta958
+1 file changed, 3 insertions(+)
