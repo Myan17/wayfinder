@@ -30,3 +30,13 @@ Rules first, as S5 did: ADR-0005 Proposed with S6-1 to S6-5 and an empty Decisio
 ### 2026-10-19T19:10:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:5f17fb8
 docs(agreements): ADR-0005 — S6's acceptance rules for the three identities, written before the prototype
 2 files changed, 133 insertions(+)
+
+### 2026-10-19T19:10:30Z · HANDOFF · myan · claude-code/opus-5.5 · 22a463f
+PR for gupta958: ADR-0005 rules only, no code. Decisions for B: stand-in embedder for S6-1..4 with real Ollama only in S6-5; determinism as a measurement, not a rule; prototype in db/tests plus a local db/s6_ollama.py (schema module). After merge, in order: new task schema/s6-identity-prototype (ORIENT item 6), db/tests/test_s6_identity.py with the v0.2 control, then db/s6_ollama.py pinned to an Ollama version and nomic-embed-text digest, Myan runs it, then the results PR (report committed unchanged, Decision, ORIENT item 6 done). Test for the prototype: make test / pytest db/tests against the pinned image.
+
+### 2026-10-19T19:10:30Z · HANDOFF · myan · claude-code/opus-5.5 · 22a463f
+TASK CLOSED. Pull request open for review.
+
+### 2026-10-19T19:10:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:22a463f
+docs(agents): close task log for myan-agreements-adr-0005-s6-rules
+1 file changed, 6 insertions(+)
