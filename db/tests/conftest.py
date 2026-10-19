@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -18,6 +19,7 @@ import psycopg
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "db"))  # db/s6_identity.py, the S6 helper (ADR-0005)
 MIGRATIONS = sorted((ROOT / "db" / "migrations").glob("*.sql"))
 DSN = os.environ.get("WAYFINDER_TEST_DSN")
 
