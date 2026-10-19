@@ -1,0 +1,32 @@
+{
+  "adr": "ADR-0005",
+  "alias": "wayfinder-s6-b43a1aa7",
+  "checks": {
+    "alias_now_names_another_digest": true,
+    "digest_is_the_runtimes": true,
+    "repointed_alias_is_a_new_spec": true,
+    "s6_1_new_representation": true,
+    "s6_3_one_embedder_call_each": true,
+    "serving_follows_activation": true,
+    "unchanged_alias_recaptures_the_existing_row": true
+  },
+  "commit": "874d13b6ffab3479d1b77227cb438d91b0533358",
+  "dimension": 768,
+  "models": {
+    "nomic-embed-text": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "snowflake-arctic-embed:110m": "8a0d86a3ca1df762297c1ba4b59b2b5f1b6db425f3f13eb98b41383ee902552a"
+  },
+  "ollama": "ollama/0.34.2",
+  "options": {},
+  "passed": true,
+  "repeatability": {
+    "byte_identical": true,
+    "cosine_distance": 2.220446049250313e-16,
+    "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "max_abs_difference": 0.0,
+    "model": "nomic-embed-text"
+  },
+  "rule": "S6-5",
+  "t_body_sha256": "1f5f30c412f928d4587acb57b1ed0634cf78001e003e987d59fb1e11fbc463bb",
+  "template": "search_document: {header}\n{body}"
+}
