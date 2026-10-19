@@ -1,8 +1,8 @@
 """Spike S6 (ADR-0005): the one build path that both embedders share.
 
 db/tests/test_s6_identity.py passes `stand_in`, and db/s6_ollama.py passes a real Ollama. The embedder is
-the only thing that differs (gupta958's ruling on #80), so hashing, reuse and insertion exist only here.
-Activation and the serving queries follow in the next pull request.
+the only thing that differs (gupta958's ruling on #80), so hashing, reuse, insertion, activation and the
+serving queries exist only here.
 """
 
 from __future__ import annotations
@@ -13,6 +13,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 DIMENSION = 768  # every S6 specification writes to vector_d768
+
+
+class ActivationRefused(Exception):
+    """A §9.3.5 precondition did not hold; nothing was changed."""
 
 
 @dataclass(frozen=True)
@@ -164,3 +168,93 @@ def index_chunk(
             (repo_id, generation_id, rep, path, chash.hex()[:40], body.count("\n")),
         )
     return rep
+
+
+def finish_build(conn, generation_id: int) -> None:
+    conn.execute(
+        "UPDATE generation SET status = 'ready', chunk_count = (SELECT count(*) FROM occurrence"
+        " WHERE generation_id = %s) WHERE id = %s AND status = 'building'",
+        (generation_id, generation_id),
+    )
+
+
+def push_and_claim(conn, repo_id: int) -> tuple[int, object]:
+    """Accept a push and claim the repository. S6 does not test scheduling (that is S5); it only needs
+    §9.3.5's preconditions to be real."""
+    return conn.execute(
+        "UPDATE repository SET desired_generation = desired_generation + 1, claim_token = gen_random_uuid(),"
+        " claim_expires_at = now() + interval '5 minutes' WHERE id = %s"
+        " RETURNING desired_generation, claim_token",
+        (repo_id,),
+    ).fetchone()
+
+
+def activate(conn, *, repo_id: int, new: int, base: int | None, desired: int, claim) -> None:
+    """DESIGN §9.3.5's fenced activation, as one transaction."""
+    with conn.transaction():
+        d, active, token, owned = conn.execute(
+            "SELECT desired_generation, active_generation_id, claim_token,"
+            " coalesce(claim_expires_at > now(), false) FROM repository WHERE id = %s FOR UPDATE",
+            (repo_id,),
+        ).fetchone()
+        # The generation's own repository, base and target, so a caller cannot substitute current values
+        # for the ones it was built against (gupta958's review of #82).
+        gen_repo, gen_base, gen_desired, status, chunks, occurrences = conn.execute(
+            "SELECT repo_id, base_generation_id, desired_generation, status, chunk_count,"
+            " (SELECT count(*) FROM occurrence WHERE generation_id = g.id) FROM generation g WHERE id = %s",
+            (new,),
+        ).fetchone()
+        if not (
+            token == claim
+            and owned
+            and gen_repo == repo_id
+            and gen_base == base
+            and gen_desired == desired
+            and d == desired
+            and active == base
+            and status == "ready"
+            and chunks == occurrences
+        ):
+            raise ActivationRefused(f"repository {repo_id}, generation {new}")
+        diff = (
+            "SELECT representation_id FROM occurrence WHERE generation_id = %s"
+            " EXCEPT SELECT representation_id FROM occurrence WHERE generation_id = %s"
+        )
+        added = [r for (r,) in conn.execute(diff, (new, base))]
+        removed = [r for (r,) in conn.execute(diff, (base, new))] if base is not None else []
+        for table, column in (("representation", "id"), ("vector_d768", "representation_id")):
+            conn.execute(f"UPDATE {table} SET live = true WHERE {column} = ANY(%s)", (added,))
+            conn.execute(f"UPDATE {table} SET live = false WHERE {column} = ANY(%s)", (removed,))
+        if base is not None:
+            conn.execute("UPDATE generation SET status = 'retired' WHERE id = %s", (base,))
+        conn.execute("UPDATE generation SET status = 'active', activated_at = now() WHERE id = %s", (new,))
+        moved = conn.execute(
+            "UPDATE repository SET active_generation_id = %s, updated_at = now()"
+            " WHERE id = %s AND active_generation_id IS NOT DISTINCT FROM %s",
+            (new, repo_id, base),
+        ).rowcount
+        if moved != 1:
+            raise ActivationRefused(f"repository {repo_id} moved underneath generation {new}")
+
+
+def serving_rows(conn, repo_id: int, spec: Spec) -> list[int]:
+    """What retrieval may read: the retrieval_rows view, bound to one specification."""
+    return [
+        r
+        for (r,) in conn.execute(
+            "SELECT representation_id FROM retrieval_rows WHERE repo_id = %s AND spec_id = %s ORDER BY 1",
+            (repo_id, spec.id),
+        )
+    ]
+
+
+def nearest(conn, repo_id: int, spec: Spec, query: list[float], k: int = 5) -> list[int]:
+    """Nearest live vectors for one specification, with spec_id as an ordinary bound predicate (§9.2)."""
+    return [
+        r
+        for (r,) in conn.execute(
+            "SELECT representation_id FROM vector_d768 WHERE live AND repo_id = %s AND spec_id = %s"
+            " ORDER BY embedding <=> %s::halfvec LIMIT %s",
+            (repo_id, spec.id, vector_text(query), k),
+        )
+    ]
