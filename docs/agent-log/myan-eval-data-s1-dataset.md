@@ -62,3 +62,16 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-19T17:59:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:f712079
 docs(agents): close task log for myan-eval-data-s1-dataset
 1 file changed, 9 insertions(+)
+
+### 2026-10-19T18:23:41Z · READ · myan · claude-code/opus-5.5 · 36b6fbf
+Review of #79 (gupta958, relayed by myan, 2026-10-19): 'In test_s1_committed.py, add independent SHA-256 constants for both accepted files: pairs 8ac8212d..., manifest 5cdde340... Test the actual file bytes against both constants. Also assert the exact accepted counts (2,328 total, 1,723 strong and 605 weak) for clear failures. Update the eval-data card's test description accordingly. The PR body's size evidence should say 114 counted lines, not 121.' The 121 was measured before the cherry-picked close commit (7 lines) was dropped.
+
+### 2026-10-19T18:23:41Z · EDIT · myan · claude-code/opus-5.5 · 36b6fbf
+test_s1_committed: PAIRS_SHA256 and MANIFEST_SHA256 constants, checked against each file's bytes; TOTAL, STRONG, WEAK = 2328, 1723, 605, checked against the rows in pairs.jsonl and against the manifest's pairs_file counts; landing and the A-3/miner test now read the same bytes. Card: the tests row describes both.
+
+### 2026-10-19T18:23:41Z · TEST · myan · claude-code/opus-5.5 · 36b6fbf
+pytest eval/miners/tests -> 201 passed (test_s1_committed: 4); ruff check and format clean. Mutants: a byte appended to pairs.jsonl (3 failed), to manifest.json (2), PAIRS_SHA256 changed (1), MANIFEST_SHA256 changed (1), STRONG 1722 (1), TOTAL 2329 (1). One survivor, equivalent on these files: removing the row-count assertion, since the pinned pairs hash plus landing's count check already imply it; kept for a clear failure message, as asked. Files restored and re-hashed: 8ac8212d..., 5cdde340...
+
+### 2026-10-19T18:23:41Z · COMMIT · myan · claude-code/opus-5.5 · parent:36b6fbf
+fix(eval-data): pin the accepted S1 files' SHA-256 and exact counts in test_s1_committed
+3 files changed, 35 insertions(+), 5 deletions(-)
