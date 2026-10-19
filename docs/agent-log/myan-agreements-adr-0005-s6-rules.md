@@ -47,3 +47,16 @@ Docs only, no code. Checked every schema and CI name the ADR relies on: in the i
 ### 2026-10-19T19:10:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:2a73775
 docs(agents): record the reference check for ADR-0005
 1 file changed, 3 insertions(+)
+
+### 2026-10-19T19:17:56Z · READ · myan · claude-code/opus-5.5 · 03d4111
+gupta958's rulings on #80 (relayed by myan, 2026-10-19): (1) stand-in sufficient for S6-1..4; S6-5 real Ollama; both paths share the same build function, the stand-in replaces only the embedding call. (2) repeatability is a measurement: two direct Ollama calls bypassing reuse, identical digest, input and options; record byte equality, max abs difference, cosine distance; the Decision records it for NFR-12. (3) db/ and schema module correct; prefer a shared importable helper db/s6_identity.py used by the test and db/s6_ollama.py. (4) S6-4 incomplete: before activation A-bound returns A and B-bound retrieval_rows and live-vector queries return zero even when B is the exact nearest; after activation B-bound returns B and A-bound zero; A's representation, vector and occurrence still exist with both live flags false; A retired, B active, repository pointer names B; exactly one active. Clarify S6-2's every-column check is before activation.
+
+### 2026-10-19T19:17:56Z · EDIT · myan · claude-code/opus-5.5 · 03d4111
+ADR-0005: Setup gains 'one build function for both embedders'; S6-2 checked before activation, covers representation and vector rows; S6-4 rewritten to B's four conditions; repeatability bullet per ruling 2; prototype section names db/s6_identity.py as the shared helper; Decision quotes the three repeatability numbers; a 'Review rulings' section records all four. Checked §9.3.5's activation SQL: it sets live false on removed representation and vector rows and the base generation 'retired', so S6-4's after-activation state is what the design does.
+
+### 2026-10-19T19:17:56Z · TEST · myan · claude-code/opus-5.5 · 03d4111
+Docs only. The ruling text maps one to one onto the edited rows (S6-2, S6-4, Setup, not-a-rule, prototype, Decision). DESIGN §9.3.5 (lines 941-945): UPDATE representation/vector_d768 SET live = false WHERE id = ANY($removed), generation 'retired' WHERE id = $base, consistent with S6-4.
+
+### 2026-10-19T19:17:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:03d4111
+docs(agreements): ADR-0005 applies gupta958's rulings — one build function, repeatability measured, S6-4 checks both specifications
+2 files changed, 51 insertions(+), 18 deletions(-)

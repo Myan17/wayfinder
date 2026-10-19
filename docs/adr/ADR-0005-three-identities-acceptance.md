@@ -43,15 +43,19 @@ The schema does not say this precisely, so S6 pins it here, and the prototype im
   - **template pair:** B differs from A only in `doc_template`.
 
   Both specs in each pair have dimension 768, so both write to `vector_d768`.
-- **Embedder.** S6-1 to S6-4 test storage identity, not model quality. For those rules, the embedder
-  is a deterministic stand-in: a 768-dimension vector derived from SHA-256 of `(model_digest,
-  embedded input)`. It is distinct per specification and stable per input. S6-5 is the only rule
-  that needs a real runtime.
+- **Embedder.** S6-1 to S6-4 test database identity and serving behaviour, not model quality. For
+  those rules, the embedder is a deterministic stand-in: a 768-dimension vector derived from SHA-256
+  of `(model_digest, embedded input)`. It is distinct per specification and stable per input. S6-5
+  uses a real Ollama.
 - **The build path.** Each embedding goes through one function: look up the representation by
   `(repo_id, spec_id, input_hash)`, embed only on a miss, insert the `representation` and
   `vector_d768` rows, and add the `occurrence` to the building generation. This is the reuse step
-  in §8.5's ingestion flow (`reuse representations by (repo, spec, input hash); embed only misses`). The prototype
-  counts embedder calls.
+  in §8.5's ingestion flow (`reuse representations by (repo, spec, input hash); embed only misses`).
+  The prototype counts embedder calls.
+- **One build function for both embedders** (gupta958, 2026-10-19). The stand-in and Ollama paths
+  call the same build function. The embedder is its only parameter that differs, and the stand-in
+  replaces only the embedding call. Hashing, lookup, insertion and activation are shared code, so
+  the two paths cannot implement them differently.
 
 ## Acceptance rules
 
@@ -60,9 +64,9 @@ S6 passes only if every rule passes, for both pairs where a rule applies.
 | # | Rule | Pass condition |
 |---|---|---|
 | S6-1 | **A second specification creates new rows** | After T is indexed under A, then under B, there is exactly one `content` row for T, and two `representation` rows and two `vector_d768` rows, one per specification. The `input_hash` values differ for the template pair and are equal for the digest pair. Either way, the rows are distinct because `spec_id` is part of the key |
-| S6-2 | **The first specification's vector is untouched** | A's `vector_d768.embedding` is byte-identical (compared as `halfvec` text) before and after B's build. A's representation row is unchanged in every column |
+| S6-2 | **The first specification's vector is untouched** | Checked after B's build and **before B's generation activates**, because activation intentionally sets A's `live` flags to false. A's `vector_d768.embedding` is byte-identical (compared as `halfvec` text) before and after B's build. A's `representation` and `vector_d768` rows are unchanged in every column |
 | S6-3 | **Reuse never crosses specifications** | Re-indexing T under A in a new generation makes **0** embedder calls and adds no `representation` row; it adds one `occurrence`. Indexing T under B for the first time makes **exactly 1** call. Changing only the header of T's chunk makes 1 call under A, because the embedded input changed |
-| S6-4 | **The old specification keeps serving** | A's generation is active, and B's generation is `building`. `retrieval_rows` and a nearest-neighbour query over `vector_d768` with `spec_id = $1` bound to A return only A's representation. This holds even when B's vector is set **equal to the query vector**, so that B would win on distance alone. After B's generation activates under §9.3.5, the same queries bound to B return only B's representation, and A's rows still exist (retired, not deleted) |
+| S6-4 | **Serving follows the active generation, and a building specification is excluded** | The serving queries are `retrieval_rows` and a nearest-neighbour query over live `vector_d768` rows with `spec_id = $1`, each run bound to A and bound to B. B's vector is set **equal to the query vector**, so that B is the exact nearest vector and would win on distance alone. **Before activation** (A's generation active, B's `building`): A-bound queries return A's representation, and B-bound queries return **zero** rows. **After B's generation activates** under §9.3.5: B-bound queries return B's representation, and A-bound queries return **zero** rows. After activation, A's `representation`, `vector_d768` and `occurrence` rows still physically exist, and both of A's `live` flags are false. A's generation is `retired`, B's is `active`, and `repository.active_generation_id` names B's. Exactly one generation is `active` |
 | S6-5 | **A specification is identified by digest, not alias** | Against a real Ollama, `model_digest` is read from the runtime (`/api/show` or `/api/tags`), never copied from the model name. When the alias that `model_ref` names is re-pointed to a different model (`ollama cp`), capturing the spec again yields a **new** `embedding_spec` row. Indexing T under it creates a new representation (S6-1 holds) and makes 1 embedder call (S6-3 holds). Capturing the spec again with no change returns the **existing** row, through the `UNIQUE (model_digest, …)` key, and creates no duplicate |
 
 ### The negative control
@@ -72,12 +76,25 @@ with `ON CONFLICT DO NOTHING`. It runs S6-1 and S6-2's sequence against that tab
 fail S6-1**: B's vector is lost and A's survives. If the control passes, the prototype cannot tell
 the two designs apart, so S6 is an **error**, not a pass.
 
+## Review rulings (gupta958, 2026-10-19)
+
+Relayed by Myan on #80. All are applied above:
+
+1. The stand-in embedder is sufficient for S6-1 to S6-4. S6-5 uses a real Ollama, and both paths
+   share one build function.
+2. Repeatability is a measurement, not a pass rule.
+3. The prototype lives in `db/`, in the schema module, with a shared helper.
+4. S6-4 was incomplete. Filtering to spec A alone cannot show that a building spec B is excluded,
+   so the rule now checks both specifications on both sides of activation, plus the state after
+   activation. S6-2's "every column" check happens before activation.
+
 ## What is deliberately not a rule
 
-- **Embedding determinism.** S6-5's run also embeds T twice under the same spec. It records whether
-  the two vectors are byte-identical and, if they are not, the largest absolute difference. This is
-  a measurement for NFR-12's reproducibility tolerance, not a pass condition. Reuse does not depend
-  on it, because a reused vector is never recomputed.
+- **Embedding repeatability** (gupta958, 2026-10-19). S6-5's run makes two direct Ollama embedding
+  calls for T, bypassing reuse, with an identical digest, input and options. It records three
+  things: whether the two vectors are byte-identical, the maximum absolute difference, and the cosine
+  distance. A difference does not fail the three-identity design, because reuse never recomputes a
+  vector. The Decision records the measurement anyway, for NFR-12's reproducibility tolerance.
 - **Two dimensions.** Only `vector_d768` exists. A spec of another dimension needs a migration
   (§9.2), and the `halfvec(768)` type already refuses a wrong-size vector. S6 records this and does
   not test it.
@@ -89,17 +106,24 @@ the two designs apart, so S6 is an **error**, not a pass.
 
 ## Where the prototype lives
 
-`db/tests/test_s6_identity.py`, which runs in CI's `pinned-extension integration` job, covers S6-1
-to S6-4 and the control. S6-5 needs Ollama, which CI does not run. It is a separate command,
-`db/s6_ollama.py`, that Myan runs locally against a pinned Ollama version and model digest. It
-writes a JSON report, and the results pull request commits that report unchanged, as the D-3 probe's
-report was (#76).
+This lives in the schema module, under `db/` (gupta958, 2026-10-19).
+
+- `db/s6_identity.py` is the shared, importable helper. It holds the `input_hash` function, the
+  build function, the stand-in embedder and the activation step. Both of the files below use it,
+  and neither re-implements any of them.
+- `db/tests/test_s6_identity.py` runs in CI's `pinned-extension integration` job. It covers S6-1 to
+  S6-4 and the control.
+- `db/s6_ollama.py` covers S6-5 and the repeatability measurement. It needs Ollama, which CI does not
+  run, so Myan runs it locally against a pinned Ollama version and model digest. It writes a JSON
+  report, and the results pull request commits that report unchanged, as #76 did for the D-3
+  probe's report.
 
 ## Decision
 
 *Empty until S6 runs.* It will be completed with one of:
 
 - **Accepted:** §9.2's three identities as designed. Quote each rule's result for both pairs, the
-  control's failure, S6-5's report hash, and the determinism measurement.
+  control's failure, S6-5's report hash, and the repeatability measurement (byte equality, maximum
+  absolute difference and cosine distance) for NFR-12.
 - **Rejected:** name the failing rule and the scenario. The schema change it needs comes first, in
   its own pull request, before §9.2's prose changes.
