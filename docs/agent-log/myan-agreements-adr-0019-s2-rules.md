@@ -43,3 +43,16 @@ PR for gupta958: five Reviewer-decides points in ADR-0019. After merge: if gupta
 ### 2026-10-19T23:47:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:6daa17b
 docs(agents): hand ADR-0019 to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-19T23:57:28Z · READ · myan · claude-code/opus-5.5 · a3c9f77
+gupta958 on #85 (relayed by Myan), five rulings: (1) cross-encoder/ms-marco-MiniLM-L6-v2, fix the extra hyphen, pin the ARM64 ONNX artifact, revision, SHA-256 and tokenizer revision, re-measure if E3 picks another artifact; (2) SQL at the real S1 size and at 60k, padding is scale evidence with its fraction reported; (3) API overhead and token relay deferred to L1, no stand-in endpoint; (4) warm for the nominal budget, cold separately, no answer-cache credit; (5) 9c's canonical two-leg query lands before the S2 harness. Blocking: no /proc/<pid>/stat utime+stime per call (tick resolution), high-resolution accounting for Postgres and Ollama with all Ollama threads defined, calibration on that exact path; cold passes separate with the exact reset; explain how the calibration is independent for external processes.
+
+### 2026-10-19T23:57:28Z · EDIT · myan · claude-code/opus-5.5 · a3c9f77
+ADR-0019 revised. Reranker pinned from Hugging Face's API and a download: revision 233902d2, onnx/model_qint8_arm64.onnx 23,200,716 bytes sha256 3573b6b9… (matches the LFS oid), four tokenizer files' sha256. Accounting: Ollama by its container's cgroup v2 usage_usec (all threads of serve and runner, including exited ones), Postgres backend by /proc/<host pid>/schedstat ns via NSpid with parallel query off, rerank by thread_time_ns; counter resolution checks. Cold: one query per cold pass, 50 fixed queries, a six-step reset. Calibration: machine idle time from /proc/stat as an independent reference, minus idle baseline and the harness's own CPU, ±5% per path. S2-1 names L1 for the two deferred rows; S2-4 at both sizes; S2-7 uses warm; rulings section; order of work with 9c second.
+
+### 2026-10-19T23:57:28Z · DECIDE · myan · claude-code/opus-5.5 · a3c9f77
+Choices the rulings left open, raised to gupta958 in the brief: max_parallel_workers_per_gather = 0 so a call is one backend; the cold sample is 50 dev queries, first 50 by sha256(group_id); Ollama idle CPU reported, not subtracted; machine idle time as the calibration reference.
+
+### 2026-10-19T23:57:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:a3c9f77
+docs(agreements): ADR-0019 per gupta958's review — pinned reranker, high-resolution accounting, separate cold passes, independent calibration
+2 files changed, 151 insertions(+), 61 deletions(-)
