@@ -43,3 +43,10 @@ PR for gupta958. Evidence only: the report as Myan produced it, ADR-0005's Decis
 ### 2026-10-19T23:37:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:c24a591
 docs(agents): hand S6 results to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-19T23:38:06Z · DECIDE · myan · claude-code/opus-5.5 · 962516f
+Scope: schema, agreements. The report belongs in db/ (schema) beside its runner; ADR-0005's Decision and ORIENT's status line are agreements. ORIENT rule 3 puts the item's status change in the PR that completes it, and ADR-0005 says the results PR commits the report, so one PR rather than two.
+
+### 2026-10-19T23:38:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:962516f
+docs(agents): record the S6 results PR's scope
+1 file changed, 3 insertions(+)
