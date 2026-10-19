@@ -33,3 +33,13 @@ pytest db/tests against the pinned ParadeDB -> 54 passed (test_s6_ollama: 5). ru
 ### 2026-10-19T20:22:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:a8bfbb3
 feat(schema): S6-5 runner — db/s6_ollama.py against a real Ollama, tested on a fake in CI
 4 files changed, 316 insertions(+)
+
+### 2026-10-19T20:22:09Z · HANDOFF · myan · claude-code/opus-5.5 · c8c6df4
+PR for gupta958. After merge, Myan runs on a clean main: make db-up; ollama serve (separate terminal); ollama pull nomic-embed-text; ollama pull snowflake-arctic-embed:110m; WAYFINDER_TEST_DSN=postgresql://wayfinder:spike_local_only_not_a_secret@localhost:55432/s3spike uv run --extra dev python db/s6_ollama.py. It prints the checks and repeatability and writes db/evidence/s6-ollama.json. Then the results PR: the report unchanged, ADR-0005 Decision (each rule for both pairs from CI, the control, the report's hash and repeatability numbers for NFR-12), ORIENT item 6 done.
+
+### 2026-10-19T20:22:09Z · HANDOFF · myan · claude-code/opus-5.5 · c8c6df4
+TASK CLOSED. Pull request open for review.
+
+### 2026-10-19T20:22:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:c8c6df4
+docs(agents): close task log for myan-schema-s6-ollama
+1 file changed, 6 insertions(+)
