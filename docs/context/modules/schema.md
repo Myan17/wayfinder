@@ -113,6 +113,7 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_views.py::test_retrieval_rows_active_generation_only_and_predicate_applies` | Only live rows of the active generation; authz's row predicate applies to the view unchanged |
 | `db/tests/test_views.py::test_view_files_match_migration` | `db/views/*.sql` match what the migration creates |
 | `db/tests/test_s6_identity.py` (all) | Spike S6 (ADR-0005) on `db/s6_identity.py`, the build path both embedders share: S6-1 (a second specification creates new rows), S6-2 (the first specification's rows unchanged), S6-3 (reuse never crosses specifications, in embedder calls), S6-4 (serving follows the active generation: a building specification returns nothing even as the exact nearest vector, and after §9.3.5's activation the old one returns nothing while its rows remain with `live` false), for a digest pair and a template pair; activation refused without the claim, after it expires, before `ready`, on a chunk-count mismatch, for a `failed` build, after a newer push, from a stale base, when another generation was activated underneath, and when the generation's own `repo_id`, `base_generation_id` or `desired_generation` differs from what the caller passes (a caller cannot substitute current values); the v0.2 `(repo_id, content_hash)` control loses B's vector; one spec row per identity key; the embedded input is substituted once and hashed as UTF-8 |
+| `db/tests/test_s6_ollama.py` (all) | `db/s6_ollama.py`'s S6-5 sequence on a fake Ollama: it passes when the alias moves to another digest; it fails when both models share a digest, or when a capture keyed on the alias returns the old row; the embedder refuses once the alias names another digest; repeatability reports a difference (byte equality, maximum absolute difference, cosine distance) without failing S6-5. Only Myan's real run is evidence |
 
 ## Fake
 
@@ -135,3 +136,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-09-23 | `db/schema.sql` snapshot and `db/dump-schema.sh` generator | — |
 | 2026-10-19 | Spike S6's shared helper `db/s6_identity.py` and the S6-1 to S6-3 tests (ADR-0005); no table changes | — |
 | 2026-10-19 | S6's serving half: §9.3.5 activation, `serving_rows`, `nearest`, S6-4 and the refusal cases | — |
+| 2026-10-19 | S6-5's runner `db/s6_ollama.py` and its fake-Ollama tests; the real run's report lands in the results PR | — |
