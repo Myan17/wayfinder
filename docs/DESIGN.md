@@ -1506,6 +1506,7 @@ stale rather than skipped silently.
 | 0016 | Two source modes: installation and public read-only |
 | 0017 | Deletion closure: serving denial, active-store deletion, derivative retention, backup expiry |
 | 0018 | Recovery tiers and secret-recovery procedure |
+| 0019 | Spike S2's CPU measurement method and completeness rules: host, accounting, control |
 
 ---
 
