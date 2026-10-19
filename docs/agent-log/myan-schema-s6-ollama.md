@@ -59,3 +59,10 @@ pytest db/tests against the pinned ParadeDB -> 58 passed (test_s6_ollama: 9). ru
 ### 2026-10-19T21:24:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:2934edf
 fix(schema): S6-5 runner owns its Ollama alias and always drops its database
 3 files changed, 112 insertions(+), 24 deletions(-)
+
+### 2026-10-19T21:24:19Z · HANDOFF · myan · claude-code/opus-5.5 · 7762027
+Review fix for gupta958 on #83: per-run alias, refusal of an existing one, delete only after our own copy, database drop in its own outer finally; four regressions. After merge, Myan's run command is unchanged.
+
+### 2026-10-19T21:24:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:7762027
+docs(agents): hand #83's review fix back to gupta958
+1 file changed, 3 insertions(+)
