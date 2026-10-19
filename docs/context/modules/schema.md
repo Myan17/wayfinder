@@ -112,7 +112,7 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_views.py::test_eligible_repo_expiry` | Lease semantics in the view |
 | `db/tests/test_views.py::test_retrieval_rows_active_generation_only_and_predicate_applies` | Only live rows of the active generation; authz's row predicate applies to the view unchanged |
 | `db/tests/test_views.py::test_view_files_match_migration` | `db/views/*.sql` match what the migration creates |
-| `db/tests/test_s6_identity.py` (all) | Spike S6 (ADR-0005) on `db/s6_identity.py`, the build path both embedders share: S6-1 (a second specification creates new rows), S6-2 (the first specification's rows unchanged), S6-3 (reuse never crosses specifications, in embedder calls), for a digest pair and a template pair; the v0.2 `(repo_id, content_hash)` control loses B's vector; one spec row per identity key; the embedded input is substituted once and hashed as UTF-8 |
+| `db/tests/test_s6_identity.py` (all) | Spike S6 (ADR-0005) on `db/s6_identity.py`, the build path both embedders share: S6-1 (a second specification creates new rows), S6-2 (the first specification's rows unchanged), S6-3 (reuse never crosses specifications, in embedder calls), S6-4 (serving follows the active generation: a building specification returns nothing even as the exact nearest vector, and after §9.3.5's activation the old one returns nothing while its rows remain with `live` false), for a digest pair and a template pair; activation refused without the claim, after it expires, before `ready`, on a chunk-count mismatch, for a `failed` build, after a newer push, or from a stale base; the v0.2 `(repo_id, content_hash)` control loses B's vector; one spec row per identity key; the embedded input is substituted once and hashed as UTF-8 |
 
 ## Fake
 
@@ -134,3 +134,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-09-22 | v1 part 4: `embedding_cache`, `tombstone` | — |
 | 2026-09-23 | `db/schema.sql` snapshot and `db/dump-schema.sh` generator | — |
 | 2026-10-19 | Spike S6's shared helper `db/s6_identity.py` and the S6-1 to S6-3 tests (ADR-0005); no table changes | — |
+| 2026-10-19 | S6's serving half: §9.3.5 activation, `serving_rows`, `nearest`, S6-4 and the refusal cases | — |

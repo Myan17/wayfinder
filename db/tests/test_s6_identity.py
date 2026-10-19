@@ -1,4 +1,4 @@
-"""Spike S6, rules S6-1 to S6-3 and the v0.2 negative control (ADR-0005), on the stand-in embedder.
+"""Spike S6, rules S6-1 to S6-4 and the v0.2 negative control (ADR-0005), on the stand-in embedder.
 
 Every rule runs for both pairs: B differs from A only in model_digest, or only in doc_template.
 """
@@ -35,19 +35,24 @@ class Counting:
 
 @pytest.fixture(params=sorted(PAIRS))
 def world(request, db):
-    """A's generation built with T, then B's generation built with T. Activation is the next PR's."""
+    """A's generation built and active with T; B's generation building with T. Nothing activated for B."""
     a_fields, b_fields = PAIRS[request.param]
     repo = seed_repo(db, seed_connection(db))
     a = s6.capture_spec(db, **{**BASE, **a_fields})
     b = s6.capture_spec(db, **{**BASE, **b_fields})
     embed = Counting()
-    gen_a = s6.new_generation(db, repo, a, desired=1, base=None)
+    desired, claim = s6.push_and_claim(db, repo)
+    gen_a = s6.new_generation(db, repo, a, desired=desired, base=None)
     rep_a = s6.index_chunk(db, embed, repo_id=repo, generation_id=gen_a, spec=a)
+    s6.finish_build(db, gen_a)
+    s6.activate(db, repo_id=repo, new=gen_a, base=None, desired=desired, claim=claim)
     w = dict(pair=request.param, db=db, repo=repo, a=a, b=b, embed=embed, gen_a=gen_a, rep_a=rep_a)
     w["snapshot"] = _rows(db, rep_a)
-    w["gen_b"] = s6.new_generation(db, repo, b, desired=2, base=gen_a)
+    desired, claim = s6.push_and_claim(db, repo)
+    w["gen_b"] = s6.new_generation(db, repo, b, desired=desired, base=gen_a)
     w["calls_before_b"] = embed.calls
     w["rep_b"] = s6.index_chunk(db, embed, repo_id=repo, generation_id=w["gen_b"], spec=b)
+    w["desired_b"], w["claim_b"] = desired, claim
     return w
 
 
@@ -59,6 +64,18 @@ def _rows(db, rep):
             "SELECT row_to_json(v)::text, embedding::text FROM vector_d768 v WHERE representation_id = %s",
             (rep,),
         ).fetchone(),
+    )
+
+
+def _activate_b(w):
+    s6.finish_build(w["db"], w["gen_b"])
+    s6.activate(
+        w["db"],
+        repo_id=w["repo"],
+        new=w["gen_b"],
+        base=w["gen_a"],
+        desired=w["desired_b"],
+        claim=w["claim_b"],
     )
 
 
@@ -98,6 +115,78 @@ def test_s6_3_reuse_never_crosses_specifications(world):
         path="wayfinder/moved.py",
     )
     assert embed.calls == before + 1
+
+
+def test_s6_4_serving_follows_the_active_generation(world):
+    db, repo, a, b, rep_a, rep_b = (world[k] for k in ("db", "repo", "a", "b", "rep_a", "rep_b"))
+    query = s6.stand_in(b, "where is a line range parsed")
+    db.execute(
+        "UPDATE vector_d768 SET embedding = %s::halfvec WHERE representation_id = %s",
+        (s6.vector_text(query), rep_b),
+    )  # B is now the exact nearest vector
+    assert (s6.serving_rows(db, repo, a), s6.nearest(db, repo, a, query)) == ([rep_a], [rep_a])
+    assert (s6.serving_rows(db, repo, b), s6.nearest(db, repo, b, query)) == ([], [])
+
+    _activate_b(world)
+    assert (s6.serving_rows(db, repo, b), s6.nearest(db, repo, b, query)) == ([rep_b], [rep_b])
+    assert (s6.serving_rows(db, repo, a), s6.nearest(db, repo, a, query)) == ([], [])
+    assert db.execute(
+        "SELECT r.live, v.live, (SELECT count(*) FROM occurrence WHERE representation_id = r.id)"
+        " FROM representation r JOIN vector_d768 v ON v.representation_id = r.id WHERE r.id = %s",
+        (rep_a,),
+    ).fetchone() == (False, False, 1)
+    statuses = dict(db.execute("SELECT id, status FROM generation WHERE repo_id = %s", (repo,)).fetchall())
+    assert statuses == {world["gen_a"]: "retired", world["gen_b"]: "active"}
+    assert one(db, "SELECT active_generation_id FROM repository WHERE id = %s", (repo,)) == world["gen_b"]
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "no claim",
+        "claim expired",
+        "still building",
+        "chunk added after ready",
+        "failed",
+        "a newer push",
+        "stale base",
+    ],
+)
+def test_activation_is_refused_unless_section_9_3_5_holds(world, case):
+    if case != "still building":
+        s6.finish_build(world["db"], world["gen_b"])
+    if case == "chunk added after ready":
+        s6.index_chunk(
+            world["db"],
+            world["embed"],
+            repo_id=world["repo"],
+            generation_id=world["gen_b"],
+            spec=world["b"],
+            path="wayfinder/late.py",
+        )
+    if case == "failed":  # complete and counted, but not 'ready'
+        world["db"].execute("UPDATE generation SET status = 'failed' WHERE id = %s", (world["gen_b"],))
+    if case == "a newer push":  # B's target is no longer the desired generation
+        world["db"].execute(
+            "UPDATE repository SET desired_generation = desired_generation + 1 WHERE id = %s",
+            (world["repo"],),
+        )
+    if case == "claim expired":
+        world["db"].execute(
+            "UPDATE repository SET claim_expires_at = now() - interval '1 second' WHERE id = %s",
+            (world["repo"],),
+        )
+    claim = None if case == "no claim" else world["claim_b"]
+    with pytest.raises(s6.ActivationRefused):
+        s6.activate(
+            world["db"],
+            repo_id=world["repo"],
+            new=world["gen_b"],
+            base=None if case == "stale base" else world["gen_a"],
+            desired=world["desired_b"],
+            claim=claim,
+        )
+    assert s6.serving_rows(world["db"], world["repo"], world["a"]) == [world["rep_a"]]
 
 
 @pytest.mark.parametrize("pair", sorted(PAIRS))
