@@ -36,3 +36,10 @@ No code. Section references checked against DESIGN: A-4 in §7.1, §9.4.2 normal
 ### 2026-10-19T23:47:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:1810a79
 docs(agreements): ADR-0019, spike S2's CPU measurement method and rules, before any harness
 3 files changed, 153 insertions(+)
+
+### 2026-10-19T23:47:47Z · HANDOFF · myan · claude-code/opus-5.5 · 6daa17b
+PR for gupta958: five Reviewer-decides points in ADR-0019. After merge: if gupta958 rules 9c first, that harness next; the S2 harness either way; item 7's A1 run stays blocked on ORIENT 9b (Myan provisions the A1).
+
+### 2026-10-19T23:47:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:6daa17b
+docs(agents): hand ADR-0019 to gupta958
+1 file changed, 3 insertions(+)
