@@ -66,3 +66,7 @@ Review fix for gupta958 on #83: per-run alias, refusal of an existing one, delet
 ### 2026-10-19T21:24:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:7762027
 docs(agents): hand #83's review fix back to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-19T21:24:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:1213be9
+docs(schema): card names the S6-5 runner's cleanup tests
+1 file changed, 1 insertion(+), 1 deletion(-)
