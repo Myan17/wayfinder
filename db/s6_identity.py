@@ -197,14 +197,19 @@ def activate(conn, *, repo_id: int, new: int, base: int | None, desired: int, cl
             " coalesce(claim_expires_at > now(), false) FROM repository WHERE id = %s FOR UPDATE",
             (repo_id,),
         ).fetchone()
-        status, chunks, occurrences = conn.execute(
-            "SELECT status, chunk_count, (SELECT count(*) FROM occurrence WHERE generation_id = g.id)"
-            " FROM generation g WHERE id = %s",
+        # The generation's own repository, base and target, so a caller cannot substitute current values
+        # for the ones it was built against (gupta958's review of #82).
+        gen_repo, gen_base, gen_desired, status, chunks, occurrences = conn.execute(
+            "SELECT repo_id, base_generation_id, desired_generation, status, chunk_count,"
+            " (SELECT count(*) FROM occurrence WHERE generation_id = g.id) FROM generation g WHERE id = %s",
             (new,),
         ).fetchone()
         if not (
             token == claim
             and owned
+            and gen_repo == repo_id
+            and gen_base == base
+            and gen_desired == desired
             and d == desired
             and active == base
             and status == "ready"

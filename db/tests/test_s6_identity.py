@@ -150,6 +150,10 @@ def test_s6_4_serving_follows_the_active_generation(world):
         "failed",
         "a newer push",
         "stale base",
+        "stored base stale, caller passes the current base",
+        "stored desired old, caller passes the new desired",
+        "another repository's generation",
+        "another generation activated underneath",
     ],
 )
 def test_activation_is_refused_unless_section_9_3_5_holds(world, case):
@@ -166,7 +170,8 @@ def test_activation_is_refused_unless_section_9_3_5_holds(world, case):
         )
     if case == "failed":  # complete and counted, but not 'ready'
         world["db"].execute("UPDATE generation SET status = 'failed' WHERE id = %s", (world["gen_b"],))
-    if case == "a newer push":  # B's target is no longer the desired generation
+    if case in ("a newer push", "stored desired old, caller passes the new desired"):
+        # B's target is no longer the desired generation
         world["db"].execute(
             "UPDATE repository SET desired_generation = desired_generation + 1 WHERE id = %s",
             (world["repo"],),
@@ -176,17 +181,38 @@ def test_activation_is_refused_unless_section_9_3_5_holds(world, case):
             "UPDATE repository SET claim_expires_at = now() - interval '1 second' WHERE id = %s",
             (world["repo"],),
         )
+    if case == "stored base stale, caller passes the current base":  # B was built before A was active
+        world["db"].execute(
+            "UPDATE generation SET base_generation_id = NULL WHERE id = %s", (world["gen_b"],)
+        )
+    if case == "another generation activated underneath":
+        db, repo = world["db"], world["repo"]
+        db.execute("UPDATE generation SET status = 'retired' WHERE id = %s", (world["gen_a"],))
+        c = s6.new_generation(db, repo, world["a"], desired=99, base=world["gen_a"])
+        db.execute("UPDATE generation SET status = 'active' WHERE id = %s", (c,))
+        db.execute("UPDATE repository SET active_generation_id = %s WHERE id = %s", (c, repo))
+    new = world["gen_b"]
+    if case == "another repository's generation":  # same base and target, built for a different repository
+        other = seed_repo(world["db"], seed_connection(world["db"]))
+        new = s6.new_generation(
+            world["db"], other, world["b"], desired=world["desired_b"], base=world["gen_a"]
+        )
+        s6.finish_build(world["db"], new)
     claim = None if case == "no claim" else world["claim_b"]
+    base = None if case == "stale base" else world["gen_a"]
+    desired = world["desired_b"] + (case == "stored desired old, caller passes the new desired")
     with pytest.raises(s6.ActivationRefused):
         s6.activate(
             world["db"],
             repo_id=world["repo"],
-            new=world["gen_b"],
-            base=None if case == "stale base" else world["gen_a"],
-            desired=world["desired_b"],
+            new=new,
+            base=base,
+            desired=desired,
             claim=claim,
         )
-    assert s6.serving_rows(world["db"], world["repo"], world["a"]) == [world["rep_a"]]
+    if case != "another generation activated underneath":
+        assert s6.serving_rows(world["db"], world["repo"], world["a"]) == [world["rep_a"]]
+    assert one(world["db"], "SELECT status FROM generation WHERE id = %s", (world["gen_b"],)) != "active"
 
 
 @pytest.mark.parametrize("pair", sorted(PAIRS))

@@ -43,3 +43,16 @@ TASK CLOSED. Pull request open for review.
 ### 2026-10-19T19:50:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:682de9f
 docs(agents): close task log for myan-schema-s6-serving
 1 file changed, 6 insertions(+)
+
+### 2026-10-19T20:02:15Z · READ · myan · claude-code/opus-5.5 · 2d82408
+#81 merged as bc77193 (gh state MERGED checked first); its task closed and worktree removed. GitHub retargeted #82 to main. Rebased with --onto origin/main past #81's pre-squash commits, so the branch holds only #82's two commits. gupta958's review of #82 (relayed by myan, 2026-10-19): activate() trusts caller-supplied base and desired and never ties them to the generation; read the generation's repo_id, base_generation_id and desired_generation in the locked path and require them to match (or derive them); add regression tests for a stale stored base with the caller passing the current base, and an old stored desired with the caller passing the new desired; keep the refusal cases in #82 (P1 item 6 later carries equivalents for production).
+
+### 2026-10-19T20:02:15Z · EDIT · myan · claude-code/opus-5.5 · 2d82408
+activate() reads repo_id, base_generation_id and desired_generation from the generation row inside the transaction that holds the repository lock, and refuses unless they equal repo_id, base and desired, alongside the existing checks. Chose matching over deriving: the caller still states its intent, and a mismatch is refused rather than silently corrected. Refusal cases added: stored base stale (base_generation_id NULL, caller passes gen_a), stored desired old (newer push, caller passes the new desired), another repository's generation (same base and target), another generation activated underneath. Each refusal case also asserts B did not become active. Card row updated.
+
+### 2026-10-19T20:02:15Z · TEST · myan · claude-code/opus-5.5 · 2d82408
+pytest db/tests against the pinned ParadeDB -> 49 passed (test_s6_identity: 34). ruff clean. New fences, each killed alone: stored repo unchecked (2 failed; survived until the cross-repository case), stored base (2), stored desired (2). current base unchecked (2, after the underneath case; before it the pointer guard made it equivalent), both base guards removed together (2). Earlier set re-run, all killed: claim, expiry, ready, chunk count, removed stay live, added never live (22), nearest ignores live, base not retired. One equivalent survivor as before: the pointer's rowcount check alone.
+
+### 2026-10-19T20:02:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:2d82408
+fix(schema): activate() ties base and desired to the generation's own row, refusing caller substitution
+4 files changed, 49 insertions(+), 9 deletions(-)
