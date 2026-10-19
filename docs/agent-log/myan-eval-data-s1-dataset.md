@@ -49,3 +49,16 @@ feat(eval-data): commit the S1 dataset and manifest from run 4, checked by s1.la
 ### 2026-10-19T17:58:57Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea8ea54
 docs(agreements): ADR-0016 Decision — accept the S1 corpus with R-03 step 1; ORIENT item 5 done
 2 files changed, 83 insertions(+), 3 deletions(-)
+
+### 2026-10-19T17:59:34Z · DECIDE · myan · claude-code/opus-5.5 · f712079
+Correction to this log's first READ: the cherry-picked s1-results close commit (2579358, later 115bed8) is dropped from this branch. It changed only myan-eval-data-s1-results.md, had no COMMIT entry here, and failed check_agent_log (2 entries for 3 commits). As with the other merged tasks since #53, a close commit made after merge stays local.
+
+### 2026-10-19T17:59:34Z · HANDOFF · myan · claude-code/opus-5.5 · f712079
+PR #79 for gupta958: run 4's dataset and manifest committed unchanged, test_s1_committed, ADR-0016 Decision (accept with fallback, R-03 step 1), ORIENT item 5 done #79. Test: cd eval/miners && uv run --extra dev pytest tests (199 passed); python -m s1.landing ../datasets/s1/pairs.jsonl ../datasets/s1/manifest.json exits 0. Bar: CI green, every Decision number traceable to the manifest. Next, in order after merge: end-task --merged, remove the worktree, then ORIENT item 6 (S6 embedding identity). G0 (Oct 11) has passed with items 6-8 open; under rule 5 the new date is myan's call.
+
+### 2026-10-19T17:59:34Z · HANDOFF · myan · claude-code/opus-5.5 · f712079
+TASK CLOSED. Pull request open for review.
+
+### 2026-10-19T17:59:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:f712079
+docs(agents): close task log for myan-eval-data-s1-dataset
+1 file changed, 9 insertions(+)
