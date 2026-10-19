@@ -137,3 +137,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-10-19 | Spike S6's shared helper `db/s6_identity.py` and the S6-1 to S6-3 tests (ADR-0005); no table changes | — |
 | 2026-10-19 | S6's serving half: §9.3.5 activation, `serving_rows`, `nearest`, S6-4 and the refusal cases | — |
 | 2026-10-19 | S6-5's runner `db/s6_ollama.py` and its fake-Ollama tests; the real run's report lands in the results PR | — |
+| 2026-10-19 | S6's evidence: Myan's S6-5 report `db/evidence/s6-ollama.json`, committed unchanged; ADR-0005 accepted | — |
