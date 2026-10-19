@@ -1,0 +1,62 @@
+# Task log — myan-agreements-adr-0005-s6-rules
+
+| Field | Value |
+|---|---|
+| Task | ADR-0005 S6 acceptance rules: two embedding specifications over identical text, written before the prototype (ORIENT item 6) |
+| Module | agreements |
+| Branch | `myan/agreements/adr-0005-s6-rules` |
+| Worktree | `../wayfinder-wt/myan-agreements-adr-0005-s6-rules` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-10-19T19:08Z/26648 |
+| Started | 2026-10-19T19:08:48Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-10-19T19:10:30Z · READ · myan · claude-code/opus-5.5 · 5f17fb8
+ORIENT item 6 (S6, 3 h): DESIGN §12.1 ADR 0005 (three identities), §9.2 embedding_spec/content/representation/vector_d768/occurrence and 'Why three identities (WF-05)', 'Model transitions', §8.5 reuse step, §9.3.5 activation, §16.3.1 INDEX-01, §2 principle 2. Schema v1 migrations (index, views, deletion) and db/tests/test_constraints.py (vector spec must match representation already pinned). ADR-0004 for the rules-first shape (#45-#48).
+
+### 2026-10-19T19:10:30Z · PLAN · myan · claude-code/opus-5.5 · 5f17fb8
+Rules first, as S5 did: ADR-0005 Proposed with S6-1 to S6-5 and an empty Decision; prototype and results in later PRs. Rules: new rows per spec (digest pair and template pair), A's vector byte-identical after B, reuse never crosses specs (embedder call counts), old spec keeps serving while B builds even when B's vector equals the query, spec identified by runtime digest not alias (real Ollama, alias re-pointed with ollama cp). A v0.2-shaped negative control must fail, else S6 is an error. Determinism, a second dimension, RRF, the HNSW plan and GC are named as not rules. Rejected: real Ollama for every rule (identity is a storage claim; a stand-in keeps S6-1..4 in CI) and testing a 384-d spec (needs a migration S6 does not own).
+
+### 2026-10-19T19:10:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:5f17fb8
+docs(agreements): ADR-0005 — S6's acceptance rules for the three identities, written before the prototype
+2 files changed, 133 insertions(+)
+
+### 2026-10-19T19:10:30Z · HANDOFF · myan · claude-code/opus-5.5 · 22a463f
+PR for gupta958: ADR-0005 rules only, no code. Decisions for B: stand-in embedder for S6-1..4 with real Ollama only in S6-5; determinism as a measurement, not a rule; prototype in db/tests plus a local db/s6_ollama.py (schema module). After merge, in order: new task schema/s6-identity-prototype (ORIENT item 6), db/tests/test_s6_identity.py with the v0.2 control, then db/s6_ollama.py pinned to an Ollama version and nomic-embed-text digest, Myan runs it, then the results PR (report committed unchanged, Decision, ORIENT item 6 done). Test for the prototype: make test / pytest db/tests against the pinned image.
+
+### 2026-10-19T19:10:30Z · HANDOFF · myan · claude-code/opus-5.5 · 22a463f
+TASK CLOSED. Pull request open for review.
+
+### 2026-10-19T19:10:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:22a463f
+docs(agents): close task log for myan-agreements-adr-0005-s6-rules
+1 file changed, 6 insertions(+)
+
+### 2026-10-19T19:10:45Z · TEST · myan · claude-code/opus-5.5 · 2a73775
+Docs only, no code. Checked every schema and CI name the ADR relies on: in the index migration model_digest, doc_template, input_hash and content_hash present, UNIQUE (repo_id, spec_id, input_hash) 1, UNIQUE (model_digest, runtime, doc_template, ...) 1, halfvec(768) 1, generation status 'retired' 1; CREATE VIEW retrieval_rows 1 (views migration); CI job 'pinned-extension integration' at .github/workflows/ci.yml:31. DESIGN anchors exist: §8.5 (line 454, the reuse step at 471), §9.2 (612), §9.3.5 (929), §9.5 (1052), §16.3.1 INDEX-01 (1750), §12.1 row 0005.
+
+### 2026-10-19T19:10:45Z · COMMIT · myan · claude-code/opus-5.5 · parent:2a73775
+docs(agents): record the reference check for ADR-0005
+1 file changed, 3 insertions(+)
+
+### 2026-10-19T19:17:56Z · READ · myan · claude-code/opus-5.5 · 03d4111
+gupta958's rulings on #80 (relayed by myan, 2026-10-19): (1) stand-in sufficient for S6-1..4; S6-5 real Ollama; both paths share the same build function, the stand-in replaces only the embedding call. (2) repeatability is a measurement: two direct Ollama calls bypassing reuse, identical digest, input and options; record byte equality, max abs difference, cosine distance; the Decision records it for NFR-12. (3) db/ and schema module correct; prefer a shared importable helper db/s6_identity.py used by the test and db/s6_ollama.py. (4) S6-4 incomplete: before activation A-bound returns A and B-bound retrieval_rows and live-vector queries return zero even when B is the exact nearest; after activation B-bound returns B and A-bound zero; A's representation, vector and occurrence still exist with both live flags false; A retired, B active, repository pointer names B; exactly one active. Clarify S6-2's every-column check is before activation.
+
+### 2026-10-19T19:17:56Z · EDIT · myan · claude-code/opus-5.5 · 03d4111
+ADR-0005: Setup gains 'one build function for both embedders'; S6-2 checked before activation, covers representation and vector rows; S6-4 rewritten to B's four conditions; repeatability bullet per ruling 2; prototype section names db/s6_identity.py as the shared helper; Decision quotes the three repeatability numbers; a 'Review rulings' section records all four. Checked §9.3.5's activation SQL: it sets live false on removed representation and vector rows and the base generation 'retired', so S6-4's after-activation state is what the design does.
+
+### 2026-10-19T19:17:56Z · TEST · myan · claude-code/opus-5.5 · 03d4111
+Docs only. The ruling text maps one to one onto the edited rows (S6-2, S6-4, Setup, not-a-rule, prototype, Decision). DESIGN §9.3.5 (lines 941-945): UPDATE representation/vector_d768 SET live = false WHERE id = ANY($removed), generation 'retired' WHERE id = $base, consistent with S6-4.
+
+### 2026-10-19T19:17:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:03d4111
+docs(agreements): ADR-0005 applies gupta958's rulings — one build function, repeatability measured, S6-4 checks both specifications
+2 files changed, 51 insertions(+), 18 deletions(-)
