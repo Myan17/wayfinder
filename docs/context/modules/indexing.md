@@ -48,13 +48,30 @@ func CollectGarbage(ctx context.Context, db DB, repoID int64, grace time.Duratio
 ```
 
 ```sql
--- db/views/retrieval_rows.sql — the ONLY shape `retrieval` may query.
+-- db/views/retrieval_rows.sql — the shape `retrieval` uses for locations (see the query shape below).
 -- Columns: representation_id, repo_id, spec_id, header, body_text, path, blob_sha,
 --          start_line, end_line, symbol, content_hash, live
 -- `live` is always true here. It is exposed so authz's row predicate (row.live AND ...) applies
 -- to the view unchanged.
 -- Guarantees: every row is live and belongs to its repository's active generation.
 ```
+
+### The documented query shape (ADR-0007 Amendment 1)
+
+`retrieval_rows` exposes neither embeddings nor the BM25 index, so `retrieval`'s two-leg query may
+read exactly this, and nothing else of `indexing`'s tables:
+
+- **`representation` through `rep_bm25`** (the lexical leg): the indexed fields `header`,
+  `header_ident`, `body_text`, `body_ident`, `path` and `path_code`, and the columns `id`,
+  `repo_id`, `path` and `live`;
+- **`vector_d768` through `vec768_hnsw`** (the dense leg): `representation_id`, `repo_id`,
+  `spec_id`, `live` and `embedding`, with `spec_id` as a parameter;
+- **then `retrieval_rows`**, joined on `representation_id`, for the location in the active
+  generation.
+
+Each base-table scan joins `eligible_repo` and applies `authz`'s `sql_predicate` to its own scanned
+alias. `retrieval` never writes these tables. A change to the indexes, their fields or these
+columns is a contract change to this card.
 
 ## Invariants a caller may rely on
 
@@ -124,3 +141,4 @@ serving path), `tombstone` (survives restore).
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
 | 2026-09-22 | `retrieval_rows` created (schema v1 part 3), with `live` for the authz predicate | — |
+| 2026-10-19 | Contract: `retrieval` may also scan `representation` (via `rep_bm25`) and `vector_d768` (via `vec768_hnsw`), authorized, before `retrieval_rows`; `retrieval_rows` is no longer the only shape (ADR-0007 Amendment 1) | — |

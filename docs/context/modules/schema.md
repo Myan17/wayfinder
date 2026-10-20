@@ -39,7 +39,8 @@ Two views, which are what other modules are allowed to depend on:
 
 ```sql
 -- db/views/eligible_repo.sql   — repository-side half of allowed() (authz owns the semantics)
--- db/views/retrieval_rows.sql  — the only row shape retrieval may query (indexing owns the semantics)
+-- db/views/retrieval_rows.sql  — retrieval's location shape (indexing owns the semantics; its card
+--                                documents the two base-table scans retrieval may also make)
 ```
 
 Plus `db/schema.sql`: a `pg_dump --schema-only` snapshot from the pinned image, so a reviewer reads
@@ -138,3 +139,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-10-19 | S6's serving half: §9.3.5 activation, `serving_rows`, `nearest`, S6-4 and the refusal cases | — |
 | 2026-10-19 | S6-5's runner `db/s6_ollama.py` and its fake-Ollama tests; the real run's report lands in the results PR | — |
 | 2026-10-19 | S6's evidence: Myan's S6-5 report `db/evidence/s6-ollama.json`, committed unchanged; ADR-0005 accepted | — |
+| 2026-10-19 | `retrieval_rows` described as retrieval's location shape; the base-table scans are documented on the indexing card (ADR-0007 Amendment 1) | — |

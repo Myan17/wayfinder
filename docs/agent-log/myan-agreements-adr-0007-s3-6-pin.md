@@ -46,3 +46,19 @@ PR for gupta958. After merge: the canonical query (apps/api/wayfinder/retrieval/
 ### 2026-10-20T00:25:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:72021de
 docs(agents): hand ADR-0007 Amendment 1 to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T00:33:33Z · READ · myan · claude-code/opus-5.5 · 2e1445d
+gupta958 on #86 (relayed by Myan), five specification issues: (1) the ADR scans representation and vector_d768 while the indexing card says retrieval_rows is the only shape retrieval may query; update the indexing and retrieval cards, declare the contract change and widened scope; (2) the lexical leg omits §9.5's separately indexed path field and code-aware tokenizer, which the v1 BM25 schema lacks; supply the schema change or resolve the contradiction, S2 must not measure a simplified probe; (3) pin deterministic ordering inside each leg before RRF ranks, or amend the governing rule; (4) custom and generic plans from the same prepared statement with force_custom_plan and force_generic_plan; (5) assert every case returns authorized candidates from both legs and none unauthorized; a 1% term can be vacuous at 1 repository.
+
+### 2026-10-20T00:33:33Z · TEST · myan · claude-code/opus-5.5 · 2e1445d
+Exploration on the local pinned image (pg_search 0.25.9), not evidence: pdb.source_code splits 'parseWidget_value foo.bar_baz HTTPServer' into parse/widget/value/foo/bar/baz/http/server; pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*') keeps parsewidget_value and foo.bar_baz whole, lowercased; pdb.regex_pattern('[^/]+') gives path segments; a bm25 index with aliased second tokenizers on one column builds, and paradedb.match on an alias matches. Scratch databases dropped.
+
+### 2026-10-20T00:33:33Z · EDIT · myan · claude-code/opus-5.5 · 2e1445d
+ADR-0007 Amendment 1 rewritten: prerequisite migration (representation.path NOT NULL with UNIQUE (id, repo_id, path) and an occurrence FK on path; refuses a non-empty table; rep_bm25 rebuilt with six fields: header/body_text source_code, header_ident/body_ident regex identifiers, path segments, path_code) landing before the query; the retrieval contract (two authorized base-table scans, then retrieval_rows); per-leg tie keys amending §9.5 step 3; fixture with 5 matches in every repository; one prepared statement under force_custom_plan and force_generic_plan; checks S3-6a-e with S3-6d non-vacuity and two more mutation checks; order of work. DESIGN §9.5 step 3 tie keys edited. Indexing card: documented query shape section and change-log; retrieval card: purpose, ordering invariant, change-log; schema card: view description and change-log.
+
+### 2026-10-20T00:33:33Z · DECIDE · myan · claude-code/opus-5.5 · 2e1445d
+Resolved §9.5 vs §9.2 in favour of §9.5 with a separate schema PR (representation.path plus the rebuilt rep_bm25), rather than indexing header as the path field: header also carries symbol, signature and docstring, so it is not a separate path field. Scope widened to indexing, retrieval and schema cards, declared in the PR body.
+
+### 2026-10-20T00:33:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e1445d
+docs(agreements): ADR-0007 Amendment 1 per gupta958's review — prerequisite BM25 schema, retrieval contract, per-leg tie keys, prepared plans, non-vacuous cases
+6 files changed, 168 insertions(+), 43 deletions(-)

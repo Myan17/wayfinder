@@ -24,7 +24,8 @@ verified_on: 2026-09-18
 
 Turns a question plus an authorized scope into a ranked, deterministic list of passages. Owns the
 hybrid query, fusion, optional reranking and the shed policy. It owns no tables: it reads `indexing`'s
-view under `authz`'s predicate.
+tables only in the query shape the indexing card documents (two authorized base-table scans,
+then `retrieval_rows`), under `authz`'s predicate.
 
 ## Public interface
 
@@ -53,7 +54,10 @@ async def passages_for_answer(query: str, scope: AuthorizedScope) -> RetrievalRe
 - Every returned passage is inside `scope`; the predicate is applied in SQL and asserted again after
   retrieval.
 - Ordering is deterministic for a fixed index state: relaxed HNSW results are re-sorted by exact
-  distance before ranks are assigned, and ties break on `(score desc, repo_id, path, start_line)`.
+  distance before ranks are assigned. Each leg breaks ties before RRF ranks are assigned, the lexical
+  leg on `(score desc, repo_id, path, representation_id)` and the dense leg on `(exact distance asc,
+  repo_id, path, representation_id)`. The final order breaks ties on `(fused score desc, repo_id,
+  path, start_line, representation_id)` (ADR-0007 Amendment 1).
 - At most `per_file_cap` (default 3) passages come from one file, so a single large file cannot
   crowd out the candidate pool.
 - Results span embedding specifications safely: one dense subquery per specification, fused by rank,
@@ -104,3 +108,4 @@ deterministic scores, so `answer`, `http` and `web` can be built and tested with
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-10-19 | Reads the indexing card's documented query shape, not `retrieval_rows` alone; per-leg tie keys before RRF (ADR-0007 Amendment 1) | — |

@@ -1065,7 +1065,11 @@ query → normalize → per-specification embed ─┐
    not a nested query grammar (WF-25).
 3. **Dense leg**: one HNSW search per embedding specification in scope, `hnsw.iterative_scan =
    relaxed_order`. Relaxed results are re-sorted by exact distance before ranks are assigned, so
-   ranking is deterministic. Ties break on `(score desc, repo_id, path, start_line)`.
+   ranking is deterministic. Each leg breaks ties before RRF ranks are assigned, because a final sort
+   cannot repair two different ranks: the lexical leg on `(score desc, repo_id, path,
+   representation_id)`, the dense leg on `(exact distance asc, repo_id, path, representation_id)`.
+   The final order breaks ties on `(fused score desc, repo_id, path, start_line,
+   representation_id)` (ADR-0007 Amendment 1).
 4. **Underfill policy**: if a leg returns fewer than requested rows or exhausts `max_scan_tuples`, the
    trace records it and the response carries `degraded: ["ann_underfill"]`. When the authorized set is
    small (below a measured threshold from E7), the planner uses exact vector search instead — at this
