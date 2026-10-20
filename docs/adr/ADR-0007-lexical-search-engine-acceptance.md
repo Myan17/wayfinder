@@ -55,7 +55,7 @@ that was measured is the artifact that ships.
 | S3-3 | **Snapshot visibility, quiet case** | In `REPEATABLE READ`, a BM25 query run twice in one transaction returns identical results while a concurrent session inserts and commits matching rows between the two | Fallback. This is the weakest form of the claim; failing it ends the discussion |
 | S3-4 | **Snapshot visibility, under an activation** | The five-step interleaving below, all five steps | Fallback |
 | S3-5 | Deleted rows leave the index with their row | After `DELETE` + `COMMIT`, a BM25 query in a **new** transaction never returns the deleted row; a transaction whose snapshot predates the delete still does | Fallback. Deletion closure (§9.3.6) depends on the index not outliving its rows |
-| S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
+| S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 (pinned by Amendment 1) shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
 
 ### S3-1: the four points that establish native execution
 
@@ -125,6 +125,172 @@ The reader's snapshot must be established **before** the switch and must survive
 Step 4 is the rule. If the reader's second query sees any row from the new generation, the BM25
 index is answering from outside the caller's snapshot and `pg_search` fails A-5. Step 5 exists so a
 "nothing ever changes" implementation cannot pass by being uniformly stale.
+
+### Amendment 1 — S3-6's query and plan checks, pinned before the harness (2026-10-19)
+
+S3-6 names "the two-leg hybrid query of §9.5", but that query did not exist as text. If it were
+written while looking at plans, it could be shaped until the plan passed. This is the goalpost
+problem this ADR exists to prevent, so the query and the checks are fixed here first. S3-6's
+consequence is unchanged: a failing plan is recorded and raised, and is **not** an automatic
+fallback. ADR-0019 adds one use: S2 times this exact query (gupta958's ruling 5 on #85). S2 must
+therefore time the production query, not a simplified probe, so the query below meets every
+lexical requirement of §9.5, and the schema change it needs lands first.
+
+#### The prerequisite schema change
+
+§9.5 step 2 requires three things of the lexical leg:
+- a code-aware tokenizer that splits identifiers on camelCase, snake_case and dots;
+- the original token, indexed as well;
+- paths indexed as a separate field.
+
+The v1 BM25 index, `rep_bm25 (id, header, body_text, repo_id, live)`, uses the default tokenizer and
+has no path field. The path exists only inside `header` (§9.4.2) and in `occurrence`. That is a
+contradiction between §9.5 and §9.2. It is resolved in favour of §9.5, by one schema migration
+that lands, in its own pull request, **before** the query and the S3-6 harness:
+
+- **`representation.path`** (text, not null). A representation's path is fixed by its embedded
+  input: the header carries the path, so two paths always make two representations (INDEX-02). The
+  migration adds `UNIQUE (id, repo_id, path)` to `representation`, and a foreign key from
+  `occurrence (representation_id, repo_id, path)` to it, so an occurrence's path cannot differ from
+  its representation's. The migration refuses to run if `representation` has rows, because no
+  environment has ingested anything yet and a backfill from `header` would be a guess.
+- **`rep_bm25` rebuilt** with the fields below. The tokenizers were checked on the pinned image
+  (pg_search 0.25.9) before this was written:
+
+  | Field | Column | Tokenizer | What it matches |
+  |---|---|---|---|
+  | `header` | `header` | `pdb.source_code` | identifier parts: `parseWidget_value` gives `parse`, `widget`, `value` |
+  | `header_ident` | `header` | `pdb.regex_pattern` for dotted identifiers | the original token, lowercased: `parsewidget_value`, `foo.bar_baz` |
+  | `body_text` | `body_text` | `pdb.source_code` | as `header` |
+  | `body_ident` | `body_text` | as `header_ident` | as `header_ident` |
+  | `path` | `path` | `pdb.regex_pattern('[^/]+')` | path segments: `src`, `app`, `widget_parser.py` |
+  | `path_code` | `path` | `pdb.source_code` | parts of path segments: `widget`, `parser`, `py` |
+
+  `repo_id` and `live` stay in the index, as in v1. The migration's tests show each row's example
+  matching. §9.2's DDL is edited in the same pull request.
+
+#### Where the query lives, and what it may read
+
+The query goes in `apps/api/wayfinder/retrieval/hybrid_sql.py`, in the retrieval module, which owns
+the hybrid query (retrieval card). It is a function that returns SQL and parameters. The S3-6
+harness and S2 both import it, and neither copies it.
+
+`retrieval_rows` does not expose embeddings or the BM25 index, so the indexing card's contract
+(`retrieval_rows` is "the ONLY shape `retrieval` may query") cannot be met by a two-leg query. The
+contract changes, in the indexing, retrieval and schema cards, to this documented shape:
+- **two authorized base-table scans:** `representation` through `rep_bm25`, and `vector_d768`
+  through `vec768_hnsw`. Each scan joins `eligible_repo` and applies `authz`'s `sql_predicate` to
+  its own scanned alias, the one helper §9.1.5 requires;
+- **then `retrieval_rows`,** for the location in the active generation.
+
+`retrieval` reads no other column of those tables, and writes none.
+
+#### The query (§9.5 steps 2, 3, 5 and 6, in one statement)
+
+| Part | Pinned |
+|---|---|
+| Lexical leg | `representation`, matched with `paradedb.match` on each of the six fields above, combined with `paradedb.boolean(should => …)`. `match` tokenizes the input with the field's own tokenizer and has no query grammar, so user text cannot inject query syntax (WF-25). The top 100, cut and ranked by the lexical key below |
+| Dense leg | One subquery per specification in scope, over `vector_d768` with `spec_id` bound as a parameter, ordered by `embedding <=> $query`. Top 100, with `hnsw.iterative_scan = relaxed_order` set by `SET LOCAL` in the query's transaction. The candidates are then ranked by the dense key below, using exact distance. S3-6 and S2 run it with one specification |
+| Filter | As above: on each scanned relation, through `sql_predicate` |
+| Fusion | RRF with `k = 60` across the legs, over each leg's ranks. The result is joined to `retrieval_rows` for the location |
+| Per-file cap | At most 3 passages per `(repo_id, path)`, chosen by the final key |
+
+**Deterministic ordering inside each leg, before RRF ranks are assigned.** §9.5 step 3's tie key,
+`(score desc, repo_id, path, start_line)`, cannot be applied inside a leg: `start_line` belongs to an
+occurrence, and a leg ranks representations. RRF ranks have to be fixed per leg, because a final
+sort cannot repair two different ranks. This amendment therefore amends step 3, and §9.5 is edited
+to match in the same pull request:
+
+| Where | Key |
+|---|---|
+| Lexical leg (cut and rank) | `paradedb.score` desc, `repo_id`, `path`, `representation.id` |
+| Dense leg (rank, after the index cut) | exact `embedding <=> $query` asc, `repo_id`, `path`, `representation.id` |
+| Final order and per-file cap | fused score desc, `repo_id`, `path`, `start_line`, `representation_id` |
+
+Each key ends in a unique column, so every order is total. The dense leg's cut is the HNSW index's
+own order, which is deterministic for a fixed index state, and only its ranks use the key.
+
+#### Fixture
+
+The data is synthetic and deterministic, because S1's real chunks need the chunker (P1). There are
+100 private repositories, so `verified_public` is false and only the granted array admits rows. The
+fixture is built at the two sizes ADR-0019 uses: **7,175** and **60,000** live representations,
+spread evenly across repositories. Vectors use ADR-0005's stand-in, seeded by row number.
+
+- **The query text** matches exactly **5 representations in every repository**, through at least
+  one field each, so every granted set has lexical candidates. That makes 500 matches at either size.
+- **The query vector** is the stand-in vector of a fixed row.
+- `ANALYZE` runs before any plan is captured.
+
+#### Session settings
+
+`max_parallel_workers_per_gather = 0`, as ADR-0019 requires for S2, so the captured plan is the plan
+S2 times. Everything else uses the pinned image's defaults.
+
+#### Cases
+
+There are two sizes, and three selectivities in which the granted array admits 1, 10 or 100 of the
+100 repositories. Each combination runs **the same prepared, parameterized statement** twice:
+
+- under `SET plan_cache_mode = force_custom_plan`;
+- under `SET plan_cache_mode = force_generic_plan`.
+
+Each is captured with `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) EXECUTE`. No case uses literal SQL. The
+generic plan is the one §9.2 asks for: it shows the partial indexes are chosen with a parameterized
+`spec_id` and granted array. That makes 12 plans.
+
+#### The checks
+
+Each plan is read as a tree. S3-6 passes only if all five checks hold on all 12 cases:
+
+| # | Check |
+|---|---|
+| S3-6a | The lexical leg is served by `pg_search`: a `Custom Scan` node whose provider is ParadeDB, on `representation`. No node is a `Seq Scan` on `representation` |
+| S3-6b | The dense leg is served by the HNSW index: an `Index Scan` using `vec768_hnsw` on `vector_d768`. No node is a `Seq Scan` on `vector_d768` |
+| S3-6c | S3-6a and S3-6b hold on the generic plans as well as the custom ones |
+| S3-6d | **The case is not vacuous.** The executed statement returns at least one candidate from the lexical leg and at least one from the dense leg. Every candidate of either leg, and every returned row, belongs to a granted repository. The harness checks each row against the granted array, separately from the SQL |
+| S3-6e | Every plan is also captured with `FORMAT TEXT`, and the text is written to the evidence report with the image digest and the commit, for the release manifest |
+
+**Mutation checks.** These show the checks can fail, and run as tests:
+- dropping `rep_bm25` must fail S3-6a;
+- dropping `vec768_hnsw` must fail S3-6b;
+- a query text that matches nothing must fail S3-6d;
+- granting a repository the harness does not count as granted must fail S3-6d.
+
+**What S3-6 does not judge.** It does not judge the plan's other joins, such as how
+`retrieval_rows` reaches `occurrence`, or its timing. Those plans are captured in S3-6e, and S2
+times the whole statement. A slow join is S2's finding, not an S3-6 failure.
+
+**Where it runs.** The evidence run is local, on the pinned image, at both sizes, and its report is
+committed unchanged. CI's pinned job runs the 7,175 cases on every pull request, so a change that
+breaks the plan fails before it merges. The 60,000 cases join CI too if they fit the job's time;
+otherwise they stay local.
+
+#### Order of work
+
+The query is fixed before anyone sees its plans, so it and the plan harness land in separate pull
+requests (gupta958, review of #86):
+
+1. This amendment, with the card contract change and §9.5 step 3's tie keys.
+2. The schema migration above, with §9.2's DDL.
+3. **The query alone:** `hybrid_sql.py`, with tests of its results, its authorization and its
+   determinism. This pull request contains no plan harness, no `EXPLAIN` capture and no plan
+   evidence.
+4. **The plan harness, after step 3 has merged:** the S3-6 cases, checks S3-6a–e and the mutation
+   checks. From step 3's merge on, the query is frozen for S3-6. This pull request may not change
+   `hybrid_sql.py`. A change to the query after its plans have been seen is a new amendment to this
+   ADR, and the plans are captured again.
+5. The evidence run, with its report committed unchanged, and the results pull request, which
+   completes ORIENT item 9c.
+
+#### Review rulings (gupta958, 2026-10-19)
+
+Relayed by Myan on #86. All are applied above:
+- `hybrid_sql.py` belongs in the retrieval module.
+- The deterministic synthetic fixture is acceptable.
+- The plan's sequential scan of `occurrence` in the `retrieval_rows` join is captured, but it is not
+  an S3-6 failure. S2 measures its cost.
+- The query and the plan harness land in separate pull requests, in the order above.
 
 ### What is deliberately not a rule here
 
