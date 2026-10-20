@@ -36,3 +36,10 @@ make db-test -> 95 passed (db 79, retrieval 16); make test -> 394 passed; with a
 ### 2026-10-20T01:26:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:b4835f2
 feat(retrieval): the canonical two-leg query, hybrid_sql.py, with result, authorization and determinism tests (ADR-0007 Amendment 1 step 3)
 7 files changed, 474 insertions(+), 2 deletions(-)
+
+### 2026-10-20T01:26:52Z · HANDOFF · myan · claude-code/opus-5.5 · 3e4ffe5
+PR for gupta958. After merge the query is frozen for S3-6: next is the plan harness and its mutation tests in a separate PR that may not touch hybrid_sql.py (step 4), then the evidence run (step 5).
+
+### 2026-10-20T01:26:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:3e4ffe5
+docs(agents): hand hybrid_sql.py to gupta958
+1 file changed, 3 insertions(+)
