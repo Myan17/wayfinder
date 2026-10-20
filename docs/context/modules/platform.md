@@ -18,9 +18,9 @@ design_sections:
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
-  "Makefile": "b05391f52d55e72d"
+  "Makefile": "ebbf6d58abfff743"
   "pyproject.toml": "4effd0a732d4ad92"
-verified_on: 2026-10-04
+verified_on: 2026-10-19
 ---
 
 # platform
@@ -46,7 +46,7 @@ make fmt         # ruff format
 make guardrails  # identity, scope, agent-log, card freshness, CODEOWNERS
 make digest      # build this week's gate report from the task logs
 make db-up       # start the pinned ParadeDB (S3 digest) and wait for a real query, not just health
-make db-test     # db/tests against it; any skipped test fails the target
+make db-test     # db/tests and apps/api/tests/retrieval against it; any skipped test fails the target
 make db-down     # stop it
 make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dump
 make manifest-check  # validate the example release manifest and print its cache keys
@@ -163,3 +163,4 @@ by CI on every pull request.
 | 2026-09-24 | Go `ingestd` scaffold: module, `cmd/ingestd`, `make go-test`/`go-build`, CI job `go` in the dispatcher | — |
 | 2026-09-28 | `eval/miners/tests` collected and `eval/miners` on the pythonpath, for the S1 miner's core (eval-data) | — |
 | 2026-10-04 | `jsonschema[format-nongpl]` added to the dev extra and locked, for eval-data's pairs-file checks (gupta958's review of #56) | — |
+| 2026-10-19 | `make db-test` also runs `apps/api/tests/retrieval`, retrieval's SQL tests against the pinned database (ADR-0007 Amendment 1 step 3) | — |
