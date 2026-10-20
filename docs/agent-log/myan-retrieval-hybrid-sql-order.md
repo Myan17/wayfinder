@@ -37,3 +37,16 @@ Stacked PR for gupta958, after 3a. Then step 4 (plan harness) once both are merg
 ### 2026-10-20T01:30:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:a9d6eaa
 docs(agents): hand the ordering tests to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T02:01:29Z · READ · myan · claude-code/opus-5.5 · 8ce71cf
+gupta958 on #89 (relayed by Myan): ordering coverage incomplete. Per-leg tests exercise repo_id and path but not the final representation_id tie-break; equal-fusion testing exercises path but not repo_id, start_line or representation_id; the per-file-cap test checks only that three rows survive, not which three. Add tests that fail if any component of the pinned keys is removed or reordered.
+
+### 2026-10-20T02:01:29Z · EDIT · myan · claude-code/opus-5.5 · 8ce71cf
+Rebased onto #88's revision (c6e1503); the retrieval card conflict resolved by keeping #88's row and adding this file's. test_hybrid_sql_order.py rewritten: equal-length texts with different term counts for deliberate BM25 order; explicit representation ids inserted in reverse; equal fused scores from rank-swapped pairs. Tests: each leg's ranks (one fixture where every key component disagrees with the next); the lexical cut (103 matches, the best row last by repo and path, a tied pair at the boundary); equal fused scores decided by repo_id, path, start_line and representation_id in turn; the per-file cap deciding by start_line and by representation_id, with an uncapped passage in another path and another repository; and every ORDER BY key list pinned on the statement.
+
+### 2026-10-20T02:01:29Z · TEST · myan · claude-code/opus-5.5 · 8ce71cf
+A mutant script tried every drop, adjacent swap and direction flip of each of the five pinned keys (55 mutants). Before the rewrite, 35 survived the order tests. After it, 3 survived, all trailing-id drops masked by an earlier sort over the same id (the cut under the lexical ranks, the per-file window under the final order, pg_search's tie order under the cut). With the statement-key test, 0 of 55 survive. The cap's PARTITION BY reduced to path only or to repo only: 2 failed each. make db-test -> 97 passed; make test -> 391 passed; ruff clean.
+
+### 2026-10-20T02:01:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:8ce71cf
+test(retrieval): pin every component of every ordering key (gupta958's review of #89)
+3 files changed, 156 insertions(+), 61 deletions(-)
