@@ -20,13 +20,6 @@ def test_only_authorized_repositories_are_returned(world):
     assert {r["repo_id"] for r in rows} == {granted[0], public[0]}
 
 
-def test_an_expired_scope_returns_nothing(world):
-    s = world.spec("sha256:a")
-    repo, gen = world.repo(s)
-    world.add(repo, gen, s, "def parse_widget(): pass", "src/w.py", vec=0)
-    assert run(world.db, scope(granted=[repo], expires_in=timedelta(seconds=-1)), vectors={s: axis(0)}) == []
-
-
 def test_rows_not_live_or_not_in_the_active_generation_are_excluded(world):
     s = world.spec("sha256:a")
     repo, gen = world.repo(s)
@@ -109,22 +102,42 @@ def test_a_path_alone_is_enough_for_the_lexical_leg(world):
     assert [r["representation_id"] for r in rows if r["lexical_rank"] is not None] == [hit]
 
 
+class Recorder:
+    """A connection that records the transaction and each statement, by kind."""
+
+    def __init__(self, conn):
+        self.conn, self.seen = conn, []
+
+    def transaction(self):
+        self.seen.append("BEGIN")
+        return self.conn.transaction()
+
+    def execute(self, sql, params=None):
+        self.seen.append(sql if sql == h.SESSION else "query")
+        return self.conn.execute(sql, params)
+
+
 def test_the_relaxed_scan_is_set_inside_the_querys_transaction(world):
     s = world.spec("sha256:a")
     repo, _ = world.repo(s)
-    seen = []
+    conn = Recorder(world.db)
+    h.execute(conn, h.build("x", {s: axis(0)}, scope(granted=[repo]), k=5), scope(granted=[repo]))
+    assert conn.seen == ["BEGIN", h.SESSION, "query"]
 
-    class Spy:
-        def __init__(self, conn):
-            self.conn = conn
 
-        def transaction(self):
-            seen.append("BEGIN")
-            return self.conn.transaction()
-
-        def execute(self, sql, params=None):
-            seen.append(sql if sql == h.SESSION else "query")
-            return self.conn.execute(sql, params)
-
-    h.execute(Spy(world.db), h.build("x", {s: axis(0)}, scope(granted=[repo]), k=5), scope(granted=[repo]))
-    assert seen == ["BEGIN", h.SESSION, "query"]
+@pytest.mark.parametrize("when", ["at build", "before the statement", "during the statement"])
+def test_an_expired_lease_returns_nothing(world, when):
+    """Fail closed at every check: when building, just before the statement runs, and after its rows
+    are fetched. A statement built before expiry must not serve rows after it."""
+    s = world.spec("sha256:a")
+    repo, gen = world.repo(s)
+    world.add(repo, gen, s, "def parse_widget(): pass", "src/w.py", vec=0)
+    sc = scope(granted=[repo], expires_in=timedelta(minutes=5))
+    held, expired = sc.expires_at - timedelta(seconds=1), sc.expires_at
+    query = h.build("widget", {s: axis(0)}, sc, k=5, now=expired if when == "at build" else held)
+    assert when == "at build" or h.execute(world.db, query, sc, clock=lambda: held)  # rows while it holds
+    ticks = {"at build": [held, held], "before the statement": [expired],
+             "during the statement": [held, expired]}
+    conn = Recorder(world.db)
+    assert h.execute(conn, query, sc, clock=iter(ticks[when]).__next__) == []
+    assert ("query" in conn.seen) == (when != "before the statement")

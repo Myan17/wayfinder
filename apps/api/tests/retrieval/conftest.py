@@ -13,7 +13,15 @@ from wayfinder.authz.interface import AuthorizedScope, Principal, PrincipalKind
 from wayfinder.retrieval import hybrid_sql as h
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "db" / "tests"))
-from conftest import DSN, db, empty_db  # noqa: F401  the schema module's database fixtures
+from conftest import (  # noqa: F401  the schema module's database fixtures
+    DSN,
+    db,
+    empty_db,
+    seed_connection,
+    seed_generation,
+    seed_repo,
+    seed_spec,
+)
 
 
 @pytest.fixture
@@ -47,36 +55,21 @@ class World:
     """Repositories with an active generation, and helpers to add indexed passages to them."""
 
     def __init__(self, conn):
-        self.db = conn
-        self.conn_id = conn.execute(
-            "INSERT INTO connection (mode, account_login, state, state_observed_at, state_valid_until,"
-            " egress_policy, config) VALUES ('public_readonly', 'acme', 'active', now(),"
-            " now() + interval '1 hour', '{}', '{}') RETURNING id").fetchone()[0]
-        self.n = 0
+        self.db, self.n = conn, 0
+        self.conn_id = seed_connection(conn)
 
     def spec(self, digest: str) -> int:
-        return self.db.execute(
-            "INSERT INTO embedding_spec (model_ref, model_digest, runtime, doc_template, query_template,"
-            " pooling, normalize, dimension, truncation, tokenizer_ref) VALUES ('m', %s, 'ollama/0',"
-            " 'd: {body}', 'q: {query}', 'mean', true, 768, 'end', 't') RETURNING id",
-            (digest,)).fetchone()[0]
+        return seed_spec(self.db, digest=digest)
 
     def repo(self, spec: int, *, public: bool = False) -> tuple[int, int]:
-        vis = "public" if public else "private"
-        repo = self.db.execute(
-            "INSERT INTO repository (connection_id, github_repo_id, full_name, default_branch, visibility,"
-            " visibility_observed_at, visibility_valid_until, serving_state, data_class) VALUES"
-            " (%s, (random() * 1e12)::bigint, 'acme/r', 'main', %s, now(), now() + interval '1 hour',"
-            " 'active', %s) RETURNING id", (self.conn_id, vis, vis)).fetchone()[0]
+        repo = seed_repo(self.db, self.conn_id, visibility="public" if public else "private")
         gen = self.generation(repo, spec, "active")
         self.db.execute("UPDATE repository SET active_generation_id = %s WHERE id = %s", (gen, repo))
         return repo, gen
 
     def generation(self, repo: int, spec: int, status: str) -> int:
-        return self.db.execute(
-            "INSERT INTO generation (repo_id, desired_generation, commit_sha, spec_id, chunker_version,"
-            " status) VALUES (%s, 1, 'c' || nextval('generation_id_seq'), %s, 'v1', %s) RETURNING id",
-            (repo, spec, status)).fetchone()[0]
+        self.n += 1
+        return seed_generation(self.db, repo, spec, status=status, n=self.n)
 
     def add(self, repo, gen, spec, body, path, *, vec=1, start_line=1, live=True) -> int:
         """`vec` is an axis index, or a whole vector."""

@@ -53,3 +53,16 @@ After the split: make db-test -> 90 passed (retrieval 11); make test -> 389 pass
 ### 2026-10-20T01:28:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:3e84702
 refactor(retrieval): split the ordering tests into their own pull request; shared helpers in conftest
 5 files changed, 100 insertions(+), 152 deletions(-)
+
+### 2026-10-20T01:45:34Z · READ · myan · claude-code/opus-5.5 · 6c140c1
+gupta958 on #88 (relayed by Myan), blocking: build() checks expiry but execute() never does, so a statement built just before expiry could return rows after the lease expires. Check scope.expires_at immediately before execution and again after fetching, before returning; fail closed with no rows; deterministic tests for expiry between build and execute and during execution.
+
+### 2026-10-20T01:45:34Z · EDIT · myan · claude-code/opus-5.5 · 6c140c1
+hybrid_sql.execute takes an injectable clock (default now in UTC); returns [] if the lease has expired before the statement runs (the statement is not sent) and again after the rows are fetched, before the assertion and return. Tests: one parametrized test over expiry at build, before the statement (statement not sent) and during it (statement sent, nothing returned); the fixture first shows rows while the lease holds. To stay under 400 lines: Recorder replaces the relaxed-scan test's local spy, the old expired-scope test folded into the parametrized one, World uses the schema module's seed helpers, the module docstring shortened. Retrieval card row edited in place.
+
+### 2026-10-20T01:45:34Z · TEST · myan · claude-code/opus-5.5 · 6c140c1
+make db-test -> 92 passed (retrieval 13); make test -> 391 passed; unreachable DSN -> 380 passed, 11 skipped; ruff clean. Mutants: pre-statement check removed -> 2 failed; post-fetch check removed -> 1 failed.
+
+### 2026-10-20T01:45:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:6c140c1
+fix(retrieval): execute re-checks the lease before the statement and before returning rows (gupta958's review of #88)
+5 files changed, 80 insertions(+), 63 deletions(-)

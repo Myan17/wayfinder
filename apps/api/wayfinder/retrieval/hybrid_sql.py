@@ -1,27 +1,18 @@
 """The canonical two-leg hybrid query -- DESIGN 9.5 steps 2, 3, 5 and 6, pinned by ADR-0007 Amendment 1.
 
-One statement: a lexical leg over `representation` through `rep_bm25`, one dense leg per embedding
-specification over `vector_d768` through `vec768_hnsw`, RRF fusion, then `retrieval_rows` for the
-location in the active generation. This is the shape the indexing card documents; nothing else of
-indexing's tables is read.
-
-Each leg joins `eligible_repo` and takes its filter from authz's `sql_predicate`, applied to the
-relation that leg scans (9.1.5), so the iterative scan keeps going until it finds authorized rows.
-`execute` asserts every row again with `assert_rows_authorized`.
-
-Every value a caller supplies is a bound parameter. The lexical leg uses `paradedb.match`, which
-tokenizes its input with the field's own tokenizer and has no query grammar, so query text cannot
-inject query syntax (WF-25).
-
-S3-6 captures this statement's plans and S2 times it. Both import it; neither copies it. Once merged,
-a change to the statement is a new amendment to ADR-0007, and its plans are captured again.
+One statement, in the shape the indexing card documents: a lexical leg over `representation` through
+`rep_bm25`, one dense leg per specification over `vector_d768` through `vec768_hnsw`, RRF, then
+`retrieval_rows` for locations. Each leg filters its scanned relation with authz's `sql_predicate`
+(9.1.5), and `execute` asserts every row again. Every caller value is a bound parameter, and
+`paradedb.match` has no query grammar (WF-25). S3-6 and S2 import this statement and never copy it;
+once merged, changing it is a new ADR-0007 amendment, and its plans are captured again.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from wayfinder.authz.interface import AuthorizedScope
@@ -128,13 +119,24 @@ SELECT representation_id, repo_id, path, blob_sha, start_line, end_line, symbol,
     return HybridQuery(sql, params)
 
 
-def execute(conn, query: HybridQuery, scope: AuthorizedScope) -> list[dict[str, Any]]:
+def execute(
+    conn, query: HybridQuery, scope: AuthorizedScope, *, clock: Callable[[], datetime] | None = None
+) -> list[dict[str, Any]]:
     """Run the statement in its own transaction with the dense legs' session setting, then assert
-    every row against the scope (9.1.5's second layer). `conn` is a psycopg connection."""
+    every row against the scope (9.1.5's second layer). `conn` is a psycopg connection.
+
+    The scope's lease is checked again just before the statement runs and again before any row is
+    returned: a statement built before expiry must not serve rows after it. An expired scope returns
+    no rows, as `sql_predicate` does at build time. `clock` exists so tests can pin the boundary."""
+    clock = clock or (lambda: datetime.now(UTC))
+    if scope.expires_at <= clock():
+        return []
     with conn.transaction():
         conn.execute(SESSION)
         cur = conn.execute(query.sql, query.params)
         names = [c.name for c in cur.description]
         rows = [dict(zip(names, r, strict=True)) for r in cur.fetchall()]
+    if scope.expires_at <= clock():
+        return []
     assert_rows_authorized(rows, scope)
     return rows
