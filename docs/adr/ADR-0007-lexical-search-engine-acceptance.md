@@ -55,7 +55,7 @@ that was measured is the artifact that ships.
 | S3-3 | **Snapshot visibility, quiet case** | In `REPEATABLE READ`, a BM25 query run twice in one transaction returns identical results while a concurrent session inserts and commits matching rows between the two | Fallback. This is the weakest form of the claim; failing it ends the discussion |
 | S3-4 | **Snapshot visibility, under an activation** | The five-step interleaving below, all five steps | Fallback |
 | S3-5 | Deleted rows leave the index with their row | After `DELETE` + `COMMIT`, a BM25 query in a **new** transaction never returns the deleted row; a transaction whose snapshot predates the delete still does | Fallback. Deletion closure (§9.3.6) depends on the index not outliving its rows |
-| S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
+| S3-6 | The planner uses the index, and we can see that it does | `EXPLAIN (ANALYZE, BUFFERS)` on the two-leg hybrid query of §9.5 (pinned by Amendment 1) shows the BM25 scan in use rather than a sequential scan with a filter, and the plan is capturable as text for the release manifest | **Not** an automatic fallback. Record the plan and raise it at G0 — a planner problem is tunable, an MVCC problem is not |
 
 ### S3-1: the four points that establish native execution
 
@@ -125,6 +125,69 @@ The reader's snapshot must be established **before** the switch and must survive
 Step 4 is the rule. If the reader's second query sees any row from the new generation, the BM25
 index is answering from outside the caller's snapshot and `pg_search` fails A-5. Step 5 exists so a
 "nothing ever changes" implementation cannot pass by being uniformly stale.
+
+### Amendment 1 — S3-6's query and plan checks, pinned before the harness (2026-10-19)
+
+S3-6 names "the two-leg hybrid query of §9.5", but that query did not exist as text. If it were
+written while looking at plans, it could be shaped until the plan passed. This is the goalpost
+problem this ADR exists to prevent, so the query and the checks are fixed here first. S3-6's
+consequence is unchanged: a failing plan is recorded and raised, and is **not** an automatic
+fallback. ADR-0019 adds one use: S2 times this exact query (gupta958's ruling 5 on #85).
+
+**Where the query lives.** It goes in `apps/api/wayfinder/retrieval/hybrid_sql.py`, in the retrieval
+module, which owns the hybrid query (retrieval card). It is a function that returns SQL and
+parameters. Both legs take their authorization filter from `authz`'s `sql_predicate`, the one helper
+§9.1.5 requires, applied to the relation each leg scans. The S3-6 harness and S2 both import it, and
+neither copies it.
+
+**Its shape** (§9.5 steps 2, 3, 5 and 6, in one statement):
+
+| Part | Pinned |
+|---|---|
+| Lexical leg | `representation`, matched with `paradedb.match` on `header` and on `body_text`, combined with `paradedb.boolean(should => …)`. `match` tokenizes the input and has no query grammar, so user text cannot inject query syntax (WF-25). Ordered by `paradedb.score` descending, then `id`. Top 100 |
+| Dense leg | One subquery per specification in scope, over `vector_d768` with `spec_id` bound as a parameter, ordered by `embedding <=> $query`. Top 100, with `hnsw.iterative_scan = relaxed_order` set by `SET LOCAL` in the query's transaction. The relaxed results are ranked by exact distance before ranks are assigned (§9.5 step 3). S3-6 and S2 run it with one specification |
+| Filter | Each leg joins `eligible_repo` and applies `sql_predicate` to its own scanned alias, so `live` and the authorization filter sit on the scanned relation |
+| Fusion | RRF with `k = 60` across the legs. The result is joined to `retrieval_rows` for the location in the active generation |
+| Per-file cap and order | At most 3 passages per `(repo_id, path)`. Final order: fused score descending, then `repo_id`, `path`, `start_line` |
+
+**Fixture.** The data is synthetic and deterministic, because S1's real chunks need the chunker
+(P1). There are 100 private repositories, so `verified_public` is false and only the granted array
+admits rows. The fixture is built at the two sizes ADR-0019 uses: **7,175** and **60,000** live
+representations, spread evenly across repositories. Vectors use ADR-0005's stand-in, seeded by row
+number. `ANALYZE` runs before any plan is captured. The query vector is the stand-in vector of a
+fixed row, and the query text is a fixed string matching about 1% of the rows.
+
+**Session settings.** `max_parallel_workers_per_gather = 0`, as ADR-0019 requires for S2, so the
+captured plan is the plan S2 times. Everything else uses the pinned image's defaults.
+
+**Cases.** There are two sizes, and three selectivities in which the granted array admits 1, 10 or
+100 of the 100 repositories. Each combination is run twice: once as a **custom** plan with literal
+parameters, and once as a **generic** plan (`PREPARE`, then `SET plan_cache_mode =
+force_generic_plan`, then `EXPLAIN (ANALYZE, BUFFERS) EXECUTE`). The generic plan is the one §9.2
+asks for: it shows the partial indexes are chosen with a parameterized `spec_id` and granted array.
+That makes 12 plans.
+
+**The checks.** Each plan is read from `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` as a tree. S3-6
+passes only if all four checks hold on all 12 plans:
+
+| # | Check |
+|---|---|
+| S3-6a | The lexical leg is served by `pg_search`: a `Custom Scan` node whose provider is ParadeDB, on `representation`. No node is a `Seq Scan` on `representation` |
+| S3-6b | The dense leg is served by the HNSW index: an `Index Scan` using `vec768_hnsw` on `vector_d768`. No node is a `Seq Scan` on `vector_d768` |
+| S3-6c | S3-6a and S3-6b hold on the generic plans as well as the custom ones |
+| S3-6d | Every plan is also captured with `FORMAT TEXT`, and the text is written to the evidence report with the image digest and the commit, for the release manifest |
+
+**Mutation checks.** These show the checks can fail. Dropping `rep_bm25` must fail S3-6a, and
+dropping `vec768_hnsw` must fail S3-6b. Both run as tests.
+
+**What S3-6 does not judge.** It does not judge the plan's other joins, such as how
+`retrieval_rows` reaches `occurrence`, or its timing. Those plans are captured in S3-6d, and S2
+times the whole statement. A slow join is S2's finding, not an S3-6 failure.
+
+**Where it runs.** The evidence run is local, on the pinned image, at both sizes, and its report is
+committed unchanged. CI's pinned job runs the 7,175 cases on every pull request, so a change that
+breaks the plan fails before it merges. The 60,000 cases join CI too if they fit the job's time;
+otherwise they stay local.
 
 ### What is deliberately not a rule here
 
