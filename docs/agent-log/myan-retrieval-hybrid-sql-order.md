@@ -57,3 +57,10 @@ Revised for gupta958's re-review of #89, rebased onto #88's revision.
 ### 2026-10-20T02:01:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:ba86479
 docs(agents): hand #89's revision back to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T02:01:42Z · TEST · myan · claude-code/opus-5.5 · e61eed2
+Correction to the previous TEST entry, whose counts were written before the run finished: make db-test -> 101 passed (db 79, retrieval 22: test_hybrid_sql 13, test_hybrid_sql_order 9); make test -> 400 passed. The mutant results in that entry stand as measured.
+
+### 2026-10-20T02:01:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:e61eed2
+docs(agents): correct #89's test counts in the task log
+1 file changed, 3 insertions(+)
