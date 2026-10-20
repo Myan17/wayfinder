@@ -66,3 +66,10 @@ make db-test -> 92 passed (retrieval 13); make test -> 391 passed; unreachable D
 ### 2026-10-20T01:45:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:6c140c1
 fix(retrieval): execute re-checks the lease before the statement and before returning rows (gupta958's review of #88)
 5 files changed, 80 insertions(+), 63 deletions(-)
+
+### 2026-10-20T01:45:35Z · HANDOFF · myan · claude-code/opus-5.5 · beca75b
+Revised for gupta958's re-review of #88. #89 is rebased onto it with the ordering coverage.
+
+### 2026-10-20T01:45:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:beca75b
+docs(agents): hand #88's revision back to gupta958
+1 file changed, 3 insertions(+)
