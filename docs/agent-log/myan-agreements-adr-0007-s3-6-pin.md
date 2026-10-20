@@ -39,3 +39,10 @@ ADR-0007: Amendment 1 under the acceptance rules (query location in the retrieva
 ### 2026-10-20T00:25:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:ed8273f
 docs(agreements): ADR-0007 Amendment 1 — S3-6's canonical two-leg query and plan checks, pinned before the harness
 2 files changed, 101 insertions(+), 1 deletion(-)
+
+### 2026-10-20T00:25:16Z · HANDOFF · myan · claude-code/opus-5.5 · 72021de
+PR for gupta958. After merge: the canonical query (apps/api/wayfinder/retrieval/hybrid_sql.py) and the S3-6 harness with its tests, then the evidence run and results; then item 7's S2 harness.
+
+### 2026-10-20T00:25:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:72021de
+docs(agents): hand ADR-0007 Amendment 1 to gupta958
+1 file changed, 3 insertions(+)
