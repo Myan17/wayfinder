@@ -43,3 +43,13 @@ PR for gupta958. After merge the query is frozen for S3-6: next is the plan harn
 ### 2026-10-20T01:26:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:3e4ffe5
 docs(agents): hand hybrid_sql.py to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T01:28:50Z · DECIDE · myan · claude-code/opus-5.5 · 3e84702
+check_pr_size failed at 442 counted lines, so step 3 splits by function before any push: this PR (3a) keeps hybrid_sql.py, the authorization and result tests, the shared test helpers (moved into the retrieval tests' conftest) and make db-test; a stacked PR (3b) adds the four ordering tests (tie keys, the lexical cut, equal fused scores, the per-file cap). Neither has a plan harness. The query is frozen when 3a merges; a bug 3b found before step 4 would still be fixed before any plan is seen. Scope widened to platform for the Makefile line and its card.
+
+### 2026-10-20T01:28:50Z · TEST · myan · claude-code/opus-5.5 · 3e84702
+After the split: make db-test -> 90 passed (retrieval 11); make test -> 389 passed; unreachable DSN -> 380 passed, 9 skipped; ruff clean. The four moved tests pass unchanged in the stacked branch.
+
+### 2026-10-20T01:28:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:3e84702
+refactor(retrieval): split the ordering tests into their own pull request; shared helpers in conftest
+5 files changed, 100 insertions(+), 152 deletions(-)
