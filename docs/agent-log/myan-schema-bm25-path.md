@@ -53,3 +53,10 @@ Schema card re-read against the regenerated db/schema.sql (path column, unique k
 ### 2026-10-20T00:54:02Z · COMMIT · myan · claude-code/opus-5.5 · parent:bd42968
 docs(schema): card verified against the regenerated db/schema.sql
 2 files changed, 5 insertions(+), 2 deletions(-)
+
+### 2026-10-20T00:56:15Z · TEST · myan · claude-code/opus-5.5 · e80be26
+CI unit failed on #87: infra/manifest/example.json schema_version '20260922230300' is not the newest migration '20261019230000' (test_release_manifest::test_cli_validate_and_cache_key). I had run the db tests and guardrails but not make test before pushing. Bumped the example's schema_version; make test -> 378 passed.
+
+### 2026-10-20T00:56:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:e80be26
+fix(platform): the example release manifest names the newest migration
+2 files changed, 4 insertions(+), 1 deletion(-)
