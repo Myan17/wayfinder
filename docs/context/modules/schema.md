@@ -16,10 +16,10 @@ design_sections:
   - "DESIGN §9.3.5–9.3.6 (activation, deletion closure)"
   - "DESIGN §18.3 (immutable migrations)"
 verified_hashes:
-  "db/schema.sql": "302e84b53272e328"
+  "db/schema.sql": "634a8e4f29ade0a7"
   "db/views/eligible_repo.sql": "4c23a29fabcc67cc"
   "db/views/retrieval_rows.sql": "acf9bb56c489f0f7"
-verified_on: 2026-09-23
+verified_on: 2026-10-19
 ---
 
 # schema

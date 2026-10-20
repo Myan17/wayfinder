@@ -46,3 +46,10 @@ PR for gupta958. After merge: hybrid_sql.py alone with result, authorization and
 ### 2026-10-20T00:53:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:44e7096
 docs(agents): hand the BM25 path migration to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T00:54:01Z · EDIT · myan · claude-code/opus-5.5 · bd42968
+Schema card re-read against the regenerated db/schema.sql (path column, unique key, occurrence FK, rep_bm25 DDL; views unchanged); hashes recorded with check_context_freshness.py --fix schema.
+
+### 2026-10-20T00:54:02Z · COMMIT · myan · claude-code/opus-5.5 · parent:bd42968
+docs(schema): card verified against the regenerated db/schema.sql
+2 files changed, 5 insertions(+), 2 deletions(-)
