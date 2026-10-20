@@ -90,3 +90,10 @@ ADR-0019 preflight: split into warm cases (one attachment on an existing backend
 ### 2026-10-20T00:13:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:c53dbf0
 docs(agreements): ADR-0019 per gupta958's third review — a fresh backend and attachment for every cold preflight case
 2 files changed, 26 insertions(+), 5 deletions(-)
+
+### 2026-10-20T00:13:17Z · HANDOFF · myan · claude-code/opus-5.5 · e428f18
+Third revision for gupta958's re-review of #85. After merge: item 9c's canonical two-leg query harness, then the S2 harness; only the A1 run is blocked (9b).
+
+### 2026-10-20T00:13:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:e428f18
+docs(agents): hand ADR-0019's third revision back to gupta958
+1 file changed, 3 insertions(+)
