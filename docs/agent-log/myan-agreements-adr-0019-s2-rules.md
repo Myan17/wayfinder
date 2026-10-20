@@ -63,3 +63,13 @@ Revised for gupta958's re-review of #85. After merge: item 9c's canonical two-le
 ### 2026-10-19T23:57:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:f7d1f30
 docs(agents): hand ADR-0019's revision back to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T00:06:04Z · READ · myan · claude-code/opus-5.5 · ccd3ecb
+gupta958's second review of #85 (relayed by Myan): two blockers. (1) parallel query off does not stop pg_search or another extension creating backend threads; schedstat measures one task; add a preflight that detects thread creation, transient included, and either count all backend threads at high resolution or stop. (2) calibration reference: elapsed x 2 - idle counts iowait and steal; define the exact /proc/stat fields, exclude idle, iowait and steal, avoid double-counting guest; add a noise gate on before/after background. Four open choices accepted. Pinned ONNX and tokenizer sizes and hashes independently verified by gupta958.
+
+### 2026-10-20T00:06:04Z · EDIT · myan · claude-code/opus-5.5 · ccd3ecb
+ADR-0019: the backend is charged through its process CPU clock (clock_getcpuclockid on the host pid, then clock_gettime), which sums the scheduler runtime over the whole thread group, live and exited. New backend thread preflight: strace -f on clone/clone3/fork/vfork over 2 sizes x 3 selectivities, warm and cold; none means the process clock must match the main thread's schedstat within 10 us; threads only are recorded and the clock must be >= schedstat; any child process is an error. Calibration: executed = user + nice + system + irq + softirq from /proc/stat's cpu line, excluding idle, iowait and steal, guest not added (already in user/nice); 60 s background before and after each block; noise gate |b_after - b_before| x elapsed <= 1% of the reference, else error; iowait and steal reported. Second-review section, S2-8 provenance and the Error outcome updated.
+
+### 2026-10-20T00:06:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccd3ecb
+docs(agreements): ADR-0019 per gupta958's second review — every backend thread counted, exact calibration fields, noise gate
+2 files changed, 86 insertions(+), 22 deletions(-)

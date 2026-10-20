@@ -29,8 +29,10 @@ measurement is **valid and complete**.
 - **Services:** Postgres and the query Ollama instance each run in their own container, so each has
   its own cgroup. The ingestion Ollama instance gets a third container, used only for S2-6.
   - Postgres uses the pinned ParadeDB image (ADR-0007's digest), with `max_parallel_workers_per_gather = 0`.
-    That way every call runs in one backend process, which the per-call accounting below charges. If
-    production later allows parallel query, the SQL stage is measured again.
+    That way no parallel worker processes are started, so the work of a call stays in its backend
+    process. If production later allows parallel query, the SQL stage is measured again. Parallel
+    query being off does not stop an extension such as `pg_search` from creating threads inside the
+    backend, so the counter below counts all of the backend's threads, and the preflight checks this.
   - Ollama is pinned by version. The query embedder is `nomic-embed-text` at digest
     `0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f`, the digest ADR-0005's run
     captured.
@@ -72,7 +74,7 @@ measured.
 | Stage (§10.3 row) | Charged to | Counter | Resolution |
 |---|---|---|---|
 | Query embedding | **every thread of every process** in the query Ollama container: `ollama serve`, its model runner, and any thread that starts or exits during the call | cgroup v2 `cpu.stat` `usage_usec` for that container, read before and after the call | 1 µs |
-| Hybrid SQL | the Postgres backend process serving the call (one thread; parallel query is off) | field 1 of `/proc/<host pid>/schedstat`, the scheduler's on-CPU time in nanoseconds. The host pid comes from the backend's `NSpid` entry, matched against `pg_backend_pid()` | 1 ns |
+| Hybrid SQL | **every thread of the Postgres backend** serving the call, including threads an extension creates and ends during the call | the backend's process CPU clock: `clock_getcpuclockid(<host pid>)`, then `clock_gettime`. This is the scheduler's runtime summed over the whole thread group, live and exited threads alike. The host pid comes from the backend's `NSpid` entry, matched against `pg_backend_pid()` | 1 ns |
 | Rerank | the calling thread in the harness | `clock_gettime(CLOCK_THREAD_CPUTIME_ID)`, through `time.thread_time_ns()` | 1 ns |
 
 The cgroup counter is used for Ollama because Ollama is multi-threaded, and its runner is a child
@@ -81,8 +83,34 @@ them, and it counts both processes. Ollama's idle background CPU is measured ove
 calls, and reported as a rate. It is not subtracted. The report gives that rate multiplied by the
 median call duration beside the p50.
 
-The harness checks each counter before use. It confirms that `/proc/<pid>/schedstat` exists (the
-kernel was built with `CONFIG_SCHED_INFO`) and that the cgroup is v2. It reads each counter twice
+### The backend thread preflight
+
+`/proc/<pid>/schedstat` measures one task, so it is not used for Postgres. The process CPU clock
+above counts every thread. The preflight checks what the backend actually does with the pinned
+extension and the canonical query, and makes sure no work leaves the thread group.
+
+1. Open a fresh connection, and attach `strace -f -qq -e trace=clone,clone3,fork,vfork -p <host pid>`
+   to its backend. Because strace logs every creation as it happens, a thread that starts and ends
+   within a call is still caught.
+2. Run the canonical query once for each corpus size and selectivity level (two sizes × three levels):
+   once warm, and once after the cold reset below. Then detach.
+3. Classify every creation the backend made:
+   - **None.** The backend is one thread for this query. The process clock must then agree with the
+     main thread's `schedstat` within 10 µs per call, which checks the clock.
+   - **Threads only** (`clone` or `clone3` with `CLONE_THREAD`). The process clock already includes
+     them. The report records the count and thread names. The process clock must be at least the
+     main thread's `schedstat` on every call, and the report gives the difference.
+   - **Any child process** (`fork`, `vfork`, or `clone` without `CLONE_THREAD`). That child's CPU is
+     outside the backend's thread group, so no counter here charges it to the call. S2 stops as an
+     **error**.
+
+The preflight runs under ptrace, which slows every traced call, so none of its timings are
+measurements. If strace cannot attach, or the process clock cannot be read, S2 is an **error**.
+
+### Counter checks
+
+The harness checks each counter before use. It confirms that the backend's process clock can be
+read from the host and that the cgroup is v2. It reads each counter twice
 across a busy target and requires a nonzero difference below 10 µs, to show the counter's real
 resolution. If any check fails, S2 is an **error**.
 
@@ -110,26 +138,44 @@ resolution. If any check fails, S2 is an **error**.
 
 ## The calibration cross-check
 
-The calibration does not trust any one counter. Its reference is **machine idle time**, which the
-kernel keeps by recording when each CPU enters and leaves idle (`/proc/stat`'s idle column, from the
-`NO_HZ` idle accounting; the report records whether the kernel has it). That is a different mechanism from the cgroup's runtime sum, the
-scheduler's per-task runtime and the thread clock, so it can catch an error in any of the three. It
-also covers processes the harness does not run, which a `getrusage` in the harness cannot.
+The calibration does not trust any one counter. Its reference is the machine's **executed CPU
+time** from the aggregate `cpu` line of `/proc/stat`, read in `USER_HZ` units:
+
+> executed = `user` + `nice` + `system` + `irq` + `softirq`
+
+- `idle` and `iowait` are excluded, because neither is execution: `iowait` is idle time while I/O
+  is outstanding.
+- `steal` is excluded, because it is time the hypervisor ran something else, and the A1 is a VM.
+- `guest` and `guest_nice` are **not added**: the kernel already counts them inside `user` and
+  `nice`, so adding them would count that time twice.
+
+These fields come from the kernel's CPU-time accounting per CPU, a different mechanism from the
+scheduler's runtime sums behind the cgroup counter, the process clock and the thread clock. The
+report records which accounting the kernel uses (`CONFIG_TICK_CPU_ACCOUNTING` or
+`CONFIG_VIRT_CPU_ACCOUNTING_GEN`). Because the reference covers the whole machine, it also covers
+the Ollama and Postgres processes the harness does not run, which a `getrusage` in the harness
+cannot.
 
 For each accounting path, before and after the run:
 
-1. Measure the machine's busy rate with the services up and idle for 60 s: elapsed time × 2 cores,
-   minus idle time.
-2. Run a calibration block of that stage's own work: real embedding calls, real two-leg queries, or
-   real rerank calls, back to back, for at least 30 s of CPU. Sum the path's per-call values.
-3. Compute the reference as the machine's busy time during the block, minus the idle busy rate ×
-   elapsed time, minus the harness process's own CPU (`CLOCK_PROCESS_CPUTIME_ID`). For the rerank
-   path, the harness's CPU is the work itself, so it is not subtracted.
-4. **The summed per-call values must be within ±5% of the reference.** If they are not, that path
+1. **Background before:** with the services up and no calls, measure executed CPU over 60 s. This
+   gives a background rate, `b_before`, in core-seconds per second.
+2. **Block:** run that stage's own work, using the same accounting path as the measurement: real
+   embedding calls, real two-leg queries, or real rerank calls, back to back, for at least 30 s of
+   CPU. Sum the path's per-call values.
+3. **Background after:** the same 60 s measurement immediately after the block gives `b_after`.
+4. **Noise gate:** if `|b_after − b_before|` × the block's elapsed time exceeds **1%** of the
+   reference in step 5, the background moved during calibration, and the calibration is an
+   **error**, not evidence.
+5. **Reference:** the executed CPU during the block, minus the mean of `b_before` and `b_after` ×
+   the block's elapsed time, minus the harness process's own CPU (`CLOCK_PROCESS_CPUTIME_ID`). For
+   the rerank path, the harness's CPU is the work itself, so it is not subtracted.
+6. **The summed per-call values must be within ±5% of the reference.** If they are not, that path
    misses or double-counts CPU, and S2 is an **error**, not a result.
 
-Over 30 s, a one-tick error in the idle accounting is under 0.1%, so the ±5% band measures the path
-and not the reference.
+The report gives `iowait` and `steal` for every block, so a busy hypervisor is visible even though
+neither field enters the reference. At `USER_HZ` = 100, the boundary error over a block of at least
+30 s is a few ticks, under 0.2%, so the ±5% band measures the path and not the reference.
 
 ## Acceptance rules
 
@@ -144,7 +190,7 @@ S2 is complete only if every rule holds on the A1.
 | S2-5 | **Cache states** | Warm and cold as defined above, both reported. The budget uses warm |
 | S2-6 | **Concurrent indexing** | Warm passes of query embedding, SQL and rerank are repeated while a full re-index of the corpus runs. The re-index uses the ingestion Ollama container at lower OS priority (§10.5), through `db/s6_identity.py`'s build path. The report gives the per-call CPU under indexing, and the indexing work's own CPU in core-seconds per second, from the ingestion container's cgroup, compared with the 25% reservation |
 | S2-7 | **The totals are recomputed, not edited** | A committed script recomputes §10.3's required-cores table from the report, using warm numbers. It covers every row, at the throughput its own mix implies, with **no answer-cache hit credited** (§10.3 decision 3). The L1-owned rows enter as their §10.3 estimates, labelled as estimates. The script's output is committed with the report |
-| S2-8 | **Provenance** | The report records `uname -a`, `lscpu`, the OCI shape, the kernel's `CONFIG_SCHED_INFO` and cgroup version, the image and model digests, the Ollama version, the reranker revision and hashes, the padding fraction and the commit. The results pull request commits the report unchanged, as #84 did for S6 |
+| S2-8 | **Provenance** | The report records `uname -a`, `lscpu`, the OCI shape, the kernel's `CONFIG_SCHED_INFO`, CPU-time accounting and cgroup version, the backend preflight's findings, the image and model digests, the Ollama version, the reranker revision and hashes, the padding fraction and the commit. The results pull request commits the report unchanged, as #84 did for S6 |
 
 ## What is deliberately not a rule
 
@@ -187,6 +233,17 @@ Method corrections from the same review:
 - Cold passes are separate, with an exact reset before each one.
 - The calibration is established independently of the processes being measured.
 
+Second review (gupta958, 2026-10-19), also applied above:
+- The four open choices are accepted: parallel query off, with the thread accounting described above; the
+  first 50 dev queries by SHA-256 of `group_id`; Ollama's idle CPU reported but not subtracted; and
+  machine CPU time as the calibration reference.
+- `/proc/<pid>/schedstat` measures one task, so the backend is charged through its process CPU
+  clock, which covers all its threads. A strace preflight detects every thread or child the backend
+  creates with the pinned extension and canonical query. A child process is an error.
+- The calibration reference is executed CPU (`user + nice + system + irq + softirq`), excluding
+  idle, iowait and steal, without double-counting guest time. A noise gate on the background before
+  and after each block turns background drift into an error.
+
 ## Decision
 
 *Empty until S2 runs on the A1.* It will be completed with one of:
@@ -195,5 +252,6 @@ Method corrections from the same review:
   rerank arm's CPU (S2-2); the recomputed totals table (S2-7); and A-4 marked **holds** or **does not
   hold** at the 70% bar, with no cache credit. If it does not hold, nothing is re-run with different
   choices. ADR-0015 step 5 and §10.3 decision 2 apply as written.
-- **Error:** a counter check or the calibration cross-check failed, or a rule could not be
+- **Error:** the backend preflight, a counter check, the calibration noise gate or the
+  calibration cross-check failed, or a rule could not be
   completed. Name it. The method is fixed before the next run, and the run is repeated in full.
