@@ -141,4 +141,5 @@ serving path), `tombstone` (survives restore).
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
 | 2026-09-22 | `retrieval_rows` created (schema v1 part 3), with `live` for the authz predicate | — |
+| 2026-10-19 | `representation.path` added, equal to every occurrence's path by a foreign key; `rep_bm25` now indexes `header`, `header_ident`, `body_text`, `body_ident`, `path` and `path_code` (schema migration `_representation_path_bm25`) | — |
 | 2026-10-19 | Contract: `retrieval` may also scan `representation` (via `rep_bm25`) and `vector_d768` (via `vec768_hnsw`), authorized, before `retrieval_rows`; `retrieval_rows` is no longer the only shape (ADR-0007 Amendment 1) | — |

@@ -54,15 +54,15 @@ def test_retrieval_rows_active_generation_only_and_predicate_applies(db):
         cur = seed_representation(db, repo, s, f"cur{repo}", live=True)
         seed_occurrence(db, repo, old, stale)
         seed_occurrence(db, repo, new, cur)
-        # The live representation also occurs in the retired generation, at a path it no longer has.
-        # `live` alone cannot hide that row; only the active-generation join can.
-        db.execute("INSERT INTO occurrence (repo_id, generation_id, representation_id, path, blob_sha,"
-                   " start_line, end_line) VALUES (%s, %s, %s, 'moved-away.py', 'b', 1, 2)", (repo, old, cur))
+        # The live representation also occurs in the retired generation, at a line it no longer has.
+        # `live` alone cannot hide that row; only the active-generation join can. (Same path: a
+        # representation's path is fixed by its header, ADR-0007 Amendment 1.)
+        seed_occurrence(db, repo, old, cur, start_line=40)
         db.execute("UPDATE repository SET active_generation_id = %s WHERE id = %s", (new, repo))
         rows[repo] = cur
 
-    visible = set(db.execute("SELECT representation_id, path FROM retrieval_rows").fetchall())
-    assert visible == {(rep, "a.py") for rep in rows.values()}
+    visible = set(db.execute("SELECT representation_id, path, start_line FROM retrieval_rows").fetchall())
+    assert visible == {(rep, "a.py", 1) for rep in rows.values()}
 
     # authz's row predicate (apps/api/wayfinder/authz/predicate.py) applied unchanged to the view.
     q = ("SELECT rr.representation_id FROM retrieval_rows rr JOIN eligible_repo eligible "

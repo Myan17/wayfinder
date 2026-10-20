@@ -430,7 +430,8 @@ CREATE TABLE public.representation (
     content_hash bytea NOT NULL,
     header text NOT NULL,
     body_text text NOT NULL,
-    live boolean DEFAULT false NOT NULL
+    live boolean DEFAULT false NOT NULL,
+    path text NOT NULL
 )
 WITH (autovacuum_vacuum_scale_factor='0.02');
 
@@ -793,6 +794,14 @@ ALTER TABLE ONLY public.representation
 
 
 --
+-- Name: representation representation_id_repo_id_path_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.representation
+    ADD CONSTRAINT representation_id_repo_id_path_key UNIQUE (id, repo_id, path);
+
+
+--
 -- Name: representation representation_id_repo_id_spec_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -875,7 +884,7 @@ CREATE UNIQUE INDEX one_active_per_repo ON public.generation USING btree (repo_i
 -- Name: rep_bm25; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX rep_bm25 ON public.representation USING bm25 (id, header, body_text, repo_id, live) WITH (key_field=id);
+CREATE INDEX rep_bm25 ON public.representation USING bm25 (id, ((header)::pdb.source_code), ((header)::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=header_ident')), ((body_text)::pdb.source_code), ((body_text)::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=body_ident')), ((path)::pdb.regex_pattern('[^/]+')), ((path)::pdb.source_code('alias=path_code')), repo_id, live) WITH (key_field=id);
 
 
 --
@@ -1001,6 +1010,14 @@ ALTER TABLE ONLY public.generation
 
 ALTER TABLE ONLY public.occurrence
     ADD CONSTRAINT occurrence_generation_id_repo_id_fkey FOREIGN KEY (generation_id, repo_id) REFERENCES public.generation(id, repo_id) ON DELETE RESTRICT;
+
+
+--
+-- Name: occurrence occurrence_path_matches_representation; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.occurrence
+    ADD CONSTRAINT occurrence_path_matches_representation FOREIGN KEY (representation_id, repo_id, path) REFERENCES public.representation(id, repo_id, path) ON DELETE RESTRICT;
 
 
 --

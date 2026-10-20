@@ -113,8 +113,8 @@ func (w *indexWorker) build(ctx context.Context, repo int64, token uuid.UUID, d 
 	body := fmt.Sprintf("g%d", gen)
 	_, err := w.pool.Exec(ctx, `
 		WITH c AS (INSERT INTO content (content_hash, body, token_count) VALUES (sha256($3::bytea), $3, 1) RETURNING content_hash),
-		     r AS (INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header, body_text)
-		           SELECT $1, (SELECT min(id) FROM embedding_spec), content_hash, content_hash, 'h', $3 FROM c RETURNING id)
+		     r AS (INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header, body_text, path)
+		           SELECT $1, (SELECT min(id) FROM embedding_spec), content_hash, content_hash, 'h', $3, 'f.go' FROM c RETURNING id)
 		INSERT INTO occurrence (repo_id, generation_id, representation_id, path, blob_sha, start_line, end_line)
 		SELECT $1, $2, id, 'f.go', 'b', 1, 1 FROM r`, repo, gen, body)
 	if err != nil {

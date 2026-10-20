@@ -714,9 +714,11 @@ CREATE TABLE representation (            -- lexical half + identity; vectors liv
   content_hash  bytea  NOT NULL REFERENCES content(content_hash),
   header        text   NOT NULL,         -- deterministic context, part of the embedded input
   body_text     text   NOT NULL,         -- denormalized copy of content.body so BM25 has one indexable row
+  path          text   NOT NULL,         -- fixed by the header (§9.4.2); BM25's separate path field (§9.5)
   live          boolean NOT NULL DEFAULT false,
   UNIQUE (repo_id, spec_id, input_hash),
-  UNIQUE (id, repo_id)                   -- lets occurrence bind representation and repo together
+  UNIQUE (id, repo_id),                  -- lets occurrence bind representation and repo together
+  UNIQUE (id, repo_id, path)             -- lets occurrence's path be held equal to this one
 );
 
 -- One vector table per embedding dimension, created by migration when a dimension first appears.
@@ -736,6 +738,8 @@ CREATE TABLE occurrence (                -- where a representation appears in on
   FOREIGN KEY (generation_id, repo_id) REFERENCES generation (id, repo_id) ON DELETE RESTRICT,
   FOREIGN KEY (representation_id, repo_id) REFERENCES representation (id, repo_id) ON DELETE RESTRICT,
   -- the composite keys make a cross-repository binding unrepresentable
+  FOREIGN KEY (representation_id, repo_id, path) REFERENCES representation (id, repo_id, path)
+    ON DELETE RESTRICT,                  -- an occurrence's path is its representation's path
   path          text NOT NULL,
   blob_sha      text NOT NULL,
   start_line    int  NOT NULL,
@@ -840,8 +844,20 @@ CREATE TABLE connection_admin (connection_id bigint NOT NULL REFERENCES connecti
 -- and no literal-matching assumption about partial-index proofs.
 CREATE INDEX vec768_hnsw ON vector_d768 USING hnsw (embedding halfvec_cosine_ops) WHERE live;
 CREATE INDEX vec768_repo ON vector_d768 (repo_id, spec_id) WHERE live;
-CREATE INDEX rep_bm25 ON representation USING bm25 (id, header, body_text, repo_id, live)
-  WITH (key_field = 'id');                      -- exact DDL per the pinned pg_search version
+-- §9.5 step 2's lexical fields (ADR-0007 Amendment 1): source_code splits identifiers on camelCase,
+-- snake_case and dots; the *_ident aliases keep the original dotted identifier (Unicode XID, as
+-- Python and Go allow); path is indexed by
+-- segment and split. Exact DDL per the pinned pg_search version (0.25.9).
+CREATE INDEX rep_bm25 ON representation USING bm25 (
+  id,
+  (header::pdb.source_code),
+  (header::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=header_ident')),
+  (body_text::pdb.source_code),
+  (body_text::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=body_ident')),
+  (path::pdb.regex_pattern('[^/]+')),
+  (path::pdb.source_code('alias=path_code')),
+  repo_id, live
+) WITH (key_field = 'id');
 CREATE INDEX rep_repo_live ON representation (repo_id) WHERE live;
 ```
 

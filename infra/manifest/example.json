@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "code_commit": "3926ec79b860103dfd299ad2cc70a2d5ff2d2f8d",
   "platform": {"os": "linux", "arch": "arm64", "python": "3.13"},
-  "schema_version": "20260922230300",
+  "schema_version": "20261019230000",
   "images": {"postgres": "paradedb/paradedb@sha256:c17153b8b7307734c3aede0393dfe8fa447f4a528ec028b1c3937186ab3ee242"},
   "extensions": {"pg_search": "0.25.9", "vector": "0.8.4"},
   "grammars": {"python": "unpinned-until-P1-chunker", "go": "unpinned-until-P1-chunker"},

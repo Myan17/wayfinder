@@ -153,9 +153,9 @@ def index_chunk(
         else:
             vector = embed(spec, text)
             rep = conn.execute(
-                "INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header, body_text)"
-                " VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
-                (repo_id, spec.id, ihash, chash, header, body),
+                "INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header, body_text,"
+                " path) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                (repo_id, spec.id, ihash, chash, header, body, path),
             ).fetchone()[0]
             conn.execute(
                 "INSERT INTO vector_d768 (representation_id, repo_id, spec_id, embedding)"
