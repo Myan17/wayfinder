@@ -50,3 +50,10 @@ A mutant script tried every drop, adjacent swap and direction flip of each of th
 ### 2026-10-20T02:01:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:8ce71cf
 test(retrieval): pin every component of every ordering key (gupta958's review of #89)
 3 files changed, 156 insertions(+), 61 deletions(-)
+
+### 2026-10-20T02:01:29Z · HANDOFF · myan · claude-code/opus-5.5 · ba86479
+Revised for gupta958's re-review of #89, rebased onto #88's revision.
+
+### 2026-10-20T02:01:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:ba86479
+docs(agents): hand #89's revision back to gupta958
+1 file changed, 3 insertions(+)
