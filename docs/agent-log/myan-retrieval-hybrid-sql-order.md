@@ -30,3 +30,10 @@ pytest apps/api/tests/retrieval on the pinned database -> 16 passed (order file 
 ### 2026-10-20T01:30:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:6c140c1
 test(retrieval): the canonical query's ordering — tie keys, the lexical cut, equal fused scores, the per-file cap (ADR-0007 Amendment 1 step 3b)
 3 files changed, 109 insertions(+), 1 deletion(-)
+
+### 2026-10-20T01:30:09Z · HANDOFF · myan · claude-code/opus-5.5 · a9d6eaa
+Stacked PR for gupta958, after 3a. Then step 4 (plan harness) once both are merged.
+
+### 2026-10-20T01:30:09Z · COMMIT · myan · claude-code/opus-5.5 · parent:a9d6eaa
+docs(agents): hand the ordering tests to gupta958
+1 file changed, 3 insertions(+)
