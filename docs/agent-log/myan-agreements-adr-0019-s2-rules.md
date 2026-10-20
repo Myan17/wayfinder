@@ -80,3 +80,13 @@ Second revision for gupta958's re-review of #85. After merge: item 9c's canonica
 ### 2026-10-20T00:06:05Z · COMMIT · myan · claude-code/opus-5.5 · parent:32f771b
 docs(agents): hand ADR-0019's second revision back to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T00:13:16Z · READ · myan · claude-code/opus-5.5 · c53dbf0
+gupta958's third review of #85 (relayed by Myan): the preflight attached strace to one backend and ran warm and cold cases before detaching, but the cold reset stops Postgres, so that backend, pid and attachment no longer exist. Each cold case must restart Postgres, open a fresh connection, resolve the new host backend pid, attach, run the one canonical query, detach; warm cases attach to their existing backend; nothing crosses a cold reset. Everything else passes review.
+
+### 2026-10-20T00:13:16Z · EDIT · myan · claude-code/opus-5.5 · c53dbf0
+ADR-0019 preflight: split into warm cases (one attachment on an existing backend) and cold cases (the six steps per case after the reset, no attachment or pid carried across). Third-review note added to the rulings section.
+
+### 2026-10-20T00:13:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:c53dbf0
+docs(agreements): ADR-0019 per gupta958's third review — a fresh backend and attachment for every cold preflight case
+2 files changed, 26 insertions(+), 5 deletions(-)

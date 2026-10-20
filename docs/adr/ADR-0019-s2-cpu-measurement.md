@@ -89,11 +89,22 @@ median call duration beside the p50.
 above counts every thread. The preflight checks what the backend actually does with the pinned
 extension and the canonical query, and makes sure no work leaves the thread group.
 
-1. Open a fresh connection, and attach `strace -f -qq -e trace=clone,clone3,fork,vfork -p <host pid>`
-   to its backend. Because strace logs every creation as it happens, a thread that starts and ends
-   within a call is still caught.
-2. Run the canonical query once for each corpus size and selectivity level (two sizes × three levels):
-   once warm, and once after the cold reset below. Then detach.
+The preflight covers each corpus size and selectivity level (two sizes × three levels), once warm
+and once cold. The tracer is `strace -f -qq -e trace=clone,clone3,fork,vfork -p <host pid>`. Because
+strace logs every creation as it happens, a thread that starts and ends within a call is still
+caught.
+
+1. **Warm cases:** open a fresh connection, resolve its host backend pid, and attach strace to it.
+   Run the canonical query once per case on that backend, then detach.
+2. **Cold cases:** the cold reset below stops Postgres, so the backend, its connection, its pid and
+   any strace attachment end with it. **No attachment or pid is carried across a cold reset.** For
+   each cold case, after the reset:
+   1. Restart Postgres.
+   2. Open a fresh connection.
+   3. Resolve its new host backend pid.
+   4. Attach strace to that pid.
+   5. Run the one canonical query.
+   6. Detach.
 3. Classify every creation the backend made:
    - **None.** The backend is one thread for this query. The process clock must then agree with the
      main thread's `schedstat` within 10 µs per call, which checks the clock.
@@ -243,6 +254,10 @@ Second review (gupta958, 2026-10-19), also applied above:
 - The calibration reference is executed CPU (`user + nice + system + irq + softirq`), excluding
   idle, iowait and steal, without double-counting guest time. A noise gate on the background before
   and after each block turns background drift into an error.
+
+Third review (gupta958, 2026-10-19): the cold preflight cases restart Postgres, open a fresh
+connection, resolve the new backend pid and attach strace to it for each case. No attachment or pid
+crosses a cold reset.
 
 ## Decision
 
