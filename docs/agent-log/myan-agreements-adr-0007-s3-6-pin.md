@@ -62,3 +62,10 @@ Resolved §9.5 vs §9.2 in favour of §9.5 with a separate schema PR (representa
 ### 2026-10-20T00:33:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:2e1445d
 docs(agreements): ADR-0007 Amendment 1 per gupta958's review — prerequisite BM25 schema, retrieval contract, per-leg tie keys, prepared plans, non-vacuous cases
 6 files changed, 168 insertions(+), 43 deletions(-)
+
+### 2026-10-20T00:33:42Z · HANDOFF · myan · claude-code/opus-5.5 · 14dad54
+Revised for gupta958's re-review of #86. After merge: the schema migration (representation.path, rebuilt rep_bm25, §9.2 DDL), then hybrid_sql.py and the S3-6 harness, then the evidence run.
+
+### 2026-10-20T00:33:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:14dad54
+docs(agents): hand ADR-0007 Amendment 1's revision back to gupta958
+1 file changed, 3 insertions(+)
