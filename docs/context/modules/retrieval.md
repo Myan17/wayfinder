@@ -86,7 +86,8 @@ async def passages_for_answer(query: str, scope: AuthorizedScope) -> RetrievalRe
 
 | Test | Pins |
 |---|---|
-| `apps/api/tests/retrieval/test_hybrid_sql.py` (all; pinned database, run by `make db-test`; the tie-key and per-file-cap tests follow in their own pull request) | `hybrid_sql.py`, the canonical two-leg statement (ADR-0007 Amendment 1): only granted or verified-public repositories; an expired lease returns nothing, whether it expired before building, before the statement runs or during it; not-live and retired-generation rows excluded; a bypassed SQL filter is caught by `execute`'s assertion; RRF over both legs; a path alone matches; query-grammar characters are plain text; one dense leg per specification; no caller value in the SQL text; the relaxed scan set inside the query's transaction. No plan is inspected (Amendment 1 step 4) |
+| `apps/api/tests/retrieval/test_hybrid_sql.py` (all; pinned database, run by `make db-test`) | `hybrid_sql.py`, the canonical two-leg statement (ADR-0007 Amendment 1): only granted or verified-public repositories; an expired lease returns nothing, whether it expired before building, before the statement runs or during it; not-live and retired-generation rows excluded; a bypassed SQL filter is caught by `execute`'s assertion; RRF over both legs; a path alone matches; query-grammar characters are plain text; one dense leg per specification; no caller value in the SQL text; the relaxed scan set inside the query's transaction. No plan is inspected (Amendment 1 step 4) |
+| `apps/api/tests/retrieval/test_hybrid_sql_order.py` (all; pinned database) | The statement's ordering: per-leg tie keys before RRF ranks whatever the insertion order, the lexical leg's top-100 cut on the tie key, equal fused scores ordered by the final key whichever row was inserted first, at most 3 passages per file |
 | `apps/api/tests/retrieval/test_scope.py::test_no_row_outside_scope` | Authorization filter, including under underfill |
 | `…/test_determinism.py::test_relaxed_order_resorted` | Stable ranking |
 | `…/test_determinism.py::test_tie_break_stable_across_runs` | Tie-break |
@@ -109,5 +110,6 @@ deterministic scores, so `answer`, `http` and `web` can be built and tested with
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-10-19 | `hybrid_sql.py`'s ordering tests (step 3b) | — |
 | 2026-10-19 | `hybrid_sql.py`: `build` and `execute` for the canonical two-leg statement, used by S3-6 and S2; internal, not yet behind `interface.py`'s `search` | — |
 | 2026-10-19 | Reads the indexing card's documented query shape, not `retrieval_rows` alone; per-leg tie keys before RRF (ADR-0007 Amendment 1) | — |
