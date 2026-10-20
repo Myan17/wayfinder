@@ -79,3 +79,10 @@ ADR-0007 Amendment 1: order of work in five steps with the query alone (no plan 
 ### 2026-10-20T00:38:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:bd08db0
 docs(agreements): ADR-0007 Amendment 1 — the query lands and freezes before the plan harness
 2 files changed, 27 insertions(+), 2 deletions(-)
+
+### 2026-10-20T00:38:57Z · HANDOFF · myan · claude-code/opus-5.5 · f6dad4e
+Second revision for gupta958's re-review of #86. After merge: the schema migration PR, then hybrid_sql.py alone, then the plan harness.
+
+### 2026-10-20T00:38:57Z · COMMIT · myan · claude-code/opus-5.5 · parent:f6dad4e
+docs(agents): hand ADR-0007 Amendment 1's second revision back to gupta958
+1 file changed, 3 insertions(+)
