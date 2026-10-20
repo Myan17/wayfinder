@@ -73,3 +73,10 @@ pytest db/tests -> 79 passed; make test -> 378 passed; ruff clean; dump-schema -
 ### 2026-10-20T01:09:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:4bba8ed
 fix(schema): rollback is pre-ingestion only, and identifiers are Unicode XID (gupta958's review of #87)
 6 files changed, 69 insertions(+), 12 deletions(-)
+
+### 2026-10-20T01:09:35Z · HANDOFF · myan · claude-code/opus-5.5 · 6319c62
+Revised for gupta958's re-review of #87. After merge: hybrid_sql.py alone (Amendment 1 step 3).
+
+### 2026-10-20T01:09:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:6319c62
+docs(agents): hand #87's revision back to gupta958
+1 file changed, 3 insertions(+)
