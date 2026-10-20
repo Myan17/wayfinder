@@ -69,3 +69,13 @@ Revised for gupta958's re-review of #86. After merge: the schema migration (repr
 ### 2026-10-20T00:33:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:14dad54
 docs(agents): hand ADR-0007 Amendment 1's revision back to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-20T00:38:56Z · READ · myan · claude-code/opus-5.5 · bd08db0
+gupta958's second review of #86 (relayed by Myan): previous five fixed; one process blocker: hybrid_sql.py and the S3-6 plan harness in one PR still allows SQL-shape changes while looking at plans. Order: ADR; migration; hybrid_sql.py with result/authz/determinism tests and no plan harness or evidence; after that is merged and immutable, the plan harness and mutation tests; then evidence. Rulings: hybrid_sql.py module correct; synthetic fixture acceptable; occurrence seq scan captured, not an S3-6 failure, S2 measures it.
+
+### 2026-10-20T00:38:56Z · EDIT · myan · claude-code/opus-5.5 · bd08db0
+ADR-0007 Amendment 1: order of work in five steps with the query alone (no plan harness, EXPLAIN or evidence) before the plan harness; from the query's merge it is frozen for S3-6, the harness PR may not change hybrid_sql.py, and a later change is a new amendment with plans captured again. Review rulings subsection added.
+
+### 2026-10-20T00:38:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:bd08db0
+docs(agreements): ADR-0007 Amendment 1 — the query lands and freezes before the plan harness
+2 files changed, 27 insertions(+), 2 deletions(-)

@@ -268,10 +268,29 @@ otherwise they stay local.
 
 #### Order of work
 
+The query is fixed before anyone sees its plans, so it and the plan harness land in separate pull
+requests (gupta958, review of #86):
+
 1. This amendment, with the card contract change and §9.5 step 3's tie keys.
 2. The schema migration above, with §9.2's DDL.
-3. `hybrid_sql.py` and the S3-6 harness, with the tests above.
-4. The evidence run and the results pull request, which completes ORIENT item 9c.
+3. **The query alone:** `hybrid_sql.py`, with tests of its results, its authorization and its
+   determinism. This pull request contains no plan harness, no `EXPLAIN` capture and no plan
+   evidence.
+4. **The plan harness, after step 3 has merged:** the S3-6 cases, checks S3-6a–e and the mutation
+   checks. From step 3's merge on, the query is frozen for S3-6. This pull request may not change
+   `hybrid_sql.py`. A change to the query after its plans have been seen is a new amendment to this
+   ADR, and the plans are captured again.
+5. The evidence run, with its report committed unchanged, and the results pull request, which
+   completes ORIENT item 9c.
+
+#### Review rulings (gupta958, 2026-10-19)
+
+Relayed by Myan on #86. All are applied above:
+- `hybrid_sql.py` belongs in the retrieval module.
+- The deterministic synthetic fixture is acceptable.
+- The plan's sequential scan of `occurrence` in the `retrieval_rows` join is captured, but it is not
+  an S3-6 failure. S2 measures its cost.
+- The query and the plan harness land in separate pull requests, in the order above.
 
 ### What is deliberately not a rule here
 
