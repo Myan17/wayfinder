@@ -39,3 +39,10 @@ Two existing tests changed, both because they encoded a representation at two pa
 ### 2026-10-20T00:53:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:279c9b7
 feat(schema): representation.path and the code-aware rep_bm25 (ADR-0007 Amendment 1 step 2)
 12 files changed, 246 insertions(+), 23 deletions(-)
+
+### 2026-10-20T00:53:51Z · HANDOFF · myan · claude-code/opus-5.5 · 44e7096
+PR for gupta958. After merge: hybrid_sql.py alone with result, authorization and determinism tests, no plan harness (Amendment 1 step 3).
+
+### 2026-10-20T00:53:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:44e7096
+docs(agents): hand the BM25 path migration to gupta958
+1 file changed, 3 insertions(+)
