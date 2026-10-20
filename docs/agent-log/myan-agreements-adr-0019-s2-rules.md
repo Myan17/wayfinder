@@ -73,3 +73,10 @@ ADR-0019: the backend is charged through its process CPU clock (clock_getcpucloc
 ### 2026-10-20T00:06:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:ccd3ecb
 docs(agreements): ADR-0019 per gupta958's second review — every backend thread counted, exact calibration fields, noise gate
 2 files changed, 86 insertions(+), 22 deletions(-)
+
+### 2026-10-20T00:06:05Z · HANDOFF · myan · claude-code/opus-5.5 · 32f771b
+Second revision for gupta958's re-review of #85. After merge: item 9c's canonical two-leg query harness, then the S2 harness; only the A1 run is blocked (9b).
+
+### 2026-10-20T00:06:05Z · COMMIT · myan · claude-code/opus-5.5 · parent:32f771b
+docs(agents): hand ADR-0019's second revision back to gupta958
+1 file changed, 3 insertions(+)
