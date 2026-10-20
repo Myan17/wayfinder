@@ -88,16 +88,18 @@ def seed_generation(conn, repo_id: int, spec_id: int, *, status: str, n: int = 1
                " RETURNING id", (repo_id, n, n, spec_id, status, base))
 
 
-def seed_representation(conn, repo_id: int, spec_id: int, text: str, *, live: bool = False) -> int:
+def seed_representation(conn, repo_id: int, spec_id: int, text: str, *, live: bool = False,
+                        path: str = "a.py") -> int:
     h = text.encode()
     conn.execute("INSERT INTO content (content_hash, body, token_count) VALUES (%s, %s, 1)"
                  " ON CONFLICT DO NOTHING", (h, text))
     return one(conn, "INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header,"
-               " body_text, live) VALUES (%s, %s, %s, %s, 'h', %s, %s) RETURNING id",
-               (repo_id, spec_id, h + str(repo_id).encode(), h, text, live))
+               " body_text, path, live) VALUES (%s, %s, %s, %s, 'h', %s, %s, %s) RETURNING id",
+               (repo_id, spec_id, h + str(repo_id).encode(), h, text, path, live))
 
 
-def seed_occurrence(conn, repo_id: int, generation_id: int, rep_id: int) -> None:
+def seed_occurrence(conn, repo_id: int, generation_id: int, rep_id: int, *, path: str = "a.py",
+                    start_line: int = 1) -> None:
     conn.execute("INSERT INTO occurrence (repo_id, generation_id, representation_id, path, blob_sha,"
-                 " start_line, end_line) VALUES (%s, %s, %s, 'a.py', 'b', 1, 2)",
-                 (repo_id, generation_id, rep_id))
+                 " start_line, end_line) VALUES (%s, %s, %s, %s, 'b', %s, %s)",
+                 (repo_id, generation_id, rep_id, path, start_line, start_line + 1))

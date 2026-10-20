@@ -166,6 +166,7 @@ def test_activation_is_refused_unless_section_9_3_5_holds(world, case):
             repo_id=world["repo"],
             generation_id=world["gen_b"],
             spec=world["b"],
+            header="acme/r · wayfinder/late.py · parse_range",  # the header carries the path (§9.4.2)
             path="wayfinder/late.py",
         )
     if case == "failed":  # complete and counted, but not 'ready'
