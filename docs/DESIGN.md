@@ -845,14 +845,15 @@ CREATE TABLE connection_admin (connection_id bigint NOT NULL REFERENCES connecti
 CREATE INDEX vec768_hnsw ON vector_d768 USING hnsw (embedding halfvec_cosine_ops) WHERE live;
 CREATE INDEX vec768_repo ON vector_d768 (repo_id, spec_id) WHERE live;
 -- §9.5 step 2's lexical fields (ADR-0007 Amendment 1): source_code splits identifiers on camelCase,
--- snake_case and dots; the *_ident aliases keep the original dotted identifier; path is indexed by
+-- snake_case and dots; the *_ident aliases keep the original dotted identifier (Unicode XID, as
+-- Python and Go allow); path is indexed by
 -- segment and split. Exact DDL per the pinned pg_search version (0.25.9).
 CREATE INDEX rep_bm25 ON representation USING bm25 (
   id,
   (header::pdb.source_code),
-  (header::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=header_ident')),
+  (header::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=header_ident')),
   (body_text::pdb.source_code),
-  (body_text::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=body_ident')),
+  (body_text::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=body_ident')),
   (path::pdb.regex_pattern('[^/]+')),
   (path::pdb.source_code('alias=path_code')),
   repo_id, live

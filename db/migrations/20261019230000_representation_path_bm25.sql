@@ -7,8 +7,9 @@
 -- equal to it by a foreign key.
 --
 -- Validation: SELECT count(*) FROM pg_indexes WHERE indexname = 'rep_bm25'  -- 1
--- Rollback: the down section restores v1's column set and index. Nothing is lost, because the up
--- section refuses to run once representation has rows.
+-- Rollback is pre-ingestion only. The down section restores v1's column set and index, and refuses
+-- once representation has rows: dropping path then would lose it, and this up section would then
+-- refuse to run again. After ingestion, a fix is a new forward migration.
 
 -- migrate:up
 
@@ -28,7 +29,9 @@ ALTER TABLE occurrence ADD CONSTRAINT occurrence_path_matches_representation
 DROP INDEX rep_bm25;
 -- Field          Tokenizer                    Matches
 -- header         source_code                  identifier parts: parseWidget_value -> parse, widget, value
--- header_ident   dotted-identifier regex      the original token, lowercased: parsewidget_value, foo.bar_baz
+-- header_ident   dotted-identifier regex      the original token, lowercased: parsewidget_value, foo.bar_baz,
+--                (Unicode XID, as Python and   größe_berechnen, café.naïve_ä, 変数
+--                Go identifiers allow)
 -- body_text      source_code                  as header
 -- body_ident     dotted-identifier regex      as header_ident
 -- path           regex on '/'                 path segments: src, app, widget_parser.py
@@ -36,15 +39,22 @@ DROP INDEX rep_bm25;
 CREATE INDEX rep_bm25 ON representation USING bm25 (
   id,
   (header::pdb.source_code),
-  (header::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=header_ident')),
+  (header::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=header_ident')),
   (body_text::pdb.source_code),
-  (body_text::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=body_ident')),
+  (body_text::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=body_ident')),
   (path::pdb.regex_pattern('[^/]+')),
   (path::pdb.source_code('alias=path_code')),
   repo_id, live
 ) WITH (key_field = 'id');
 
 -- migrate:down
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM representation) THEN
+    RAISE EXCEPTION 'representation has rows: rolling back would drop their path (ADR-0007 Amendment 1)';
+  END IF;
+END $$;
 
 DROP INDEX rep_bm25;
 CREATE INDEX rep_bm25 ON representation USING bm25 (id, header, body_text, repo_id, live)

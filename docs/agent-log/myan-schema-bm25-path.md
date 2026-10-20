@@ -60,3 +60,16 @@ CI unit failed on #87: infra/manifest/example.json schema_version '2026092223030
 ### 2026-10-20T00:56:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:e80be26
 fix(platform): the example release manifest names the newest migration
 2 files changed, 4 insertions(+), 1 deletion(-)
+
+### 2026-10-20T01:09:34Z · READ · myan · claude-code/opus-5.5 · 4bba8ed
+gupta958 on #87 (relayed by Myan): (1) rollback contract: after ingestion, down drops path and the next up refuses; make down refuse once representations exist and document rollback as pre-ingestion only, or provide a re-upgrade path; add a regression test. (2) header_ident/body_ident regexes are ASCII-only; use a Unicode-aware expression with a real database test, or narrow the contract to ASCII.
+
+### 2026-10-20T01:09:34Z · EDIT · myan · claude-code/opus-5.5 · 4bba8ed
+Migration: down refuses once representation has rows (same DO guard as up); header comment documents rollback as pre-ingestion only, a post-ingestion fix being a new forward migration. Ident regex is now [\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*, probed on pinned 0.25.9 (keeps größe_berechnen, café.naïve_ä, 変数, ünïcode.ström; the ASCII pattern gave gr, e_berechnen, caf, na, ve_). DESIGN §9.2 DDL and comment, schema card tests row and change-log, db/schema.sql regenerated, card hashes re-recorded. Tests: Unicode identifiers match whole through the real index; their ASCII fragments do not; rollback refuses with rows and path survives.
+
+### 2026-10-20T01:09:34Z · TEST · myan · claude-code/opus-5.5 · 4bba8ed
+pytest db/tests -> 79 passed; make test -> 378 passed; ruff clean; dump-schema --check current. Mutants: ASCII body_ident -> 5 failed (the whole-identifier cases alone caught only 変数, because an ASCII pattern splits the query the same way, so the fragment cases were added); down guard off -> 1 failed.
+
+### 2026-10-20T01:09:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:4bba8ed
+fix(schema): rollback is pre-ingestion only, and identifiers are Unicode XID (gupta958's review of #87)
+6 files changed, 69 insertions(+), 12 deletions(-)

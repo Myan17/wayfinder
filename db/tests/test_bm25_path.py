@@ -91,3 +91,40 @@ def test_the_migration_refuses_a_table_with_rows(empty_db):
                      " body_text) VALUES (%s, %s, '\\x01', '\\x01', 'h', 'x')", (repo, spec))
     with pytest.raises(psycopg.errors.RaiseException, match="representation has rows"):
         empty_db.execute(sections(this)[0])
+
+
+UNICODE_BODY = "def größe_berechnen(x): return café.naïve_ä + 変数 + Ünïcode.Ström"
+
+
+@pytest.fixture
+def unicode_rows(db):
+    repo = seed_repo(db, seed_connection(db))
+    spec = seed_spec(db)
+    hit = seed_representation(db, repo, spec, UNICODE_BODY, path="src/u.py")
+    seed_representation(db, repo, spec, "def other(): pass", path="src/o.py")
+    return db, hit
+
+
+@pytest.mark.parametrize("ident", ["größe_berechnen", "café.naïve_ä", "変数", "Ünïcode.Ström"])
+def test_unicode_identifiers_match_whole(unicode_rows, ident):
+    """Python and Go allow Unicode identifiers (XID), so the ident fields must keep them whole."""
+    db, hit = unicode_rows
+    assert matches(db, "body_ident", ident) == [hit]
+
+
+@pytest.mark.parametrize("fragment", ["gr", "e_berechnen", "caf", "ve_"])
+def test_ascii_fragments_of_unicode_identifiers_do_not_match(unicode_rows, fragment):
+    """What an ASCII-only pattern would leave of those identifiers. Matching the whole identifier is
+    not enough on its own: an ASCII pattern splits the query the same way and still matches."""
+    db, _ = unicode_rows
+    assert matches(db, "body_ident", fragment) == []
+
+
+def test_rollback_refuses_once_representations_exist(db):
+    """Rollback is pre-ingestion only: dropping path would lose it, and the up section would then refuse."""
+    this = next(m for m in MIGRATIONS if m.name.endswith("_representation_path_bm25.sql"))
+    repo = seed_repo(db, seed_connection(db))
+    rep = seed_representation(db, repo, seed_spec(db), "x", path="a.py")
+    with pytest.raises(psycopg.errors.RaiseException, match="rolling back would drop their path"):
+        db.execute(sections(this)[1])
+    assert db.execute("SELECT path FROM representation WHERE id = %s", (rep,)).fetchone() == ("a.py",)

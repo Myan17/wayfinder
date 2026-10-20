@@ -884,7 +884,7 @@ CREATE UNIQUE INDEX one_active_per_repo ON public.generation USING btree (repo_i
 -- Name: rep_bm25; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX rep_bm25 ON public.representation USING bm25 (id, ((header)::pdb.source_code), ((header)::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=header_ident')), ((body_text)::pdb.source_code), ((body_text)::pdb.regex_pattern('[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*', 'alias=body_ident')), ((path)::pdb.regex_pattern('[^/]+')), ((path)::pdb.source_code('alias=path_code')), repo_id, live) WITH (key_field=id);
+CREATE INDEX rep_bm25 ON public.representation USING bm25 (id, ((header)::pdb.source_code), ((header)::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=header_ident')), ((body_text)::pdb.source_code), ((body_text)::pdb.regex_pattern('[\p{XID_Start}_]\p{XID_Continue}*(\.[\p{XID_Start}_]\p{XID_Continue}*)*', 'alias=body_ident')), ((path)::pdb.regex_pattern('[^/]+')), ((path)::pdb.source_code('alias=path_code')), repo_id, live) WITH (key_field=id);
 
 
 --
