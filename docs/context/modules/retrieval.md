@@ -86,6 +86,7 @@ async def passages_for_answer(query: str, scope: AuthorizedScope) -> RetrievalRe
 
 | Test | Pins |
 |---|---|
+| `apps/api/tests/retrieval/test_hybrid_sql.py` (all; pinned database, run by `make db-test`) | `hybrid_sql.py`, the canonical two-leg statement (ADR-0007 Amendment 1): only granted or verified-public repositories; an expired scope returns nothing; not-live and retired-generation rows excluded; a bypassed SQL filter is caught by `execute`'s assertion; RRF over both legs; ties ordered by the pinned keys whatever the insertion order, including the lexical leg's top-100 cut and equal fused scores; at most 3 per file; a path alone matches; query-grammar characters are plain text; one dense leg per specification; no caller value in the SQL text; the relaxed scan set inside the query's transaction. No plan is inspected (Amendment 1 step 4) |
 | `apps/api/tests/retrieval/test_scope.py::test_no_row_outside_scope` | Authorization filter, including under underfill |
 | `…/test_determinism.py::test_relaxed_order_resorted` | Stable ranking |
 | `…/test_determinism.py::test_tie_break_stable_across_runs` | Tie-break |
@@ -108,4 +109,5 @@ deterministic scores, so `answer`, `http` and `web` can be built and tested with
 | Date | Change | BCR |
 |---|---|---|
 | 2026-09-18 | Card created from DESIGN v0.3 before implementation | — |
+| 2026-10-19 | `hybrid_sql.py`: `build` and `execute` for the canonical two-leg statement, used by S3-6 and S2; internal, not yet behind `interface.py`'s `search` | — |
 | 2026-10-19 | Reads the indexing card's documented query shape, not `retrieval_rows` alone; per-leg tie keys before RRF (ADR-0007 Amendment 1) | — |
