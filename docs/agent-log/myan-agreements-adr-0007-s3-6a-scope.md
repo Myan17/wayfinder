@@ -33,3 +33,10 @@ Docs only. Checked that the amendment's subtree definition matches a real 7,175 
 ### 2026-10-22T04:57:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:6bf7cc5
 docs(agreements): ADR-0007 Amendment 2 — S3-6a judges the lexical leg only (gupta958's ruling on #90)
 2 files changed, 72 insertions(+), 1 deletion(-)
+
+### 2026-10-22T04:57:06Z · HANDOFF · myan · claude-code/opus-5.5 · 704f167
+PR for gupta958. It must merge before #90's revision (scoped check_lexical plus the CI matrix pin), which is pushed alongside it but waits on this rule. After both: step 5, the evidence run and results PR.
+
+### 2026-10-22T04:57:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:704f167
+docs(agents): hand ADR-0007 Amendment 2 to gupta958
+1 file changed, 3 insertions(+)
