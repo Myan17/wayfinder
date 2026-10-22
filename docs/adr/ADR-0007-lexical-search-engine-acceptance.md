@@ -347,7 +347,7 @@ already a failure. The 60,000 cases stay local: their fixture takes about 389 s 
 **Still Proposed. Measured locally on 2026-09-22, and S3-6 on 2026-10-22; S3-1b outstanding, so this
 is not an acceptance.**
 
-Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), PostgreSQL 18.6,
+Image `paradedb/paradedb@sha256:c17153b8b7307734c3aede0393dfe8fa447f4a528ec028b1c3937186ab3ee242` (0.25.9, `linux/arm64`), PostgreSQL 18.6,
 `pg_search` 0.25.9. Reproduce with `infra/spikes/s3/`.
 
 | Rule | Result | Observed |

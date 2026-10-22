@@ -46,3 +46,10 @@ Results PR ready for gupta958. After merge, ORIENT's next open item is 7 (S2 har
 ### 2026-10-22T17:09:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:d55b829
 docs(retrieval): S3-6 results handoff entry
 1 file changed, 3 insertions(+)
+
+### 2026-10-22T17:25:07Z · EDIT · myan · claude-code/opus-5.5 · 0cd7577
+gupta958 on #93: ADR-0007 Decision's image line showed c17153b8…64f4, a wrong suffix. Replaced it with the full digest c17153b8…e242, which matches infra/spikes/s3/compose.yml:8, infra/spikes/s3/run.py:26, infra/manifest/example.json and the report's image field. No other change.
+
+### 2026-10-22T17:25:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:0cd7577
+docs(agreements): ADR-0007 Decision names the full, correct image digest
+2 files changed, 4 insertions(+), 1 deletion(-)
