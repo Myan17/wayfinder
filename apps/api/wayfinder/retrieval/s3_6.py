@@ -151,23 +151,32 @@ def walk(node: dict) -> Iterator[dict]:
         yield from walk(child)
 
 
-def scans(plan: dict, relation: str, served) -> dict:
+def scans(nodes: list[dict], relation: str, served) -> dict:
     """Whether some node on `relation` satisfies `served`, and the aliases of every Seq Scan on it."""
-    nodes = [n for n in walk(plan) if n.get("Relation Name") == relation]
+    nodes = [n for n in nodes if n.get("Relation Name") == relation]
     seq = sorted(n.get("Alias", relation) for n in nodes if n["Node Type"] == "Seq Scan")
     served_by = any(served(n) for n in nodes)
     return {"passed": served_by and not seq, "served": served_by, "seq_scans": seq}
 
 
+def lexical_leg(plan: dict) -> list[dict]:
+    """Amendment 2: every node under the scan of the `lexical` CTE, inlined (a Subquery Scan aliased
+    `lexical`) or materialized (the `CTE lexical` subplan). Empty when the plan has neither."""
+    return [n for root in walk(plan)
+            if root.get("Alias") == "lexical" or root.get("Subplan Name") == "CTE lexical"
+            for n in walk(root)]
+
+
 def check_lexical(plan: dict) -> dict:
-    """S3-6a: a ParadeDB Custom Scan on representation, and no Seq Scan on it."""
-    return scans(plan, "representation", lambda n: n["Node Type"] == "Custom Scan"
+    """S3-6a, on the lexical leg's subtree only (Amendment 2): a ParadeDB Custom Scan on
+    representation, and no Seq Scan on it. A plan with no lexical subtree fails."""
+    return scans(lexical_leg(plan), "representation", lambda n: n["Node Type"] == "Custom Scan"
                  and "ParadeDB" in n.get("Custom Plan Provider", ""))
 
 
 def check_dense(plan: dict) -> dict:
     """S3-6b: an Index Scan using vec768_hnsw on vector_d768, and no Seq Scan on it."""
-    return scans(plan, "vector_d768", lambda n: n["Node Type"] == "Index Scan"
+    return scans(list(walk(plan)), "vector_d768", lambda n: n["Node Type"] == "Index Scan"
                  and n.get("Index Name") == "vec768_hnsw")
 
 

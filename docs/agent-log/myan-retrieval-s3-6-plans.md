@@ -43,3 +43,16 @@ PR for gupta958, who has to rule on the first plans before step 5. (1) S3-6a rea
 ### 2026-10-22T04:43:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:dd64312
 docs(retrieval): hand the S3-6 plan harness to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-22T04:59:37Z · READ · myan · claude-code/opus-5.5 · 95bb67d
+gupta958's rulings on #90 (relayed by Myan): S3-6a on the lexical leg only, by ADR-0007 Amendment 2 first (#91); S3-6b exactly as written, failures raised at G0; CI pins the complete observed scan outcome of the six 7,175 cases (the last test asserted only S3-6d/e); 60,000 stays local; location, stand-in reuse and the parameter rewrite accepted. Do not merge until revised.
+
+### 2026-10-22T04:59:37Z · EDIT · myan · claude-code/opus-5.5 · 95bb67d
+Rebased onto main 6bf7cc5 (#89); the card's test table conflict resolved by keeping #89's rows and adding this one. check_lexical now reads lexical_leg(plan): the subtree under the Subquery Scan aliased lexical or the CTE lexical subplan, empty (so failing) when neither exists, as Amendment 2 defines it. check_dense is unchanged in meaning. The last test is replaced by a pin of (S3-6a, S3-6b) for every (granted, mode) at 7,175, plus S3-6d, the text capture and the overall checks {a: true, b: false, c: false, d: true, e: true}. The mutation tests' baseline asserts were removed, because the pin covers them.
+
+### 2026-10-22T04:59:37Z · TEST · myan · claude-code/opus-5.5 · 95bb67d
+test_s3_6_plans.py against the pinned database -> 10 passed (58 s). Mutants on the scoped check, each killed: the Alias branch dropped, the CTE subplan branch dropped, the whole plan used instead of the subtree, and S3-6b scoped to the lexical leg. ruff check clean.
+
+### 2026-10-22T04:59:37Z · COMMIT · myan · claude-code/opus-5.5 · parent:95bb67d
+feat(retrieval): S3-6a reads only the lexical leg, and CI pins every 7,175 case's scans (ADR-0007 Amendment 2)
+4 files changed, 52 insertions(+), 17 deletions(-)

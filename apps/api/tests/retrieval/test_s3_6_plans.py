@@ -22,15 +22,23 @@ def tree(*children):
 
 BM25 = node("Custom Scan", "representation", **{"Custom Plan Provider": "ParadeDB Base Scan"})
 HNSW = node("Index Scan", "vector_d768", **{"Index Name": "vec768_hnsw"})
+SEQ_REP = node("Seq Scan", "representation", Alias="rep_2")
 
 
-def test_lexical_check_reads_the_whole_tree():
-    assert s3_6.check_lexical(tree(BM25, HNSW))["passed"]
-    assert not s3_6.check_lexical(tree(HNSW))["served"]
-    seq = s3_6.check_lexical(tree(BM25, node("Seq Scan", "representation", Alias="rep_2")))
-    assert seq == {"passed": False, "served": True, "seq_scans": ["rep_2"]}
+def lexical(*children):
+    return {"Node Type": "Subquery Scan", "Alias": "lexical", "Plans": list(children)}
+
+
+def test_lexical_check_reads_only_the_lexical_leg():
+    assert s3_6.check_lexical(tree(lexical(BM25), HNSW, SEQ_REP))["passed"]  # Amendment 2
+    assert s3_6.check_lexical(tree(lexical(BM25, SEQ_REP))) == {
+        "passed": False, "served": True, "seq_scans": ["rep_2"]}
+    assert not s3_6.check_lexical(tree(BM25))["served"]  # no lexical subtree: fails closed
+    materialized = {**lexical(BM25), "Alias": None, "Subplan Name": "CTE lexical"}
+    cte = {"Node Type": "CTE Scan", "Plans": [materialized]}
+    assert s3_6.check_lexical(tree(cte))["passed"]
     other = node("Custom Scan", "representation", **{"Custom Plan Provider": "Other"})
-    assert not s3_6.check_lexical(tree(other))["served"]
+    assert not s3_6.check_lexical(tree(lexical(other)))["served"]
 
 
 def test_dense_check_needs_the_hnsw_index_and_no_seq_scan():
@@ -92,14 +100,12 @@ def under(conn, ddl, *args, **kw):
 
 def test_dropping_rep_bm25_fails_s3_6a(plans):
     conn, fx = plans
-    assert s3_6.case(conn, fx, 100, "force_custom_plan")["S3-6a"]["served"]
     out = under(conn, "DROP INDEX rep_bm25", fx, 100, "force_custom_plan")
     assert not out["S3-6a"]["passed"] and not out["S3-6a"].get("served")
 
 
 def test_dropping_vec768_hnsw_fails_s3_6b(plans):
     conn, fx = plans
-    assert s3_6.case(conn, fx, 100, "force_custom_plan")["S3-6b"]["served"]
     out = under(conn, "DROP INDEX vec768_hnsw", fx, 100, "force_custom_plan")
     assert not out["S3-6b"]["passed"] and not out["S3-6b"].get("served")
 
@@ -118,8 +124,19 @@ def test_a_grant_the_harness_does_not_count_fails_s3_6d(plans):
     assert out["S3-6d"]["outside"] == [extra] and not out["S3-6d"]["passed"]
 
 
-def test_every_case_is_captured_with_its_text_plan(plans):
+# The observed scan outcome of every 7,175 case (gupta958's ruling on #90, Amendment 2). A plan
+# change in either direction fails here, though S3-6 as a whole already fails at this size.
+LEX = {"passed": True, "served": True, "seq_scans": []}
+HNSW_USED = {"passed": True, "served": True, "seq_scans": []}
+EXACT = {"passed": False, "served": False, "seq_scans": ["v"]}
+OBSERVED_7175 = {(g, m): (LEX, HNSW_USED if (g, m) == (100, "force_custom_plan") else EXACT)
+                 for g in s3_6.SELECTIVITIES for m in s3_6.MODES}
+
+
+def test_every_7175_case_pins_its_observed_scans(plans):
     conn, fx = plans
     cases = [s3_6.case(conn, fx, g, m) for g in s3_6.SELECTIVITIES for m in s3_6.MODES]
-    assert len(cases) == 6 and all("error" not in c and c["plan_text"] for c in cases)
-    assert s3_6.verdict(cases)["checks"]["S3-6e"] and s3_6.verdict(cases)["checks"]["S3-6d"]
+    assert {(c["granted"], c["mode"]): (c["S3-6a"], c["S3-6b"]) for c in cases} == OBSERVED_7175
+    assert all("error" not in c and c["plan_text"] and c["S3-6d"]["passed"] for c in cases)
+    assert s3_6.verdict(cases)["checks"] == {
+        "S3-6a": True, "S3-6b": False, "S3-6c": False, "S3-6d": True, "S3-6e": True}
