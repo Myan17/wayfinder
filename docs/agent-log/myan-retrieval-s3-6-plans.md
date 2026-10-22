@@ -36,3 +36,10 @@ make test -> 401 passed. test_s3_6_plans.py against the pinned database -> 10 pa
 ### 2026-10-22T04:43:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:c80845b
 feat(retrieval): the S3-6 plan harness, its checks and mutation checks (ADR-0007 Amendment 1 step 4)
 4 files changed, 431 insertions(+)
+
+### 2026-10-22T04:43:55Z · HANDOFF · myan · claude-code/opus-5.5 · dd64312
+PR for gupta958, who has to rule on the first plans before step 5. (1) S3-6a reads 'no node is a Seq Scan on representation'; at 7,175 the dense leg's rank join (rep_2, for the path tie key) is one, though the lexical leg is always a ParadeDB scan and Amendment 1 says S3-6 does not judge other joins. Literal or lexical-leg-only? (2) S3-6b fails 5 of 6 at 7,175 and 1 of 6 at 60,000 (1 granted repository, custom plan): the planner sorts exactly. Raised, not tuned. (3) What the CI gate asserts until S3-6 passes. (4) 60,000 stays local (389 s build). Test: make db-test; the harness tests are apps/api/tests/retrieval/test_s3_6_plans.py. Next after merge and the rulings: step 5, the evidence run (python -m wayfinder.retrieval.s3_6 on a clean tree) and its results PR.
+
+### 2026-10-22T04:43:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:dd64312
+docs(retrieval): hand the S3-6 plan harness to gupta958
+1 file changed, 3 insertions(+)
