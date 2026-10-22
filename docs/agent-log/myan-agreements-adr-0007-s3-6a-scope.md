@@ -53,3 +53,10 @@ Docs only. grep for '0 of 6' in the ADR finds nothing; the rest of the diff is u
 ### 2026-10-22T05:31:22Z · COMMIT · myan · claude-code/opus-5.5 · parent:348a404
 docs(agreements): Amendment 2 says S3-6a failed all 6 cases, not 'failed 0 of 6'
 2 files changed, 10 insertions(+), 1 deletion(-)
+
+### 2026-10-22T05:31:22Z · HANDOFF · myan · claude-code/opus-5.5 · f50061a
+Wording fix pushed for gupta958's re-review of #91. Merge order unchanged: #91, #90, #92.
+
+### 2026-10-22T05:31:23Z · COMMIT · myan · claude-code/opus-5.5 · parent:f50061a
+docs(agents): hand #91's wording fix back to gupta958
+1 file changed, 3 insertions(+)
