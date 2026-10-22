@@ -39,3 +39,10 @@ Report checked against the pinned 7,175 matrix (OBSERVED_7175 in test_s3_6_plans
 ### 2026-10-22T17:09:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:ed2738d
 docs(retrieval): S3-6 results — the plan report, ADR-0007's S3-6 Decision row, ORIENT item 9c done
 5 files changed, 375 insertions(+), 6 deletions(-)
+
+### 2026-10-22T17:09:24Z · HANDOFF · myan · claude-code/opus-5.5 · d55b829
+Results PR ready for gupta958. After merge, ORIENT's next open item is 7 (S2 harness; its evidence run needs the A1).
+
+### 2026-10-22T17:09:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:d55b829
+docs(retrieval): S3-6 results handoff entry
+1 file changed, 3 insertions(+)
