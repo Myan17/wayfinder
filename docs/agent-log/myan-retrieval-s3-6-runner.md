@@ -30,3 +30,10 @@ test_s3_6_runner.py against the pinned database -> 3 passed (49 s). Mutants, eac
 ### 2026-10-22T05:12:10Z · COMMIT · myan · claude-code/opus-5.5 · parent:e313b43
 feat(retrieval): the S3-6 evidence runner, python -m wayfinder.retrieval.s3_6 (ADR-0007 Amendment 1 step 5's tool)
 4 files changed, 141 insertions(+)
+
+### 2026-10-22T05:12:10Z · HANDOFF · myan · claude-code/opus-5.5 · 53963e4
+PR for gupta958, stacked on #90; merge after #91 and #90, rebased onto main first. Then Myan runs, from a clean main: WAYFINDER_TEST_DSN=postgresql://wayfinder:spike_local_only_not_a_secret@localhost:55432/s3spike uv run --extra dev python -m wayfinder.retrieval.s3_6 (about 7 min, mostly the 60,000 build). It exits 1, because S3-6b fails as recorded. Then the results PR commits db/evidence/s3-6-plans.json unchanged, fills ADR-0007's S3-6 Decision row, and marks ORIENT 9c.
+
+### 2026-10-22T05:12:10Z · COMMIT · myan · claude-code/opus-5.5 · parent:53963e4
+docs(retrieval): hand the S3-6 runner to gupta958
+1 file changed, 3 insertions(+)
