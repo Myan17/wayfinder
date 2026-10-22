@@ -43,3 +43,13 @@ Amendment 1 for gupta958's review. No harness code until it merges.
 ### 2026-10-22T17:49:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:bf9a795
 docs(agreements): ADR-0019 Amendment 1 task log
 1 file changed, 6 insertions(+)
+
+### 2026-10-22T18:35:43Z · DECIDE · myan · claude-code/opus-5.5 · f8956ed
+gupta958's rulings on #94, applied verbatim in substance: (1) 60-line stand-in accepted, with a required full rerun of S2's SQL, rerank and indexing measurements once P1's chunker lands, values labelled 'measured on 60-line windows' until then; (2) pseudo-repository hash input is UTF-8, formula spelled out with .encode('utf-8').hexdigest(); (3) strong dev issues only, unchanged; (4) S2 CI job runs in full only on changes to the harness, retrieval query, database inputs, dependencies, model pins or its workflow, no-ops successfully otherwise, caches keyed by pinned digest and always verified. Rulings recorded in the ADR.
+
+### 2026-10-22T18:35:43Z · EDIT · myan · claude-code/opus-5.5 · f8956ed
+ADR-0019 Amendment 1: rerun paragraph in section 1, UTF-8 hash in section 3, CI path-gated job in section 5, 'Review rulings on Amendment 1' block; the scope sentence now names the one added obligation.
+
+### 2026-10-22T18:35:43Z · COMMIT · myan · claude-code/opus-5.5 · parent:f8956ed
+docs(agreements): ADR-0019 Amendment 1 — apply gupta958's rulings on #94
+2 files changed, 55 insertions(+), 12 deletions(-)

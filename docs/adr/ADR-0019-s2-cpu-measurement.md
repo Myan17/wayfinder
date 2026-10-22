@@ -264,8 +264,8 @@ crosses a cold reset.
 The setup above names the corpus, the queries and the selectivity levels. It does not say how to
 produce them, and five of the choices are still open. The ADR's own premise is that a choice made
 while writing the harness is a choice made by the harness, so they are fixed here first, as
-ADR-0007 Amendment 1 did for S3-6. Nothing in this amendment changes a rule, a counter, a pass
-structure or the calibration.
+ADR-0007 Amendment 1 did for S3-6. It changes no acceptance rule, counter, pass
+structure or calibration. It adds one obligation: the rerun after the real chunker lands (section 1).
 
 ### 1. Chunks: ADR-0016's estimate rule, until the chunker exists
 
@@ -280,10 +280,18 @@ file counted as `ceil(lines / 60)`. S2 uses that rule as its chunker:
   the file's path.
 
 By construction this gives the estimate's count. The harness checks that each repository's window
-count equals its `chunk_estimate` in the manifest, and refuses to run if any differs. It is not §9.4's chunker, and the report says so. The report gives the windows'
-token-length distribution under the embedder's tokenizer, so the difference can be seen when the
-chunker lands. Per-pair base commits (§14.2 step 3) serve retrieval quality. S2 measures cost, so
-one snapshot per repository is enough.
+count equals its `chunk_estimate` in the manifest, and refuses to run if any differs. It is not §9.4's
+chunker, and the report says so. The report gives the windows' token-length distribution under the
+embedder's tokenizer. Per-pair base commits (§14.2 step 3) serve retrieval quality. S2 measures
+cost, so one snapshot per repository is enough.
+
+**A rerun is required when the chunker lands** (gupta958). The windows stand in for §9.4's chunks
+only until P1 item 5 merges. After that, S2's SQL, rerank and indexing measurements are run again
+in full on the A1, over the real chunker's output and under this ADR: the hybrid SQL and rerank rows
+of S2-1, S2-2, S2-4, S2-5 for those stages, and S2-6, with S2-7 recomputed from the new report. The
+results pull request of that rerun replaces those values in the Decision and in §10.3. Until then,
+the Decision labels them **measured on 60-line windows**. Query embedding does not read chunks, so
+its values carry over.
 
 ### 2. Corpus vectors are real
 
@@ -296,8 +304,9 @@ keeps ADR-0019's stand-in vectors.
 
 S2-4 grants 1%, 10% and 100% of repositories. Four repositories cannot express 1%. The corpus is
 loaded as **100 pseudo-repository rows**, which is §14.2 step 5's mechanism. A file goes to
-pseudo-repository `int(sha256(f"{github_repo_id}/{path}"), 16) % 100`, so all of a file's windows
-stay together. The three levels grant pseudo-repositories 0, 0–9 and 0–99. The report gives the
+pseudo-repository `int(sha256(f"{github_repo_id}/{path}".encode("utf-8")).hexdigest(), 16) % 100`:
+the hash input is the decimal repository id, a slash and the file's path from git, encoded as
+UTF-8, so the assignment is the same on every machine. All of a file's windows stay together. The three levels grant pseudo-repositories 0, 0–9 and 0–99. The report gives the
 fraction of representations each level actually admits, because files differ in size. At 60k, a
 padding copy stays in its source's pseudo-repository. This matches S3-6's fixture shape (100
 repositories, granted 1, 10, 100), so S2 times the same plans that S3-6 recorded.
@@ -323,10 +332,38 @@ repositories, granted 1, 10, 100), so S2 times the same plans that S3-6 recorded
 The process CPU clock of a host pid and a container's cgroup need a Linux host that runs Docker
 natively. Docker on macOS runs containers inside a virtual machine, where neither is reachable from
 the host. **S2-dev runs on CI's Ubuntu runner, never on a Mac.** The harness runs as root there and
-on the A1, because `drop_caches` and `strace -p` need it. CI's job runs a small fixture against the
-pinned Postgres image, the pinned Ollama (0.34.2, ADR-0005's run, with the pinned model digest) and
-the pinned reranker, so every counter, the preflight and the calibration run on every pull request.
-As ADR-0019 already says, those numbers are S2-dev's and never evidence.
+on the A1, because `drop_caches` and `strace -p` need it.
+
+**CI's S2 job** (gupta958) runs a small fixture against the pinned Postgres image, the pinned
+Ollama (0.34.2, ADR-0005's run, with the pinned model digest) and the pinned reranker, so every
+counter, the preflight and the calibration run. It runs in full **only when a pull request changes
+one of S2's inputs**:
+- the S2 harness, `eval/harness/s2/**`;
+- the retrieval query, `apps/api/wayfinder/retrieval/hybrid_sql.py` and `s3_6.py`, which the
+  harness imports;
+- the database inputs: `db/migrations/**`, `db/s6_identity.py`, `eval/datasets/s1/**` and
+  `eval/miners/s1/universe.py`;
+- the dependencies, `pyproject.toml` and `uv.lock`;
+- the model pins, which live in the harness;
+- the job's own workflow file.
+
+On any other pull request the job passes as a no-op, and says so in its log. It does not download
+Ollama's model. The job still reports a status, so it can be a required check. The model and the
+reranker are cached under a key that is their pinned digest. After every restore or download, the
+job checks the model's digest against `/api/tags` and the reranker files against their SHA-256,
+and fails on any mismatch. A cache is never trusted without that check. As ADR-0019 already says,
+the job's numbers are S2-dev's and never evidence.
+
+### Review rulings on Amendment 1 (gupta958, 2026-10-22)
+
+Relayed by Myan on #94. All are applied above:
+1. The 60-line chunking stand-in is accepted. S2's SQL, rerank and indexing measurements are rerun
+   after the real P1 chunker lands.
+2. The 100 pseudo-repositories are accepted. The hash input is UTF-8.
+3. Strong dev issues only. Weak pairs are not mixed into the query set.
+4. The full S2 CI job runs only when the harness, the retrieval query, the database inputs, the
+   dependencies, the model pins or its workflow change, and passes as a no-op otherwise. Caches
+   are keyed by pinned digest, and the digest is always verified.
 
 ### What this amendment leaves to the harness pull requests
 
