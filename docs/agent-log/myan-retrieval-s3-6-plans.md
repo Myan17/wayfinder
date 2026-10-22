@@ -56,3 +56,13 @@ test_s3_6_plans.py against the pinned database -> 10 passed (58 s). Mutants on t
 ### 2026-10-22T04:59:37Z · COMMIT · myan · claude-code/opus-5.5 · parent:95bb67d
 feat(retrieval): S3-6a reads only the lexical leg, and CI pins every 7,175 case's scans (ADR-0007 Amendment 2)
 4 files changed, 52 insertions(+), 17 deletions(-)
+
+### 2026-10-22T05:02:19Z · DECIDE · myan · claude-code/opus-5.5 · cffd617
+check_pr_size failed at 423 counted lines after the revision. Split by function, as S6's runner was (#83, then #84): this PR keeps the fixture, cases, checks and tests; the evidence runner (cases_at, on_temporary_database, main, the report path and image pin) moves to a stacked PR, which step 5 runs. Nothing in this PR's tests used the runner.
+
+### 2026-10-22T05:02:19Z · TEST · myan · claude-code/opus-5.5 · cffd617
+After the split: test_s3_6_plans.py -> 10 passed (56 s); ruff clean.
+
+### 2026-10-22T05:02:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:cffd617
+refactor(retrieval): move the S3-6 evidence runner to its own pull request
+3 files changed, 8 insertions(+), 58 deletions(-)

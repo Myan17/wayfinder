@@ -1,6 +1,4 @@
-"""Spike S3-6 (ADR-0007 Amendment 1, step 4): the plans of the canonical two-leg query.
-
-    WAYFINDER_TEST_DSN=... uv run python -m wayfinder.retrieval.s3_6 [report.json]
+"""Spike S3-6 (ADR-0007 Amendments 1 and 2, step 4): the plans of the canonical two-leg query.
 
 The statement is `hybrid_sql.build`'s, imported and never copied; this module may not change it. Each
 case PREPAREs that one parameterized statement and captures EXPLAIN (ANALYZE, BUFFERS) EXECUTE under
@@ -12,12 +10,8 @@ automatic fallback.
 from __future__ import annotations
 
 import hashlib
-import json
-import os
 import re
-import subprocess
 import sys
-import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -33,9 +27,7 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / "db"))
 import s6_identity  # noqa: E402  ADR-0005's stand-in embedder, shared with spike S6
 
-COMPOSE = ROOT / "infra" / "spikes" / "s3" / "compose.yml"
 MIGRATIONS = sorted((ROOT / "db" / "migrations").glob("*.sql"))
-REPORT = ROOT / "db" / "evidence" / "s3-6-plans.json"
 
 REPOS = 100                      # all private: only the granted array admits rows
 SIZES = (7_175, 60_000)          # ADR-0019's two sizes, live representations
@@ -229,51 +221,3 @@ def verdict(cases: list[dict]) -> dict:
         "S3-6e": all(c.get("plan_text") for c in cases),
     }
     return {"checks": checks, "passed": all(checks.values())}
-
-
-def cases_at(conn, size: int) -> list[dict]:
-    fx = build_fixture(conn, size)
-    return [case(conn, fx, g, m) for g in SELECTIVITIES for m in MODES]
-
-
-def on_temporary_database(dsn: str, size: int) -> list[dict]:
-    name = f"wf_s3_6_{uuid.uuid4().hex[:12]}"
-    with psycopg.connect(dsn, autocommit=True) as admin:
-        admin.execute(f'CREATE DATABASE "{name}"')
-    try:
-        with psycopg.connect(psycopg.conninfo.make_conninfo(dsn, dbname=name), autocommit=True) as conn:
-            for m in MIGRATIONS:
-                conn.execute(m.read_text().split("-- migrate:up", 1)[1].split("-- migrate:down")[0])
-            return cases_at(conn, size)
-    finally:
-        with psycopg.connect(dsn, autocommit=True) as admin:
-            admin.execute(f'DROP DATABASE "{name}" WITH (FORCE)')
-
-
-def main(argv: list[str]) -> int:
-    dsn = os.environ.get("WAYFINDER_TEST_DSN")
-    if not dsn:
-        sys.exit("WAYFINDER_TEST_DSN is not set (make db-up prints it in the Makefile)")
-    git = ["git", "-C", str(ROOT)]
-    if subprocess.run([*git, "status", "--porcelain"], capture_output=True, text=True).stdout:
-        sys.exit("the tree has uncommitted changes; the report must name the commit that produced it")
-    cases = [c for size in SIZES for c in on_temporary_database(dsn, size)]
-    with psycopg.connect(dsn) as conn:
-        server = conn.execute("SELECT version(), (SELECT extversion FROM pg_extension"
-                              " WHERE extname = 'pg_search')").fetchone()
-    report = {
-        **verdict(cases),
-        "image": re.search(r"image:\s*(\S+)", COMPOSE.read_text())[1],
-        "server": {"version": server[0], "pg_search": server[1]},
-        "commit": subprocess.run([*git, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip(),
-        "cases": cases,
-    }
-    out = Path(argv[0]) if argv else REPORT
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2, sort_keys=True, default=str) + "\n")
-    print(json.dumps({"passed": report["passed"], **report["checks"]}, indent=2))
-    return 0 if report["passed"] else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))

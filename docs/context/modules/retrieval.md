@@ -114,4 +114,4 @@ deterministic scores, so `answer`, `http` and `web` can be built and tested with
 | 2026-10-19 | `hybrid_sql.py`'s ordering tests (step 3b) | — |
 | 2026-10-19 | `hybrid_sql.py`: `build` and `execute` for the canonical two-leg statement, used by S3-6 and S2; internal, not yet behind `interface.py`'s `search` | — |
 | 2026-10-19 | Reads the indexing card's documented query shape, not `retrieval_rows` alone; per-leg tie keys before RRF (ADR-0007 Amendment 1) | — |
-| 2026-10-22 | `s3_6.py`: the S3-6 plan harness and its evidence runner (`python -m wayfinder.retrieval.s3_6`); `hybrid_sql.py` unchanged | — |
+| 2026-10-22 | `s3_6.py`: the S3-6 plan harness (cases, checks, fixture); `hybrid_sql.py` unchanged | — |
