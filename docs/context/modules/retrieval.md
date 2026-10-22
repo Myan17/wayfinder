@@ -117,3 +117,4 @@ deterministic scores, so `answer`, `http` and `web` can be built and tested with
 | 2026-10-19 | Reads the indexing card's documented query shape, not `retrieval_rows` alone; per-leg tie keys before RRF (ADR-0007 Amendment 1) | — |
 | 2026-10-22 | `s3_6.py`: the S3-6 plan harness (cases, checks, fixture); `hybrid_sql.py` unchanged | — |
 | 2026-10-22 | `s3_6.py`'s evidence runner (`python -m wayfinder.retrieval.s3_6`), writing `db/evidence/s3-6-plans.json` | — |
+| 2026-10-22 | `db/evidence/s3-6-plans.json`, the S3-6 report: S3-6a, S3-6d and S3-6e pass; S3-6b and S3-6c fail (ADR-0007 Decision) | — |
