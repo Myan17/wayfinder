@@ -63,3 +63,10 @@ Rulings applied; #94 back to gupta958 for re-review.
 ### 2026-10-22T18:35:44Z · COMMIT · myan · claude-code/opus-5.5 · parent:4462fa0
 docs(agreements): ADR-0019 Amendment 1 revision log
 1 file changed, 6 insertions(+)
+
+### 2026-10-22T22:46:54Z · EDIT · myan · claude-code/opus-5.5 · 64aa1f1
+gupta958's second ruling on #94: the S2 CI trigger list replaces hybrid_sql.py and s3_6.py with apps/api/wayfinder/retrieval/**, apps/api/wayfinder/authz/**, db/views/** and infra/spikes/s3/**, because each can change the generated SQL, the predicate, the queried views or the pinned image. Recorded as ruling 5.
+
+### 2026-10-22T22:46:54Z · COMMIT · myan · claude-code/opus-5.5 · parent:64aa1f1
+docs(agreements): ADR-0019 Amendment 1 — widen the S2 CI trigger list
+2 files changed, 10 insertions(+), 4 deletions(-)

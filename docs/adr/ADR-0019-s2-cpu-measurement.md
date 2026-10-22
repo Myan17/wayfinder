@@ -339,10 +339,11 @@ Ollama (0.34.2, ADR-0005's run, with the pinned model digest) and the pinned rer
 counter, the preflight and the calibration run. It runs in full **only when a pull request changes
 one of S2's inputs**:
 - the S2 harness, `eval/harness/s2/**`;
-- the retrieval query, `apps/api/wayfinder/retrieval/hybrid_sql.py` and `s3_6.py`, which the
-  harness imports;
-- the database inputs: `db/migrations/**`, `db/s6_identity.py`, `eval/datasets/s1/**` and
-  `eval/miners/s1/universe.py`;
+- the retrieval query and what it reads: `apps/api/wayfinder/retrieval/**`,
+  `apps/api/wayfinder/authz/**` and `db/views/**`, which can change the generated SQL, the
+  authorization predicate or the queried views (gupta958);
+- the database inputs: `db/migrations/**`, `db/s6_identity.py`, `eval/datasets/s1/**`,
+  `eval/miners/s1/universe.py`, and `infra/spikes/s3/**`, which pins the database image;
 - the dependencies, `pyproject.toml` and `uv.lock`;
 - the model pins, which live in the harness;
 - the job's own workflow file.
@@ -364,6 +365,8 @@ Relayed by Myan on #94. All are applied above:
 4. The full S2 CI job runs only when the harness, the retrieval query, the database inputs, the
    dependencies, the model pins or its workflow change, and passes as a no-op otherwise. Caches
    are keyed by pinned digest, and the digest is always verified.
+5. The trigger list covers all of `apps/api/wayfinder/retrieval/**`, `apps/api/wayfinder/authz/**`,
+   `db/views/**` and `infra/spikes/s3/**`, not only the two retrieval files the harness imports.
 
 ### What this amendment leaves to the harness pull requests
 
