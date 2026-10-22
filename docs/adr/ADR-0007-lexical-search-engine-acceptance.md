@@ -245,7 +245,7 @@ Each plan is read as a tree. S3-6 passes only if all five checks hold on all 12 
 
 | # | Check |
 |---|---|
-| S3-6a | The lexical leg is served by `pg_search`: a `Custom Scan` node whose provider is ParadeDB, on `representation`. No node is a `Seq Scan` on `representation` |
+| S3-6a | The lexical leg is served by `pg_search`: a `Custom Scan` node whose provider is ParadeDB, on `representation`. No node is a `Seq Scan` on `representation`. **Scoped to the lexical leg's subtree by Amendment 2** |
 | S3-6b | The dense leg is served by the HNSW index: an `Index Scan` using `vec768_hnsw` on `vector_d768`. No node is a `Seq Scan` on `vector_d768` |
 | S3-6c | S3-6a and S3-6b hold on the generic plans as well as the custom ones |
 | S3-6d | **The case is not vacuous.** The executed statement returns at least one candidate from the lexical leg and at least one from the dense leg. Every candidate of either leg, and every returned row, belongs to a granted repository. The harness checks each row against the granted array, separately from the SQL |
@@ -291,6 +291,46 @@ Relayed by Myan on #86. All are applied above:
 - The plan's sequential scan of `occurrence` in the `retrieval_rows` join is captured, but it is not
   an S3-6 failure. S2 measures its cost.
 - The query and the plan harness land in separate pull requests, in the order above.
+
+### Amendment 2 — S3-6a judges the lexical leg only (2026-10-22)
+
+**Written after the first plans were seen**, on gupta958's ruling in the review of #90. It is
+recorded as such, because ADR-0007 exists to stop rules from moving after a measurement.
+
+**What the plans showed.** Amendment 1's S3-6a says "no node is a `Seq Scan` on `representation`",
+anywhere in the plan. At 7,175 representations, every case served the lexical leg with a ParadeDB
+Base Scan. Every case also seq-scanned `representation` in a different place: the dense leg's rank
+step, which joins `representation` to read `path` for the dense tie key. At 60,000 that join used
+`representation_pkey`. Read literally, S3-6a failed all 6 cases at 7,175 on a join that it was not
+written to judge.
+
+**Why this is a scope correction, not a moved threshold.** S3-6 asks whether the BM25 index serves
+the lexical leg (the S3-6 row: "the BM25 scan in use rather than a sequential scan with a filter").
+Amendment 1 also says S3-6 "does not judge the plan's other joins … A slow join is S2's finding, not
+an S3-6 failure." The two sentences conflict for the dense leg's join to `representation`. This
+amendment resolves the conflict in favour of the second sentence. It changes no number, and it
+does not touch S3-6b.
+
+**The rule.** S3-6a is evaluated on the **lexical leg's subtree**: the plan node that scans the
+`lexical` CTE (a `Subquery Scan` with alias `lexical` when the planner inlines it, or the
+`CTE lexical` subplan when it materializes it), and every node beneath it. Within that subtree there
+must be a ParadeDB `Custom Scan` on `representation`, and no `Seq Scan` on `representation`. If the
+plan has no such subtree, S3-6a fails. Nodes outside the subtree are not judged by S3-6a, including
+the dense leg's join to `representation` and `retrieval_rows`' join. They stay in the captured
+plans (S3-6e), and S2 times them.
+
+**What does not change.**
+- **S3-6b stays exactly as written** (gupta958): any `Seq Scan` on `vector_d768` fails it, and there
+  is no minimum candidate count. Its small-scan failures are recorded and raised at G0. At 7,175 the
+  planner seq-scans `vector_d768` and sorts exactly in 5 of 6 cases. At 60,000 it does so in 1 of 6
+  (1 granted repository, custom plan).
+- S3-6c, S3-6d, S3-6e and the four mutation checks.
+- The query. `hybrid_sql.py` is not changed.
+
+**CI.** The pinned job pins the complete observed outcome of all six 7,175 cases: S3-6a, S3-6b
+and the Seq Scan aliases of each, for each selectivity and plan mode. A plan change in either
+direction then fails CI and is seen, instead of staying green because the overall verdict was
+already a failure. The 60,000 cases stay local: their fixture takes about 389 s to build (gupta958).
 
 ### What is deliberately not a rule here
 
