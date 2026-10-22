@@ -40,3 +40,16 @@ PR for gupta958. It must merge before #90's revision (scoped check_lexical plus 
 ### 2026-10-22T04:57:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:704f167
 docs(agents): hand ADR-0007 Amendment 2 to gupta958
 1 file changed, 3 insertions(+)
+
+### 2026-10-22T05:31:22Z · READ · myan · claude-code/opus-5.5 · 348a404
+gupta958 on #91 (relayed by Myan): 'S3-6a failed 0 of 6 cases' reads as the opposite of what happened; say 'failed all 6 cases' or 'passed 0 of 6'.
+
+### 2026-10-22T05:31:22Z · EDIT · myan · claude-code/opus-5.5 · 348a404
+Amendment 2 now reads 'S3-6a failed all 6 cases at 7,175'; the PR body says the same. No other change.
+
+### 2026-10-22T05:31:22Z · TEST · myan · claude-code/opus-5.5 · 348a404
+Docs only. grep for '0 of 6' in the ADR finds nothing; the rest of the diff is unchanged.
+
+### 2026-10-22T05:31:22Z · COMMIT · myan · claude-code/opus-5.5 · parent:348a404
+docs(agreements): Amendment 2 says S3-6a failed all 6 cases, not 'failed 0 of 6'
+2 files changed, 10 insertions(+), 1 deletion(-)

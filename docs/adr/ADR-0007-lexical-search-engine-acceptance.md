@@ -301,7 +301,7 @@ recorded as such, because ADR-0007 exists to stop rules from moving after a meas
 anywhere in the plan. At 7,175 representations, every case served the lexical leg with a ParadeDB
 Base Scan. Every case also seq-scanned `representation` in a different place: the dense leg's rank
 step, which joins `representation` to read `path` for the dense tie key. At 60,000 that join used
-`representation_pkey`. Read literally, S3-6a failed 0 of 6 cases at 7,175 on a join that it was not
+`representation_pkey`. Read literally, S3-6a failed all 6 cases at 7,175 on a join that it was not
 written to judge.
 
 **Why this is a scope correction, not a moved threshold.** S3-6 asks whether the BM25 index serves
