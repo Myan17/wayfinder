@@ -53,3 +53,13 @@ ADR-0019 Amendment 1: rerun paragraph in section 1, UTF-8 hash in section 3, CI 
 ### 2026-10-22T18:35:43Z · COMMIT · myan · claude-code/opus-5.5 · parent:f8956ed
 docs(agreements): ADR-0019 Amendment 1 — apply gupta958's rulings on #94
 2 files changed, 55 insertions(+), 12 deletions(-)
+
+### 2026-10-22T18:35:43Z · TEST · myan · claude-code/opus-5.5 · 4462fa0
+Formula checked: int(sha256('90194616/pydantic/main.py'.encode('utf-8')).hexdigest(),16)%100 evaluates. Guardrails rerun.
+
+### 2026-10-22T18:35:44Z · HANDOFF · myan · claude-code/opus-5.5 · 4462fa0
+Rulings applied; #94 back to gupta958 for re-review.
+
+### 2026-10-22T18:35:44Z · COMMIT · myan · claude-code/opus-5.5 · parent:4462fa0
+docs(agreements): ADR-0019 Amendment 1 revision log
+1 file changed, 6 insertions(+)
