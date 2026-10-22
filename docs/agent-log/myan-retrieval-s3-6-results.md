@@ -53,3 +53,10 @@ gupta958 on #93: ADR-0007 Decision's image line showed c17153b8…64f4, a wrong 
 ### 2026-10-22T17:25:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:0cd7577
 docs(agreements): ADR-0007 Decision names the full, correct image digest
 2 files changed, 4 insertions(+), 1 deletion(-)
+
+### 2026-10-22T17:25:07Z · TEST · myan · claude-code/opus-5.5 · d871dbf
+Digest fix: git grep shows c17153b8…e242 in compose, run.py, manifest, report and the ADR; no …64f4 remains outside old agent logs. Guardrails and make test rerun.
+
+### 2026-10-22T17:25:08Z · COMMIT · myan · claude-code/opus-5.5 · parent:d871dbf
+docs(retrieval): S3-6 results log, digest fix checks
+1 file changed, 3 insertions(+)
