@@ -33,3 +33,13 @@ ADR-0019 Amendment 1: (1) 60-line windows over ADR-0016's universe at as-of comm
 ### 2026-10-22T17:49:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:dcd7bea
 docs(agreements): ADR-0019 Amendment 1 — S2's corpus, vectors, selectivity, queries and dev host, before the harness
 2 files changed, 109 insertions(+), 1 deletion(-)
+
+### 2026-10-22T17:49:27Z · TEST · myan · claude-code/opus-5.5 · bf9a795
+Docs only. Counts verified from pairs.jsonl (874 strong dev issues); universe.lines and chunks() read. Guardrails run before push.
+
+### 2026-10-22T17:49:27Z · HANDOFF · myan · claude-code/opus-5.5 · bf9a795
+Amendment 1 for gupta958's review. No harness code until it merges.
+
+### 2026-10-22T17:49:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:bf9a795
+docs(agreements): ADR-0019 Amendment 1 task log
+1 file changed, 6 insertions(+)
