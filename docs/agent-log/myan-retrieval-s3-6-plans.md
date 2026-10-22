@@ -66,3 +66,10 @@ After the split: test_s3_6_plans.py -> 10 passed (56 s); ruff clean.
 ### 2026-10-22T05:02:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:cffd617
 refactor(retrieval): move the S3-6 evidence runner to its own pull request
 3 files changed, 8 insertions(+), 58 deletions(-)
+
+### 2026-10-22T05:02:19Z · HANDOFF · myan · claude-code/opus-5.5 · fd1c179
+Revised for gupta958's re-review of #90: rebased onto 6bf7cc5, S3-6a scoped by Amendment 2 (#91, which merges first), the 7,175 scan matrix pinned, the runner split to a stacked PR. Next: #91 merges, then #90, then the runner PR rebased onto main, then step 5.
+
+### 2026-10-22T05:02:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:fd1c179
+docs(retrieval): hand #90's revision back to gupta958
+1 file changed, 3 insertions(+)
