@@ -47,7 +47,7 @@ experiment. 32 h planned, 3 h of contingency.
 | 8 | S4 provider and account ledger | 3 | Appendix B refresh; not needed until P3 | open |
 | 9a | S3 rules S3-1a, S3-2 to S3-5 | — | Ran before item 3 existed; its evidence is ADR-0007's local run, not release evidence | done #19 |
 | 9b | S3-1b: provision the A1 and run S3 on it | — | | blocked: Myan provisions the A1 |
-| 9c | S3-6: two-leg hybrid query of DESIGN §9.5 (vector column, HNSW index, stand-in embeddings) | — | Follow-up to #19; runs under item 3's manifest | open |
+| 9c | S3-6: two-leg hybrid query of DESIGN §9.5 (vector column, HNSW index, stand-in embeddings) | — | Follow-up to #19; runs under item 3's manifest | done #86–#93; S3-6b and S3-6c fail, raised at G0 |
 
 ### Done outside the order during P0 (for the record, not a precedent)
 

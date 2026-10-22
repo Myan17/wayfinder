@@ -344,8 +344,8 @@ already a failure. The 60,000 cases stay local: their fixture takes about 389 s 
 
 ## Decision
 
-**Still Proposed. Measured locally on 2026-09-22; S3-1b and S3-6 outstanding, so this is not an
-acceptance.**
+**Still Proposed. Measured locally on 2026-09-22, and S3-6 on 2026-10-22; S3-1b outstanding, so this
+is not an acceptance.**
 
 Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), PostgreSQL 18.6,
 `pg_search` 0.25.9. Reproduce with `infra/spikes/s3/`.
@@ -358,7 +358,32 @@ Image `paradedb/paradedb@sha256:c17153b8…64f4` (0.25.9, `linux/arm64`), Postgr
 | S3-3 | PASS | 5 rows, then 5 rows, in one `REPEATABLE READ` snapshot across a concurrent commit |
 | S3-4 | PASS | Reader saw gen `[1]`; writer activated gen 2 and retired gen 1; **same transaction still saw `[1]`**; a new transaction saw `[2]` |
 | S3-5 | PASS | Snapshot predating the delete kept 4 rows; a new transaction saw 0 |
-| **S3-6** | **OUTSTANDING** | The rule names §9.5's **two-leg** query. This harness has no dense leg — no vector column, no pgvector index, no embeddings — so nothing was measured. The two-leg harness and its plan capture are their own pull request |
+| **S3-6** | **FAIL (S3-6b, S3-6c). Raised at G0; not a fallback** | Measured on 2026-10-22 on the same image under Amendments 1 and 2. S3-6a, S3-6d and S3-6e pass on all 12 cases. S3-6b fails on 6 of 12: the planner seq-scans `vector_d768` and sorts exactly instead of using `vec768_hnsw`. Three of those are generic plans, so S3-6c fails too. Per case below |
+
+**S3-6, per case.** Report `db/evidence/s3-6-plans.json`, written by `python -m
+wayfinder.retrieval.s3_6` at commit `ed2738d` (SHA-256 `e7510d68…fed9`). It is committed unchanged and
+holds every plan as text (S3-6e). "Seq" means a `Seq Scan` on `vector_d768`.
+
+| Rows | Granted | Custom plan: S3-6a / S3-6b / rows | Generic plan: S3-6a / S3-6b / rows |
+|---|---|---|---|
+| 7,175 | 1 | pass / **Seq** / 72 | pass / **Seq** / 72 |
+| 7,175 | 10 | pass / **Seq** / 140 | pass / **Seq** / 140 |
+| 7,175 | 100 | pass / HNSW / 197 | pass / **Seq** / 197 |
+| 60,000 | 1 | pass / **Seq** / 101 | pass / HNSW / 102 |
+| 60,000 | 10 | pass / HNSW / 147 | pass / HNSW / 147 |
+| 60,000 | 100 | pass / HNSW / 199 | pass / HNSW / 199 |
+
+S3-6d passes on all 12 cases: each returns candidates from both legs, and no row is outside the
+granted repositories. The four mutation checks fail their rules as Amendment 1 requires, and the
+7,175 outcome above is pinned. Both run in CI's pinned-extension job on `main` at `ed2738d`
+(run 39730278934, 114 passed).
+
+**What S3-6 shows.** The failures happen where the scan is small: few granted repositories, or the
+7,175-row fixture. There the planner prices an exact sort below the HNSW scan. At 60,000 rows only
+the 1-granted custom plan does this. The S3-6 row makes this a G0 question and not a fallback
+trigger. Amendment 2 records gupta958's ruling: no minimum candidate count is added after the plans
+were seen. Whether an exact scan of a small granted set is acceptable, or the dense leg needs a
+change, is for G0. S2 times both plan shapes. None of this touches the MVCC rules S3-3 to S3-5.
 
 **Three results were mutation-checked**, because a rule that passes first time and cannot fail is
 worth nothing:
@@ -376,7 +401,7 @@ worth nothing:
 architecture is the same and the image digest is the same, but A-5 is a claim about the deployment
 target and §19.2 puts A1 provisioning inside S3. Nothing here should be cited as A-5 being settled.
 
-When S3-1b and S3-6 run, this section is completed with one of:
+When S3-1b runs, this section is completed with one of:
 
 - **Accept `pg_search`** — every one of S3-1b, S3-2, S3-3, S3-4 and S3-5 PASS, each measured on the
   A1. S3-6 recorded either way. S3-1a is a precondition and carries no weight here: passing it on a
@@ -392,7 +417,7 @@ a rule that failed.
 other rule passes on a development machine. That is deliberate: a local aarch64 machine and an
 Oracle A1 are both arm64, but A-5 is a claim about the deployment target, and the same digest
 behaving here is a precondition, not the evidence. §19.2 puts A1 provisioning inside S3 for this
-reason. A partial result is recorded as *"S3-1a and S3-2..S3-5 measured locally; S3-1b and S3-6
+reason. A partial result is recorded as *"S3-1a, S3-2..S3-5 and S3-6 measured locally; S3-1b
 outstanding"* — never as an acceptance.
 
 ## Consequences if the fallback is taken
