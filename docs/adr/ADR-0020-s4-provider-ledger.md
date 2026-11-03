@@ -5,6 +5,9 @@
 - **Decides:** how assumption A-7 (`DESIGN` §7.1) is tested, and the evidence behind the S4 rows of
   Appendix B, the provider rows of §11.1, the model IDs and prices of §11.2, and the data-terms
   approvals of §9.7.2.
+- **Reviewer rulings (`gupta958`, 2026-11-03):** the rules and the ledger land in separate pull
+  requests, rules first; the 30-day expiry of S4-7 is accepted; scope is the seven services of
+  §11.1, and Oracle and GitHub stay with their existing owners.
 
 ## Why this document exists before the lookups
 

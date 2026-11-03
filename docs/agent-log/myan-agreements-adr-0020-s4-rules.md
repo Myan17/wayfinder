@@ -53,3 +53,16 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-03T02:37:45Z · COMMIT · myan · claude-code/opus-5 · parent:40113d6
 docs(agents): close task log for myan-agreements-adr-0020-s4-rules
 1 file changed, 3 insertions(+)
+
+### 2026-11-03T15:05:24Z · DECIDE · myan · claude-code/opus-5.5 · a926010
+Review of #96 (gupta958, relayed by myan, 2026-11-03): 'Keep the rules and ledger in separate PRs; the rules must land first. The 30-day value expiry is accepted. S4 is limited to the seven services in DESIGN §11.1. Oracle and GitHub remain with their existing owners. After #97 merges, rebase #96 onto main and ask me for the final approval.'
+
+### 2026-11-03T15:05:24Z · EDIT · myan · claude-code/opus-5.5 · a926010
+docs/adr/ADR-0020-s4-provider-ledger.md: header records gupta958's three rulings. No rule text changed.
+
+### 2026-11-03T15:05:24Z · TEST · myan · claude-code/opus-5.5 · a926010
+Rebased onto origin/main d99ad47 (#97 merged, as gupta958 directed). Old head 7fcb709, base dcd7bea; clean rebase, no conflicts, no content change from the rebase itself.
+
+### 2026-11-03T15:05:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:a926010
+docs(agreements): record gupta958's rulings on ADR-0020 and the rebase onto #97
+2 files changed, 12 insertions(+)
