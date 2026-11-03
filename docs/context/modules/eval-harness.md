@@ -9,6 +9,7 @@ interface_files:
   - eval/harness/s2/inputs.py
   - eval/harness/s2/counters.py
   - eval/harness/s2/preflight.py
+  - eval/harness/s2/calibration.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -22,6 +23,7 @@ design_sections:
   - "DESIGN §16.5 (quality gates)"
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
+  "eval/harness/s2/calibration.py": "4068356755b417c2"
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
@@ -70,6 +72,13 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `children`, `kind` of `none`, `threads` or `child`), `check_clock(found, process_ns,
   schedstat_ns)`, `cases()` (12 `Case`s) and `run_case(case, reset, connect, traced_query) ->
   Result`, where `traced_query` returns `Traced` (strace output, the two clock deltas, thread names).
+- **`s2.calibration`**: `calibrate(machine, path, call) -> Calibration` for `path` in `PATHS`
+  (`embedding`, `sql`, `rerank`), built from `background(machine)`, `block(machine, call)` and
+  `check(path, before, block, after)`. `call` makes one real call and returns its CPU in ns through
+  the path's own counter. `Machine` holds the `/proc/stat` reader, monotonic clock, harness process
+  clock, sleep and `USER_HZ`; `Machine.linux()` is the real one. `Calibration` gives the three
+  `Window`s (executed, `iowait` and `steal` seconds, elapsed), the noise, the reference and `ratio`.
+  `accounting(kernel_config())` names the kernel's CPU-time accounting for S2-8.
 
 ## Invariants a caller may rely on
 
@@ -101,6 +110,11 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   resets before a cold case and then connects afresh, so no pid or attachment crosses a reset.
   `Result.thread_names` keeps names only for threads strace saw created; a thread that exited before
   its name was read is still counted.
+- The calibration runs 60 s of background, then calls until their summed CPU reaches 30 s, then
+  60 s of background. The reference is the block's executed CPU minus the mean background rate
+  times its elapsed time, minus the harness's process CPU except on `rerank`. The noise gate fails
+  when `|b_after - b_before|` times the elapsed time exceeds 1% of the reference, and the check fails
+  when the per-call sum is more than 5% from it. `iowait` and `steal` are reported, never added.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
@@ -119,6 +133,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | A window count differs from the manifest | `count_problems` returns one line per repository | Refuse to run S2 (Amendment 1 §1) |
 | A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids | `CounterError` | S2 stops as an error (ADR-0019) |
 | The backend's clocks disagree, or it creates a child process | `CounterError` from `check_clock` | S2 stops as an error |
+| The calibration's background moves more than 1%, its per-call sum is more than 5% from the reference, a call reports no CPU, `/proc/stat` goes backwards, or the kernel config sets other than one accounting option | `CounterError` from `s2.calibration` | S2 stops as an error (ADR-0019) |
 | strace output has a creation that cannot be parsed, or a call that never resumes | `ValueError` from `classify` | Treat as an error; never assume none |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
 | An issue fetch is not a 200, or returns a pull request | `RuntimeError` naming `owner/repo#n` | Stop; a partial query set changes what S2 measures |
@@ -141,9 +156,9 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `…::test_normalization_is_nfc_and_trailing_whitespace_only`, `…::test_queries_above_2000_characters_are_rejected`, `…::test_the_cold_sample_is_the_first_of_each_of_the_first_50_groups` | Normalization, rejection and the cold sample |
 | `…::test_the_query_joins_title_and_body_as_ruled_then_normalizes_once` | gupta958's join ruling (whitespace-only bodies count as empty) and one normalization |
 | `eval/harness/tests/test_s2_fetch_issues.py` (all seven tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git, including a missing subdirectory of a checkout from outside it |
-
 | `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
 | `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, no pid crossing a cold reset, and thread names |
+| `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the 5% band both ways, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake
 
