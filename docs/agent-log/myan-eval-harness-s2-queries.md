@@ -42,3 +42,10 @@ uv run pytest eval/harness/tests → 22 passed; uv run pytest → 410 passed, 25
 ### 2026-11-03T15:15:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:d99ad47
 feat(eval-harness): S2 harness part 2 — the strong-dev query set, the ruled title/body join, and the REST issue fetch (ADR-0019 Amendment 1 §4)
 7 files changed, 379 insertions(+), 8 deletions(-)
+
+### 2026-11-03T15:15:13Z · HANDOFF · myan · claude-code/opus-5.5 · 5fcbd9a
+S2 part 2: Amendment 1 §4 in s2.inputs with gupta958's join ruling, and s2.fetch_issues. The fetch has not been run: myan runs it with his GITHUB_TOKEN to a path outside git, and the next harness part reads that file. ORIENT item 7 stays open (counters and preflight, calibration, passes and report next).
+
+### 2026-11-03T15:15:13Z · COMMIT · myan · claude-code/opus-5.5 · parent:5fcbd9a
+docs(eval-harness): S2 part 2 handoff
+1 file changed, 3 insertions(+)
