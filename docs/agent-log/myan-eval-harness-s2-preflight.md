@@ -36,3 +36,10 @@ uv run pytest eval/harness/tests → 42 passed, 3 skipped (the Linux-only counte
 ### 2026-11-03T20:32:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:de4d5f3
 feat(eval-harness): S2 harness part 4 — ADR-0019's backend thread preflight, with thread names for the report
 5 files changed, 312 insertions(+), 1 deletion(-)
+
+### 2026-11-03T20:32:36Z · HANDOFF · myan · claude-code/opus-5.5 · 9017aa1
+S2 part 4: s2.preflight. Next: the calibration (background rates, blocks, noise gate, ±5% check), then the passes and report, which also wire Docker, Postgres and strace into run_case's callables.
+
+### 2026-11-03T20:32:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:9017aa1
+docs(eval-harness): S2 part 4 handoff
+1 file changed, 3 insertions(+)
