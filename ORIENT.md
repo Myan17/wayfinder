@@ -43,7 +43,7 @@ experiment. 32 h planned, 3 h of contingency.
 | 4 | S5 River scheduling proof at every crash boundary | 5 | Evidence for DESIGN §9.3.3, which P1 builds on | done #45–#48 |
 | 5 | S1 corpus: linkable pairs, base-commit resolvability, licenses, acquisition mode | 4 | Needs ADR-0013; feeds the P2 evaluation dataset | done #79 |
 | 6 | S6 embedding identity: two specifications over identical text | 3 | Evidence for DESIGN §9.2 | done #81–#84 |
-| 7 | S2 whole-system CPU | 6 | Replaces every estimate in DESIGN §10.3 | open |
+| 7 | S2 whole-system CPU | 6 | Replaces every estimate in DESIGN §10.3 | blocked: awaiting review of #94 (ADR-0019 Amendment 1), which pins S2's inputs before any harness code |
 | 8 | S4 provider and account ledger | 3 | Appendix B refresh; not needed until P3 | open |
 | 9a | S3 rules S3-1a, S3-2 to S3-5 | — | Ran before item 3 existed; its evidence is ADR-0007's local run, not release evidence | done #19 |
 | 9b | S3-1b: provision the A1 and run S3 on it | — | | blocked: Myan provisions the A1 |
