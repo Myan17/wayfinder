@@ -65,7 +65,7 @@ def test_harness_cpu_is_subtracted_except_on_the_rerank_path():
     # with 10% overhead not subtracted, a non-rerank path would read 0.91 of its reference
     host = FakeHost(overhead_ns=10_000_000)
     assert host.run("embedding").ratio == pytest.approx(1, abs=0.002)
-    with pytest.raises(CounterError, match="outside 5%"):
+    with pytest.raises(CounterError, match="outside 95% to 105%"):
         FakeHost(overhead_ns=10_000_000).run("rerank")  # the same 10% left out of the reference
     # rerank: the harness's CPU is the work, so the thread clock reports it and it stays in
     got = FakeHost(overhead_ns=10_000_000).run("rerank", reported_ns=110_000_000)
@@ -74,10 +74,25 @@ def test_harness_cpu_is_subtracted_except_on_the_rerank_path():
 
 def test_a_path_that_misses_cpu_is_an_error_and_one_inside_5_percent_is_not():
     FakeHost().run("sql", reported_ns=96_000_000)
-    with pytest.raises(CounterError, match="outside 5%"):
+    with pytest.raises(CounterError, match="outside 95% to 105%"):
         FakeHost().run("sql", reported_ns=94_000_000)
-    with pytest.raises(CounterError, match="outside 5%"):
+    with pytest.raises(CounterError, match="outside 95% to 105%"):
         FakeHost().run("sql", reported_ns=106_000_000)
+
+
+def test_the_agreement_bounds_are_inclusive_at_exactly_95_and_105_percent():
+    # no background and the rerank path, so the reference is exactly the block's 100 s
+    idle = Window(executed_s=0, iowait_s=0, steal_s=0, elapsed_s=60)
+    block_window = Window(executed_s=100, iowait_s=0, steal_s=0, elapsed_s=100)
+
+    def ratio(summed_ns):
+        return cal.check("rerank", idle, Block(block_window, 0.0, [summed_ns]), idle).ratio
+
+    assert ratio(95 * 10**9) == 0.95
+    assert ratio(105 * 10**9) == 1.05
+    for just_outside in (95 * 10**9 - 1_000_000, 105 * 10**9 + 1_000_000):
+        with pytest.raises(CounterError, match="outside 95% to 105%"):
+            ratio(just_outside)
 
 
 def test_background_that_moves_during_the_block_fails_the_noise_gate():

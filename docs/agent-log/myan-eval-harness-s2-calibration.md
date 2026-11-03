@@ -44,3 +44,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-03T23:17:30Z · COMMIT · myan · claude-code/opus-5.5 · parent:3f449b7
 docs(agents): close task log for myan-eval-harness-s2-calibration
 1 file changed, 3 insertions(+)
+
+### 2026-11-03T23:57:29Z · DECIDE · myan · claude-code/opus-5.5 · cfbce5f
+gupta958's review of #102: compare the ratio against inclusive bounds, 0.95 <= ratio <= 1.05, not abs(ratio - 1) > 0.05. The old form failed both exact boundaries in floating point (abs(1.05 - 1) and abs(0.95 - 1) both exceed 0.05), so exactly 95% and 105% were wrongly errors.
+
+### 2026-11-03T23:57:29Z · TEST · myan · claude-code/opus-5.5 · cfbce5f
+New test_the_agreement_bounds_are_inclusive_at_exactly_95_and_105_percent: ratio exactly 0.95 and 1.05 pass, 1 ms of 100 s outside either bound fails. calibration tests 10 passed; uv run pytest 441 passed, 28 skipped; ruff clean; context-freshness --fix eval-harness.
+
+### 2026-11-03T23:57:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:cfbce5f
+fix(eval-harness): make the calibration's agreement bounds inclusive
+4 files changed, 33 insertions(+), 11 deletions(-)

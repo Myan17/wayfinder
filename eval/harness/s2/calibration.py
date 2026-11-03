@@ -9,7 +9,7 @@ different accounting from the scheduler sums behind the three per-call counters.
 4. noise gate: `|b_after - b_before|` x the block's elapsed time must not exceed 1% of the reference;
 5. reference: executed CPU during the block, minus the mean background over the block, minus the
    harness process's own CPU, except on the rerank path, where the harness's CPU is the work;
-6. the summed per-call values must be within 5% of the reference.
+6. the summed per-call values must be between 95% and 105% of the reference, both inclusive.
 
 A failed gate or check raises `CounterError`: S2 is an error, not a result. The machine is reached
 through `Machine`'s callables, so every rule is tested off Linux; `Machine.linux()` is the real one.
@@ -31,7 +31,7 @@ PATHS = ("embedding", "sql", "rerank")
 BACKGROUND_S = 60
 BLOCK_CPU_NS = 30 * 10**9
 NOISE_LIMIT = 0.01
-AGREEMENT_LIMIT = 0.05
+AGREEMENT_BOUNDS = (0.95, 1.05)  # inclusive: exactly 95% and 105% pass
 NS = 10**9
 
 
@@ -147,10 +147,11 @@ def check(path: str, before: Window, blk: Block, after: Window) -> Calibration:
             f"above 1% of the {reference:.3f} s reference"
         )
     result = Calibration(path, before, blk, after, noise, reference)
-    if abs(result.ratio - 1) > AGREEMENT_LIMIT:
+    low, high = AGREEMENT_BOUNDS
+    if not low <= result.ratio <= high:
         raise CounterError(
             f"{path}: per-call sum {blk.summed_s:.3f} s is {result.ratio:.2%} of the "
-            f"{reference:.3f} s reference, outside 5%"
+            f"{reference:.3f} s reference, outside 95% to 105%"
         )
     return result
 
