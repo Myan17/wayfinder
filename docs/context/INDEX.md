@@ -24,7 +24,7 @@ lands its first interface file — CI enforces this.
 | `cache` | myan | 🟡 [modules/cache.md](modules/cache.md) | `apps/api/wayfinder/cache/interface.py` | `cache/fakes.py` |
 | `http` | myan | 🟡 [modules/http.md](modules/http.md) | `openapi.json` (generated), `docs/api/errors.md` | generated client |
 | `web` | myan | 🟡 [modules/web.md](modules/web.md) | `apps/web/src/api/client.ts` (generated) | — |
-| `eval-harness` | myan | 🟡 [modules/eval-harness.md](modules/eval-harness.md) | `eval/harness/interface.py`, `eval/experiments/schema.json` | — |
+| `eval-harness` | myan | ✅ [modules/eval-harness.md](modules/eval-harness.md) | `eval/harness/s2/inputs.py`, `eval/harness/interface.py`, `eval/experiments/schema.json` | — |
 | `sources` | myan | 🟡 [modules/sources.md](modules/sources.md) | `apps/ingestd/internal/source/source.go` | `source/fake` |
 | `chunking` | myan | 🟡 [modules/chunking.md](modules/chunking.md) | `apps/ingestd/internal/chunk/chunk.go` | `chunk/fake` |
 | `indexing` | myan | ✅ [modules/indexing.md](modules/indexing.md) | `apps/ingestd/internal/generation/api.go`, `db/views/retrieval_rows.sql` | `generation/fake` |
