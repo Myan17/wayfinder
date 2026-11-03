@@ -52,3 +52,13 @@ Removed eval/harness/s2/preflight.py and eval/harness/tests/test_s2_preflight.py
 ### 2026-11-03T20:07:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:0ff4da2
 refactor(eval-harness): move the backend thread preflight to the next part, to keep this one under 400 lines
 5 files changed, 9 insertions(+), 249 deletions(-)
+
+### 2026-11-03T20:07:42Z · TEST · myan · claude-code/opus-5.5 · 220e956
+On the split head: uv run pytest eval/harness/tests → 30 passed, 3 skipped (Linux-only); uv run pytest → 419 passed, 28 skipped; ruff clean; check_pr_size → 283 counted lines; context-freshness OK, 10 interface files.
+
+### 2026-11-03T20:07:42Z · HANDOFF · myan · claude-code/opus-5.5 · 220e956
+S2 part 3: s2.counters, ADR-0019's three per-stage counters, NSpid matching, executed CPU and the counter checks. The three Linux-only tests run first on CI's ubuntu-24.04 unit job; check it is green, not skipped. Next part: s2.preflight, kept unchanged in the session scratchpad (s2-preflight/), then calibration, then passes and report.
+
+### 2026-11-03T20:07:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:220e956
+docs(eval-harness): S2 part 3 test record and handoff
+1 file changed, 6 insertions(+)
