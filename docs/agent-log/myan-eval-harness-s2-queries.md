@@ -89,3 +89,13 @@ docs(eval-harness): record the rebase of S2 part 2 onto #98
 
 ### 2026-11-03T17:56:06Z · HANDOFF · myan · claude-code/opus-5.5 · 7c79e40
 TASK CLOSED. Pull request open for review.
+
+### 2026-11-03T17:56:14Z · COMMIT · myan · claude-code/opus-5.5 · ae5f51c
+ae5f51c (parent:7c79e40) docs(agents): close task log for myan-eval-harness-s2-queries — 1 file changed. Logged by hand: the post-commit hook's idempotence check matched an earlier identical close subject and skipped it. Caught by check_agent_log before the push.
+
+### 2026-11-03T17:56:14Z · TEST · myan · claude-code/opus-5.5 · ae5f51c
+Correction to the rebase entry above: the suite on the rebased head is 412 passed, 25 skipped, not 411. The extra test is #98's orient.py year-rollover regression, now on main.
+
+### 2026-11-03T17:56:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:ae5f51c
+docs(agents): log the close commit after the rebase, which the post-commit hook skipped
+1 file changed, 6 insertions(+)
