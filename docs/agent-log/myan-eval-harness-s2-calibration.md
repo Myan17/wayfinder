@@ -54,3 +54,10 @@ New test_the_agreement_bounds_are_inclusive_at_exactly_95_and_105_percent: ratio
 ### 2026-11-03T23:57:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:cfbce5f
 fix(eval-harness): make the calibration's agreement bounds inclusive
 4 files changed, 33 insertions(+), 11 deletions(-)
+
+### 2026-11-03T23:57:29Z · HANDOFF · myan · claude-code/opus-5.5 · ff1d386
+Review fix applied: inclusive 95%/105% bounds with boundary tests. Ready for gupta958's re-review.
+
+### 2026-11-03T23:57:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:ff1d386
+docs(agents): hand off the calibration bounds fix
+1 file changed, 3 insertions(+)
