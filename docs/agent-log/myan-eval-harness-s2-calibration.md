@@ -30,3 +30,10 @@ uv run pytest: 440 passed, 28 skipped on macOS (431 before; 9 new in test_s2_cal
 ### 2026-11-03T23:17:05Z · COMMIT · myan · claude-code/opus-5.5 · parent:0f8845d
 feat(eval-harness): add ADR-0019's calibration cross-check
 5 files changed, 366 insertions(+), 2 deletions(-)
+
+### 2026-11-03T23:17:29Z · HANDOFF · myan · claude-code/opus-5.5 · a444b06
+S2 part 5: s2.calibration, ADR-0019's calibration cross-check as pure logic behind Machine's callables (background 60 s, block to 30 s of summed per-call CPU, background 60 s, 1% noise gate, reference minus mean background and harness CPU except on rerank, 5% band), plus the kernel accounting option for S2-8. Nothing measures yet. Next: the passes and report, which wire Docker, Postgres, Ollama, the reranker and strace into the preflight's and calibration's callables, and pin onnxruntime and tokenizers in uv.lock.
+
+### 2026-11-03T23:17:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:a444b06
+docs(agents): hand off the calibration task
+1 file changed, 3 insertions(+)
