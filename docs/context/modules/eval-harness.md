@@ -8,7 +8,6 @@ paths:
 interface_files:
   - eval/harness/s2/inputs.py
   - eval/harness/s2/counters.py
-  - eval/harness/s2/preflight.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -24,7 +23,6 @@ design_sections:
 verified_hashes:
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
-  "eval/harness/s2/preflight.py": "3adb920c83ca4c79"
 verified_on: 2026-11-03
 ---
 
@@ -66,10 +64,6 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `thread_cpu_ns()` for rerank; `schedstat_ns(host_pid)`; `executed_ticks(proc_stat) -> Executed`
   for the calibration; the checks `check_cgroup_v2()` and `check_resolution(read_ns, name)`; and
   `CounterError`.
-- **`s2.preflight`**: `strace_command(host_pid)`, `classify(strace_output) -> Creations` (`threads`,
-  `children`, `kind` of `none`, `threads` or `child`), `check_clock(found, process_ns,
-  schedstat_ns)`, `cases()` (12 `Case`s) and `run_case(case, reset, connect, traced_query) ->
-  Result`.
 
 ## Invariants a caller may rely on
 
@@ -93,12 +87,6 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `executed_ticks` is `user + nice + system + irq + softirq`, never adding `guest`.
 - `check_resolution` takes two back-to-back reads while the caller keeps the target busy, and
   needs `0 < diff < 10 µs`.
-- `classify` counts only successful creations, joins strace's split `unfinished`/`resumed` lines,
-  and raises on a creation it cannot parse. `check_clock`: with no creations, the process clock and
-  `schedstat` agree within 10 µs per call; with threads only, the process clock is at least
-  `schedstat`; any child process is a `CounterError`.
-- `cases()` is two sizes (`real`, `60k`) by three levels (1, 10, 100), warm and cold. `run_case`
-  resets before a cold case and then connects afresh, so no pid or attachment crosses a reset.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
@@ -115,8 +103,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | Condition | What the caller sees | What the caller should do |
 |---|---|---|
 | A window count differs from the manifest | `count_problems` returns one line per repository | Refuse to run S2 (Amendment 1 §1) |
-| A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids; clocks disagree; the backend creates a child | `CounterError` | S2 stops as an error (ADR-0019) |
-| strace output has a creation that cannot be parsed, or never resumes | `ValueError` from `classify` | Treat as an error; never assume none |
+| A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids | `CounterError` | S2 stops as an error (ADR-0019) |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
 | An issue fetch is not a 200, or returns a pull request | `RuntimeError` naming `owner/repo#n` | Stop; a partial query set changes what S2 measures |
 | `--out` is inside a git checkout, judged at its nearest existing ancestor | exit status 2, nothing fetched | Choose a path outside git |
@@ -140,7 +127,6 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_fetch_issues.py` (all seven tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git, including a missing subdirectory of a checkout from outside it |
 
 | `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
-| `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, and no pid crossing a cold reset |
 
 ## Fake
 
@@ -158,4 +144,4 @@ against it (`AGENTS.md` §3.4).
 | 2026-09-18 | Placeholder created alongside the framework | — |
 | 2026-11-03 | First contract: S2's corpus windows and pseudo-repositories (ADR-0019 Amendment 1 §1, §3). The query set (§4) follows in the next part | — |
 | 2026-11-03 | Amendment 1 §4: the query set, `query` with gupta958's join ruling, and `s2.fetch_issues` | — |
-| 2026-11-03 | ADR-0019's counters, counter checks and the backend thread preflight (`s2.counters`, `s2.preflight`) | — |
+| 2026-11-03 | ADR-0019's counters and counter checks (`s2.counters`). The backend thread preflight follows in the next part | — |

@@ -42,3 +42,13 @@ On macOS: uv run pytest eval/harness/tests → 41 passed, 3 skipped (the three L
 ### 2026-11-03T20:06:58Z · COMMIT · myan · claude-code/opus-5.5 · parent:416a167
 feat(eval-harness): S2 harness part 3 — ADR-0019's CPU counters, counter checks and the backend thread preflight
 7 files changed, 568 insertions(+), 1 deletion(-)
+
+### 2026-11-03T20:07:35Z · DECIDE · myan · claude-code/opus-5.5 · 0ff4da2
+Split by function after check_pr_size reported 529 lines: this PR keeps s2.counters (the per-stage counters, NSpid matching, executed CPU and the counter checks). s2.preflight, its tests and its card lines move unchanged into the next part, kept in the session scratchpad.
+
+### 2026-11-03T20:07:35Z · EDIT · myan · claude-code/opus-5.5 · 0ff4da2
+Removed eval/harness/s2/preflight.py and eval/harness/tests/test_s2_preflight.py; card and INDEX lose the preflight entries; card hashes re-recorded.
+
+### 2026-11-03T20:07:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:0ff4da2
+refactor(eval-harness): move the backend thread preflight to the next part, to keep this one under 400 lines
+5 files changed, 9 insertions(+), 249 deletions(-)
