@@ -30,3 +30,10 @@ Change only item 7's Status cell in ORIENT.md to 'blocked: awaiting review of #9
 ### 2026-11-03T02:35:19Z · COMMIT · myan · claude-code/opus-5 · parent:dcd7bea
 docs(agreements): ORIENT item 7 blocked until #94 merges
 2 files changed, 29 insertions(+), 1 deletion(-)
+
+### 2026-11-03T02:35:25Z · HANDOFF · myan · claude-code/opus-5 · c94a490
+ORIENT item 7 set to blocked on #94's review; orient.py now names item 8 (S4). One-line change, no other files.
+
+### 2026-11-03T02:35:25Z · COMMIT · myan · claude-code/opus-5 · parent:c94a490
+docs(agreements): ORIENT item 7 blocked — handoff
+1 file changed, 3 insertions(+)
