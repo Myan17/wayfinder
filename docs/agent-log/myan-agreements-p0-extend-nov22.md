@@ -69,3 +69,10 @@ uv run pytest → 397 passed, 25 skipped; orient.py → G0 closes 2026-11-22.
 ### 2026-11-03T17:31:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:6d0ca51
 docs(agreements): README's G0 date and DESIGN version, and DESIGN's status line, say v0.3.6 (gupta958's review of #98)
 3 files changed, 15 insertions(+), 3 deletions(-)
+
+### 2026-11-03T17:31:49Z · HANDOFF · myan · claude-code/opus-5.5 · c8f101e
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-03T17:31:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:c8f101e
+docs(agents): close task log for myan-agreements-p0-extend-nov22
+1 file changed, 3 insertions(+)
