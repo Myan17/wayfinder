@@ -49,3 +49,13 @@ eval/harness/s2/inputs.py, eval/harness/tests/test_s2_inputs.py, docs/context/mo
 ### 2026-11-03T02:53:26Z · COMMIT · myan · claude-code/opus-5 · parent:be44316
 refactor(eval-harness): move the S2 query set to the next part, to keep this one under 400 lines
 4 files changed, 15 insertions(+), 114 deletions(-)
+
+### 2026-11-03T02:53:56Z · TEST · myan · claude-code/opus-5 · 24898da
+On the split head: uv run pytest eval/harness/tests → 8 passed; uv run pytest → 396 passed, 25 skipped; ruff on eval/harness clean; check_pr_size → 333 counted lines; check_ownership with PR_BODY 'Scope: eval-harness, platform' → OK; identity, agent-log, context-freshness, codeowners, gh-account → OK.
+
+### 2026-11-03T02:53:56Z · HANDOFF · myan · claude-code/opus-5 · 24898da
+Part 1 of the S2 harness: Amendment 1 §1 and §3 in eval/harness/s2/inputs.py, the eval-harness card's first contract, and #94's missing TASK CLOSED entry. Next part (own branch after this merges, or stacked): §4's query set, kept in the scratchpad copies of inputs.py and its tests, plus the REST issue-fetch script. Open question for gupta958 then: how title and body are joined (DESIGN §14.2 step 4 does not say).
+
+### 2026-11-03T02:53:56Z · COMMIT · myan · claude-code/opus-5 · parent:24898da
+docs(eval-harness): S2 inputs part 1 test record and handoff
+1 file changed, 6 insertions(+)
