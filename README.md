@@ -4,7 +4,7 @@ Permission-aware retrieval and question answering over a GitHub organization's c
 Ask *where* something is implemented, or *why* it behaves the way it does, and get an answer whose
 citations resolve to passages you are authorized to see, or an explicit refusal.
 
-**Status:** Phase 0 (spikes and foundations), gate G0 on 2026-10-11. Nothing is deployed. No claim in
+**Status:** Phase 0 (spikes and foundations), gate G0 on 2026-11-22. Nothing is deployed. No claim in
 this README is evidence until `manifests/` holds a release manifest that reproduces it.
 
 ## What it answers
@@ -57,15 +57,15 @@ DESIGN §8 has the full context diagram and the data flows.
 
 | Phase | Dates | Gate | State |
 |---|---|---|---|
-| P0 Spikes, decisions, schema | Sep 21 – Oct 11 | G0: every spike answered, ADR-0013/0015 written first | In progress |
-| P1 Safety and consistency kernel | Oct 12 – 25 | G1: authorization, generation fencing, GC, River scheduling proven by tests | Ordered list in `ORIENT.md` |
-| P2 Authorized retrieval slice | Oct 26 – Nov 8 | G2: install → index → search → cite → revoke → deny → delete, end to end | |
-| P3 Generated answers | Nov 9 – 15 | G3 | |
-| P4 Measurement and hardening | Nov 16 – 22 | G4 | |
-| P5 Release evidence | Nov 23 – 29 | G5: DESIGN §16.7 met on the release commit | |
-| Launch review | Mon Nov 30 | Approve, or remove the unproven capability | |
+| P0 Spikes, decisions, schema | Sep 21 – Nov 22 | G0: every spike answered, ADR-0013/0015 written first | In progress |
+| P1 Safety and consistency kernel | Nov 23 – Dec 6 | G1: authorization, generation fencing, GC, River scheduling proven by tests | Ordered list in `ORIENT.md` |
+| P2 Authorized retrieval slice | Dec 7 – 20 | G2: install → index → search → cite → revoke → deny → delete, end to end | |
+| P3 Generated answers | Dec 21 – 27 | G3 | |
+| P4 Measurement and hardening | Dec 28 – Jan 3 | G4 | |
+| P5 Release evidence | Jan 4 – 10 | G5: DESIGN §16.7 met on the release commit | |
+| Launch review | Mon Jan 11, 2027 | Approve, or remove the unproven capability | |
 
-P0 was extended twice under DESIGN §19.8 step 4; evidence is never cut to hold a date.
+P0 was extended three times under DESIGN §19.8 step 4; evidence is never cut to hold a date.
 
 **Built so far:**
 
@@ -115,7 +115,7 @@ along with task scope, contract-card freshness, commit identity and a 400-line p
 
 | Document | What it is |
 |---|---|
-| [`docs/DESIGN.md`](docs/DESIGN.md) | The design (v0.3.3), including what the system will not claim |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | The design (v0.3.6), including what the system will not claim |
 | [`ORIENT.md`](ORIENT.md) | The ordered work list and each item's status |
 | [`AGENTS.md`](AGENTS.md) | Operating rules for coding agents; read before any session |
 | [`docs/adr/`](docs/adr/) | Decision records; acceptance rules are written before each experiment |

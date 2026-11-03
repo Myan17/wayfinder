@@ -31,9 +31,10 @@ gives the **order** to work them in and the **status** of each item, which DESIG
 
 ## Current phase: P0 — spikes, decisions, schema, selection rules
 
-Sep 21 – Oct 11 (moved from Sep 27 to Sep 30 on 2026-09-26, then to Oct 11 on 2026-10-04, both under
-rule 5, DESIGN §19.8 step 4; the second move came four days after G0's date had passed). Gate **G0**: every spike answered, and ADR-0013 and ADR-0015 written before any
-experiment. 32 h planned, 3 h of contingency.
+Sep 21 – Nov 22 (moved from Sep 27 to Sep 30 on 2026-09-26, to Oct 11 on 2026-10-04, then to Nov 22 on
+2026-11-03, all under rule 5, DESIGN §19.8 step 4; the second move came four days and the third 23 days after
+G0's date had passed, and the third is `gupta958`'s direction, DESIGN v0.3.6). Gate **G0**: every spike
+answered, and ADR-0013 and ADR-0015 written before any experiment. 32 h planned, 3 h of contingency.
 
 | # | Item | h | Why it is here in the order | Status |
 |---|---|---|---|---|
@@ -66,7 +67,7 @@ None open. Done: `myan` made `dispatcher` a required status check on main on 202
 
 ## Next phase
 
-P1, the safety and consistency kernel (Oct 12 – 25, gate G1; DESIGN §19.3, 65 h planned, 5 h of
+P1, the safety and consistency kernel (Nov 23 – Dec 6, gate G1; DESIGN §19.3, 65 h planned, 5 h of
 contingency). Exit: AUTH-01…AUTH-11, INDEX-01…INDEX-08 and INPUT-01 pass against the pinned stack.
 This is the ordered list rule 6 requires. It becomes `## Current phase` in the pull request that closes
 G0 with its gate report, and no item here starts before that.
