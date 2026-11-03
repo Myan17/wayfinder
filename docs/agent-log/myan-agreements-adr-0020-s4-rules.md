@@ -69,3 +69,10 @@ docs(agreements): record gupta958's rulings on ADR-0020 and the rebase onto #97
 
 ### 2026-11-03T15:05:30Z · HANDOFF · myan · claude-code/opus-5.5 · 2ee8a31
 TASK CLOSED. Pull request open for review.
+
+### 2026-11-03T15:05:37Z · COMMIT · myan · claude-code/opus-5.5 · 79d7766
+79d7766 (parent:2ee8a31) docs(agents): close task log for myan-agreements-adr-0020-s4-rules — 1 file changed. Logged by hand: the post-commit hook's idempotence check matched the earlier identical close subject and skipped it.
+
+### 2026-11-03T15:05:37Z · COMMIT · myan · claude-code/opus-5.5 · parent:79d7766
+docs(agents): log the close commit after the rebase, which the post-commit hook skipped
+1 file changed, 3 insertions(+)
