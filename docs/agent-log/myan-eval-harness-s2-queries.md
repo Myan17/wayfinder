@@ -56,3 +56,19 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-03T15:15:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:a22c52b
 docs(agents): close task log for myan-eval-harness-s2-queries
 1 file changed, 3 insertions(+)
+
+### 2026-11-03T17:32:26Z · DECIDE · myan · claude-code/opus-5.5 · dfbeebf
+Review of #99 (gupta958, relayed by myan, 2026-11-03): 'A body containing only whitespace should count as empty and produce the title alone. Add regression coverage for spaces, tabs and newlines. Fix inside_git(). When the output parent does not exist, it checks the caller's cwd instead. An absolute destination under a repository can therefore be accepted when the script is launched outside that repository. Find the destination's nearest existing ancestor and check that location. Add a regression test using a nonexistent subdirectory inside a git checkout while the caller is outside it. The title/body join, single normalization, issue-fetch behavior, and agreements scope are otherwise accepted.' Then rebase onto main after #96 and ask for re-review.
+
+### 2026-11-03T17:32:26Z · TEST · myan · claude-code/opus-5.5 · dfbeebf
+Rebased onto origin/main 9ca8981 (#96 merged). Old head b32e9b4 on d99ad47; clean rebase, no conflicts.
+
+### 2026-11-03T17:33:05Z · EDIT · myan · claude-code/opus-5.5 · dfbeebf
+eval/harness/s2/inputs.py: query_text treats a missing, empty or whitespace-only body as empty (body.strip()). eval/harness/s2/fetch_issues.py: inside_git resolves the destination and probes its nearest existing ancestor, never the cwd. Tests: whitespace-only bodies (spaces, tabs, newlines, mixed with CR) give the title alone; a missing subdirectory inside a fresh git checkout is refused while cwd is outside it, and a missing path outside any checkout is not. Card: invariant, failure row and test rows updated; hash refreshed.
+
+### 2026-11-03T17:33:05Z · TEST · myan · claude-code/opus-5.5 · dfbeebf
+Before the fix: 2 failed (the two new regressions), 21 passed. After: uv run pytest eval/harness/tests → 23 passed; uv run pytest → 411 passed, 25 skipped; ruff check and format clean; check_context_freshness OK.
+
+### 2026-11-03T17:33:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:dfbeebf
+fix(eval-harness): whitespace-only issue bodies count as empty, and inside_git probes the destination's nearest existing ancestor (gupta958's review of #99)
+6 files changed, 43 insertions(+), 11 deletions(-)

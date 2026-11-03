@@ -79,11 +79,15 @@ def fetch(issues: list[inputs.Issue], names: dict[int, str], get: Transport) -> 
 
 
 def inside_git(path: Path) -> bool:
-    probe = path.parent if path.parent.exists() else Path.cwd()
+    """True when the destination is inside a git checkout. The probe is the destination's nearest
+    existing ancestor, never the caller's cwd, so a path under a repository is caught from anywhere.
+    """
+    path = path.expanduser().resolve()
+    probe = next(p for p in path.parents if p.exists())
     r = subprocess.run(
         ["git", "-C", str(probe), "rev-parse", "--show-toplevel"], capture_output=True, text=True
     )
-    return r.returncode == 0 and path.resolve().is_relative_to(Path(r.stdout.strip()).resolve())
+    return r.returncode == 0 and path.is_relative_to(Path(r.stdout.strip()).resolve())
 
 
 def write(rows: list[dict], out: Path, fetched_at: str) -> dict:

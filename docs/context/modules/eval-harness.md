@@ -20,7 +20,7 @@ design_sections:
   - "DESIGN §16.5 (quality gates)"
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
-  "eval/harness/s2/inputs.py": "5b7712c9b4cfce77"
+  "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
 verified_on: 2026-11-03
 ---
 
@@ -69,7 +69,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   the committed S1 dataset it returns 874 issues.
 - `normalize` applies NFC and strips trailing whitespace per line, and does nothing else (DESIGN
   §9.4.2). `accepted` is false above 2,000 characters (§9.5 step 1). `query_text` is the title
-  alone when the body is missing or empty, and otherwise the title, two LF characters and the body
+  alone when the body is missing, empty or only whitespace, and otherwise the title, two LF characters and the body
   (gupta958's ruling, 2026-11-03). `query` applies `normalize` once, to the joined text.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
@@ -89,7 +89,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | A window count differs from the manifest | `count_problems` returns one line per repository | Refuse to run S2 (Amendment 1 §1) |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
 | An issue fetch is not a 200, or returns a pull request | `RuntimeError` naming `owner/repo#n` | Stop; a partial query set changes what S2 measures |
-| `--out` is inside a git checkout | exit status 2, nothing fetched | Choose a path outside git |
+| `--out` is inside a git checkout, judged at its nearest existing ancestor | exit status 2, nothing fetched | Choose a path outside git |
 | A git object is missing or unreadable | `subprocess.CalledProcessError` or `AssertionError` from `snapshot` | Stop; never run on a partial corpus |
 
 ## Data owned
@@ -106,8 +106,8 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `…::test_pseudo_repo_is_amendment_1s_exact_hash`, `…::test_a_files_windows_share_one_pseudo_repo`, `…::test_grant_levels_are_0_then_0_to_9_then_0_to_99` | Amendment 1 §3 |
 | `…::test_the_strong_dev_query_set_is_874_issues`, `…::test_weak_and_non_dev_pairs_are_excluded_and_a_split_group_is_refused` | Amendment 1 §4's set |
 | `…::test_normalization_is_nfc_and_trailing_whitespace_only`, `…::test_queries_above_2000_characters_are_rejected`, `…::test_the_cold_sample_is_the_first_of_each_of_the_first_50_groups` | Normalization, rejection and the cold sample |
-| `…::test_the_query_joins_title_and_body_as_ruled_then_normalizes_once` | gupta958's join ruling and one normalization |
-| `eval/harness/tests/test_s2_fetch_issues.py` (all six tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git |
+| `…::test_the_query_joins_title_and_body_as_ruled_then_normalizes_once` | gupta958's join ruling (whitespace-only bodies count as empty) and one normalization |
+| `eval/harness/tests/test_s2_fetch_issues.py` (all seven tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git, including a missing subdirectory of a checkout from outside it |
 
 ## Fake
 

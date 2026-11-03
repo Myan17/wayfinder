@@ -150,9 +150,10 @@ def strong_dev_issues(pairs: Iterable[Mapping]) -> list[Issue]:
 
 def query_text(title: str, body: str | None) -> str:
     """DESIGN 14.2 step 4, joined as gupta958 ruled (2026-11-03): the title alone when the body is
-    missing or empty, otherwise the title, two LF characters and the body. Nothing is normalized here.
+    missing, empty or only whitespace, otherwise the title, two LF characters and the body. Nothing
+    is normalized here.
     """
-    return f"{title}\n\n{body}" if body else title
+    return f"{title}\n\n{body}" if body and body.strip() else title
 
 
 def normalize(text: str) -> str:

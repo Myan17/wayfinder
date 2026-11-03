@@ -143,8 +143,9 @@ def test_the_query_joins_title_and_body_as_ruled_then_normalizes_once():
     # gupta958, 2026-11-03: title alone when the body is missing or empty, else title + LF LF + body
     assert inputs.query("Title  ", None) == inputs.query("Title  ", "") == "Title"
     assert inputs.query("Cafe\u0301 bug ", "  step 1  \r\nstep 2\t") == "Caf\u00e9 bug\n\n  step 1\nstep 2"
-    # a body of spaces is not empty, so the join happens and its trailing blank line remains
-    assert inputs.query("Title", "   ") == "Title\n\n"
+    # gupta958, review of #99: a body of only whitespace counts as empty, so the title stands alone
+    for blank in ("   ", "\t\t", "\n\n", " \t\r\n "):
+        assert inputs.query_text("Title", blank) == inputs.query("Title", blank) == "Title"
     q = inputs.query("T", 'quoted "a  b"  ')
     assert q == 'T\n\nquoted "a  b"' and inputs.normalize(q) == q
 

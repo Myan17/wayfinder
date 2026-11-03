@@ -1,5 +1,6 @@
 import hashlib
 import json
+import subprocess
 
 import pytest
 from s2 import fetch_issues, inputs
@@ -70,3 +71,16 @@ def test_the_real_dataset_resolves_every_query_issue_to_a_repository_name():
     pairs = [json.loads(line) for line in fetch_issues.PAIRS.read_text().splitlines()]
     names = fetch_issues.repo_names(manifest)
     assert {q.github_repo_id for q in inputs.strong_dev_issues(pairs)} <= names.keys()
+
+
+def test_a_missing_subdirectory_inside_a_checkout_is_refused_from_outside_it(tmp_path, monkeypatch):
+    # Regression (gupta958, #99): with the parent missing, inside_git probed the caller's cwd, so an
+    # absolute path under a repository passed when the script ran from outside that repository.
+    repo, outside = tmp_path / "repo", tmp_path / "outside"
+    repo.mkdir()
+    outside.mkdir()
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    monkeypatch.chdir(outside)
+    out = repo / "not" / "yet" / "issues.jsonl"
+    assert fetch_issues.inside_git(out)
+    assert not fetch_issues.inside_git(outside / "missing" / "issues.jsonl")
