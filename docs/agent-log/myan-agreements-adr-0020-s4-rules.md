@@ -1,0 +1,38 @@
+# Task log — myan-agreements-adr-0020-s4-rules
+
+| Field | Value |
+|---|---|
+| Task | ADR-0020: spike S4's ledger fields, evidence classes and done rule, before any lookup (ORIENT item 8) |
+| Module | agreements |
+| Branch | `myan/agreements/adr-0020-s4-rules` |
+| Worktree | `../wayfinder-wt/myan-agreements-adr-0020-s4-rules` |
+| Operator | myan |
+| Agent | claude-code/opus-5 |
+| Session | 2026-11-03T02:35Z/26882 |
+| Started | 2026-11-03T02:36:56Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-11-03T02:37:36Z · DECIDE · myan · claude-code/opus-5 · dcd7bea
+myan directed on 2026-11-03 ('Mark 7 blocked, do S4'): take ORIENT item 8 while #94 waits (item 7 blocked in #95).
+
+### 2026-11-03T02:37:36Z · PLAN · myan · claude-code/opus-5 · dcd7bea
+Rules first, as for S1/S2/S3/S5/S6: ADR-0020 pins S4's scope (the seven services §11.1 and Appendix B name), its fields, three evidence classes (account / public / unverified), and acceptance rules S4-1..S4-7, with an empty Decision. The ledger and the Appendix B refresh come in a second PR after review. Rejected: one PR with rules and ledger together, because rules written after reading the pages could be bent to approve the providers the chain already assumes. Correction: the ADR file was written a few minutes before this entry; nothing else was edited first.
+
+### 2026-11-03T02:37:36Z · READ · myan · claude-code/opus-5 · dcd7bea
+DESIGN §7.1 A-7, §7.2, §9.7.1, §9.7.2, §11.1, §11.2, §19.2, §19.8, Appendix B; ADR-0019 for the ADR shape.
+
+### 2026-11-03T02:37:36Z · EDIT · myan · claude-code/opus-5 · dcd7bea
+docs/adr/ADR-0020-s4-provider-ledger.md (new)
+
+### 2026-11-03T02:37:36Z · COMMIT · myan · claude-code/opus-5 · parent:dcd7bea
+docs(agreements): ADR-0020 — spike S4's ledger fields, evidence classes and rules, before any lookup
+2 files changed, 147 insertions(+)
