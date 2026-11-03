@@ -83,9 +83,10 @@ def parse_phases(design: str, base_year: int) -> list[dict]:
         m1, d1, m2, d2 = span.group(1), int(span.group(2)), span.group(3) or span.group(1), int(span.group(4))
         if MONTHS[m1] < prev_month:
             year += 1
-        prev_month = MONTHS[m2]
         start = dt.date(year, MONTHS[m1], d1)
         end = dt.date(year + (1 if MONTHS[m2] < MONTHS[m1] else 0), MONTHS[m2], d2)
+        # the next row continues from this span's end, so a "Dec 28 - Jan 3" row moves the year on
+        year, prev_month = end.year, MONTHS[m2]
         phases.append({"id": pid, "weeks": weeks, "start": start, "end": end,
                        "theme": theme, "gate": gate})
     return phases

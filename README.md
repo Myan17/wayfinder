@@ -57,15 +57,15 @@ DESIGN §8 has the full context diagram and the data flows.
 
 | Phase | Dates | Gate | State |
 |---|---|---|---|
-| P0 Spikes, decisions, schema | Sep 21 – Oct 11 | G0: every spike answered, ADR-0013/0015 written first | In progress |
-| P1 Safety and consistency kernel | Oct 12 – 25 | G1: authorization, generation fencing, GC, River scheduling proven by tests | Ordered list in `ORIENT.md` |
-| P2 Authorized retrieval slice | Oct 26 – Nov 8 | G2: install → index → search → cite → revoke → deny → delete, end to end | |
-| P3 Generated answers | Nov 9 – 15 | G3 | |
-| P4 Measurement and hardening | Nov 16 – 22 | G4 | |
-| P5 Release evidence | Nov 23 – 29 | G5: DESIGN §16.7 met on the release commit | |
-| Launch review | Mon Nov 30 | Approve, or remove the unproven capability | |
+| P0 Spikes, decisions, schema | Sep 21 – Nov 22 | G0: every spike answered, ADR-0013/0015 written first | In progress |
+| P1 Safety and consistency kernel | Nov 23 – Dec 6 | G1: authorization, generation fencing, GC, River scheduling proven by tests | Ordered list in `ORIENT.md` |
+| P2 Authorized retrieval slice | Dec 7 – 20 | G2: install → index → search → cite → revoke → deny → delete, end to end | |
+| P3 Generated answers | Dec 21 – 27 | G3 | |
+| P4 Measurement and hardening | Dec 28 – Jan 3 | G4 | |
+| P5 Release evidence | Jan 4 – 10 | G5: DESIGN §16.7 met on the release commit | |
+| Launch review | Mon Jan 11, 2027 | Approve, or remove the unproven capability | |
 
-P0 was extended twice under DESIGN §19.8 step 4; evidence is never cut to hold a date.
+P0 was extended three times under DESIGN §19.8 step 4; evidence is never cut to hold a date.
 
 **Built so far:**
 

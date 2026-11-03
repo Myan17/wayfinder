@@ -306,3 +306,13 @@ def test_render_says_how_to_start_the_next_item_when_no_worktree_has_it():
                         trees=[], prs={}, merges=[], network=True,
                         items=orient.orient_items(ORIENT))
     assert "start   scripts/new-task.sh" in out and "(ORIENT item 4)" in out
+
+
+def test_a_phase_after_one_that_crosses_the_year_is_in_the_new_year():
+    # Regression: the year advanced only when a span's start month went backwards, so after
+    # "Dec 28 - Jan 3" the next phase, "Jan 4 - 10", read as January of the old year.
+    design = (f"| P4 | 15 | Dec 28 {EN} Jan 3 | Hardening | **G4**: suites |\n"
+              f"| P5 | 16 | Jan 4 {EN} 10 | Release | **G5**: exit criteria met |\n")
+    p4, p5 = orient.parse_phases(design, base_year=2026)
+    assert (p4["start"], p4["end"]) == (dt.date(2026, 12, 28), dt.date(2027, 1, 3))
+    assert (p5["start"], p5["end"]) == (dt.date(2027, 1, 4), dt.date(2027, 1, 10))
