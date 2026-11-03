@@ -7,6 +7,7 @@ paths:
   - docs/context/modules/eval-harness.md
 interface_files:
   - eval/harness/s2/inputs.py
+  - eval/harness/s2/counters.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -20,6 +21,7 @@ design_sections:
   - "DESIGN §16.5 (quality gates)"
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
+  "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
 verified_on: 2026-11-03
 ---
@@ -56,6 +58,13 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   with a `.meta.json` beside it holding `count`, `fetched_at` and `sha256`. Each line holds
   `github_repo_id`, `issue`, `title` and `body`, as GitHub returned them.
 
+- **`s2.counters`** (Linux-only readers; parsers take paths, so they run anywhere): `cgroup_of(pid)`
+  and `cgroup_usage_usec(cgroup)` for query embedding; `backend_host_pid(backend_pid,
+  postgres_cgroup)`, `process_clock(host_pid)` and `process_cpu_ns(clock)` for hybrid SQL;
+  `thread_cpu_ns()` for rerank; `schedstat_ns(host_pid)`; `executed_ticks(proc_stat) -> Executed`
+  for the calibration; the checks `check_cgroup_v2()` and `check_resolution(read_ns, name)`; and
+  `CounterError`.
+
 ## Invariants a caller may rely on
 
 - A file's windows are consecutive `s1.universe.CHUNK_LINES` (60) line cuts, and the last window
@@ -71,6 +80,13 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   §9.4.2). `accepted` is false above 2,000 characters (§9.5 step 1). `query_text` is the title
   alone when the body is missing, empty or only whitespace, and otherwise the title, two LF characters and the body
   (gupta958's ruling, 2026-11-03). `query` applies `normalize` once, to the joined text.
+- The counters are ADR-0019's and no others: cgroup v2 `usage_usec` for the query Ollama container,
+  the backend's process CPU clock (`clock_getcpuclockid`, so exited threads count), the harness
+  thread clock for rerank. No per-call value is read from `/proc/<pid>/stat`. `backend_host_pid`
+  matches `NSpid` only among the Postgres cgroup's processes and needs exactly one match.
+  `executed_ticks` is `user + nice + system + irq + softirq`, never adding `guest`.
+- `check_resolution` takes two back-to-back reads while the caller keeps the target busy, and
+  needs `0 < diff < 10 µs`.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
@@ -87,6 +103,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | Condition | What the caller sees | What the caller should do |
 |---|---|---|
 | A window count differs from the manifest | `count_problems` returns one line per repository | Refuse to run S2 (Amendment 1 §1) |
+| A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids | `CounterError` | S2 stops as an error (ADR-0019) |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
 | An issue fetch is not a 200, or returns a pull request | `RuntimeError` naming `owner/repo#n` | Stop; a partial query set changes what S2 measures |
 | `--out` is inside a git checkout, judged at its nearest existing ancestor | exit status 2, nothing fetched | Choose a path outside git |
@@ -109,6 +126,8 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `…::test_the_query_joins_title_and_body_as_ruled_then_normalizes_once` | gupta958's join ruling (whitespace-only bodies count as empty) and one normalization |
 | `eval/harness/tests/test_s2_fetch_issues.py` (all seven tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git, including a missing subdirectory of a checkout from outside it |
 
+| `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
+
 ## Fake
 
 None. Only S2's own parts call this module. A fake is required before any other module builds
@@ -125,3 +144,4 @@ against it (`AGENTS.md` §3.4).
 | 2026-09-18 | Placeholder created alongside the framework | — |
 | 2026-11-03 | First contract: S2's corpus windows and pseudo-repositories (ADR-0019 Amendment 1 §1, §3). The query set (§4) follows in the next part | — |
 | 2026-11-03 | Amendment 1 §4: the query set, `query` with gupta958's join ruling, and `s2.fetch_issues` | — |
+| 2026-11-03 | ADR-0019's counters and counter checks (`s2.counters`). The backend thread preflight follows in the next part | — |
