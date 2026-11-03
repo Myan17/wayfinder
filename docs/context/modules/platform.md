@@ -19,8 +19,8 @@ design_sections:
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
   "Makefile": "ebbf6d58abfff743"
-  "pyproject.toml": "4effd0a732d4ad92"
-verified_on: 2026-10-19
+  "pyproject.toml": "c4eedb4857c2062a"
+verified_on: 2026-11-02
 ---
 
 # platform
@@ -63,9 +63,9 @@ And `.github/workflows/ci.yml` (jobs `unit`, `db`, `go`, `dispatcher`). The Go m
 
 Plus the Python project definition:
 
-- package root `apps/api`; tests in `apps/api/tests`, `scripts/tests`, `infra/manifest/tests` **and**
-  `eval/miners/tests`, so tooling and the S1 miner are covered by the same `make test`;
-  `pythonpath = ["apps/api", "eval/miners"]`
+- package root `apps/api`; tests in `apps/api/tests`, `scripts/tests`, `infra/manifest/tests`,
+  `eval/miners/tests` **and** `eval/harness/tests`, so tooling, the S1 miner and the S2 harness are
+  covered by the same `make test`; `pythonpath = ["apps/api", "eval/miners", "eval/harness"]`
 - `requires-python = ">=3.13"`; the dev extra pins pytest, pytest-asyncio, hypothesis, ruff and
   `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
   and `jsonschema[format-nongpl]` (eval-data validates the S1 pairs file against `$defs/pair`; the
@@ -164,3 +164,4 @@ by CI on every pull request.
 | 2026-09-28 | `eval/miners/tests` collected and `eval/miners` on the pythonpath, for the S1 miner's core (eval-data) | — |
 | 2026-10-04 | `jsonschema[format-nongpl]` added to the dev extra and locked, for eval-data's pairs-file checks (gupta958's review of #56) | — |
 | 2026-10-19 | `make db-test` also runs `apps/api/tests/retrieval`, retrieval's SQL tests against the pinned database (ADR-0007 Amendment 1 step 3) | — |
+| 2026-11-03 | `eval/harness/tests` collected and `eval/harness` on the pythonpath, for S2's inputs (eval-harness, ADR-0019 Amendment 1) | — |
