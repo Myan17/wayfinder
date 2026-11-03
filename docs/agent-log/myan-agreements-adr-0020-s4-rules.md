@@ -36,3 +36,13 @@ docs/adr/ADR-0020-s4-provider-ledger.md (new)
 ### 2026-11-03T02:37:36Z · COMMIT · myan · claude-code/opus-5 · parent:dcd7bea
 docs(agreements): ADR-0020 — spike S4's ledger fields, evidence classes and rules, before any lookup
 2 files changed, 147 insertions(+)
+
+### 2026-11-03T02:37:44Z · TEST · myan · claude-code/opus-5 · 5e42030
+Guardrails on 5e42030 against origin/main dcd7bea, each on its own exit code: identity, ownership, context-freshness, gen_codeowners --check, pr-size, gh-account pass; agent-log rechecked after this entry.
+
+### 2026-11-03T02:37:44Z · HANDOFF · myan · claude-code/opus-5 · 5e42030
+ADR-0020 written with an empty Decision; ready for gupta958. After merge: myan reads the console values (S4 needs his accounts), the agent gathers the public values, and the results PR fills the Decision and refreshes Appendix B, §11.1, §11.2, §9.7.2 and A-7. ORIENT item 8 stays open until then.
+
+### 2026-11-03T02:37:45Z · COMMIT · myan · claude-code/opus-5 · parent:5e42030
+docs(agreements): ADR-0020 test record and handoff
+1 file changed, 6 insertions(+)
