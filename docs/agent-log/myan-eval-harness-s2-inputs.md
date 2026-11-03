@@ -36,3 +36,16 @@ uv run pytest eval/harness/tests → 13 passed; uv run pytest → 401 passed, 25
 ### 2026-11-03T02:52:36Z · COMMIT · myan · claude-code/opus-5 · parent:89e57be
 feat(eval-harness): S2's inputs — 60-line windows, pseudo-repositories, the strong-dev query set (ADR-0019 Amendment 1)
 8 files changed, 436 insertions(+), 32 deletions(-)
+
+### 2026-11-03T02:53:25Z · COMMIT · myan · claude-code/opus-5 · be44316
+be44316 (parent:417c796) docs(agents): close task log for myan-agreements-adr-0019-s2-inputs — cherry-picked from e37f54c on the merged #94 branch, which squash-merged without its TASK CLOSED entry; the cherry-pick does not run the post-commit hook, so this entry is written by hand.
+
+### 2026-11-03T02:53:25Z · DECIDE · myan · claude-code/opus-5 · be44316
+Split by function after check_pr_size reported 441 lines: this PR keeps Amendment 1 §1 (windows, the count refusal) and §3 (pseudo-repositories, grant levels). §4 (strong-dev issues, normalization, the 2,000-character rejection, the cold sample) moves unchanged into the next PR with the issue-fetch script.
+
+### 2026-11-03T02:53:25Z · EDIT · myan · claude-code/opus-5 · be44316
+eval/harness/s2/inputs.py, eval/harness/tests/test_s2_inputs.py, docs/context/modules/eval-harness.md: §4's functions, tests and card lines removed (kept for the next PR).
+
+### 2026-11-03T02:53:26Z · COMMIT · myan · claude-code/opus-5 · parent:be44316
+refactor(eval-harness): move the S2 query set to the next part, to keep this one under 400 lines
+4 files changed, 15 insertions(+), 114 deletions(-)

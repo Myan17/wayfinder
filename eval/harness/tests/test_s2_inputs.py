@@ -11,7 +11,6 @@ from s1 import repo, universe
 from s2 import inputs
 
 ROOT = Path(__file__).resolve().parents[3]
-PAIRS = ROOT / "eval/datasets/s1/pairs.jsonl"
 MANIFEST = ROOT / "eval/datasets/s1/manifest.json"
 
 
@@ -114,39 +113,3 @@ def test_grant_levels_are_0_then_0_to_9_then_0_to_99():
     assert {k: (v.start, v.stop) for k, v in inputs.GRANTS.items()} == {1: (0, 1), 10: (0, 10), 100: (0, 100)}
     ws = [inputs.Window(1, f"f{i}", 0, 1, "", i) for i in range(100)]
     assert [inputs.admitted_fraction(ws, p) for p in (1, 10, 100)] == [0.01, 0.10, 1.0]
-
-
-def test_the_strong_dev_query_set_is_874_issues():
-    pairs = [json.loads(line) for line in PAIRS.read_text().splitlines()]
-    issues = inputs.strong_dev_issues(pairs)
-    assert len(issues) == 874
-    assert issues == sorted(issues, key=lambda q: (q.github_repo_id, q.issue))
-    keep = {(p["github_repo_id"], p["issue"]) for p in pairs if p["strong"] and p["split"] == "dev"}
-    assert {(q.github_repo_id, q.issue) for q in issues} == keep
-
-
-def test_weak_and_non_dev_pairs_are_excluded_and_a_split_group_is_refused():
-    base = {"github_repo_id": 1, "issue": 5, "group_id": "1:9", "strong": True, "split": "dev"}
-    assert inputs.strong_dev_issues([base | {"strong": False}, base | {"split": "test"}]) == []
-    assert len(inputs.strong_dev_issues([base, base | {"pr": 2}])) == 1
-    with pytest.raises(ValueError, match="two groups"):
-        inputs.strong_dev_issues([base, base | {"group_id": "1:10"}])
-
-
-def test_normalization_is_nfc_and_trailing_whitespace_only():
-    assert inputs.normalize('café  \nx\t\n  indented "a  b"  ') == 'café\nx\n  indented "a  b"'
-    assert inputs.query_text("Title", None) == "Title"
-    assert inputs.query_text("Title", "Body") == "Title\n\nBody"
-
-
-def test_queries_above_2000_characters_are_rejected():
-    assert inputs.accepted("x" * 2000) and not inputs.accepted("x" * 2001)
-
-
-def test_the_cold_sample_is_the_first_of_each_of_the_first_50_groups():
-    issues = [inputs.Issue(1, n, f"1:{n // 2}") for n in range(200)]  # two issues per group
-    sample = inputs.cold_sample(reversed(issues))
-    assert len(sample) == 50 and len({q.group_id for q in sample}) == 50
-    order = sorted({q.group_id for q in issues}, key=lambda g: hashlib.sha256(g.encode()).hexdigest())
-    assert [q.group_id for q in sample] == order[:50]
-    assert all(q.issue % 2 == 0 for q in sample)  # the lower issue number of each group
