@@ -36,3 +36,13 @@ uv run pytest scripts/tests/test_orient.py before the fix → 1 failed (P5 'Jan 
 ### 2026-11-03T15:09:39Z · COMMIT · myan · claude-code/opus-5.5 · parent:d99ad47
 docs(agreements): extend P0 through 2026-11-22 under §19.8 step 4, P1–P5 keep their lengths, launch review 2027-01-11 (DESIGN v0.3.6)
 6 files changed, 81 insertions(+), 33 deletions(-)
+
+### 2026-11-03T15:10:20Z · TEST · myan · claude-code/opus-5.5 · a85b901
+uv run pytest (after uv sync --frozen --all-groups --all-extras in this worktree; the first run had 9 collection errors from missing dev packages, not from the change) → 397 passed, 25 skipped.
+
+### 2026-11-03T15:10:20Z · HANDOFF · myan · claude-code/opus-5.5 · a85b901
+P0 extended to Sun 2026-11-22 as gupta958 directed; P1–P5 keep their lengths, launch review Mon 2027-01-11, DESIGN v0.3.6. orient.py's year carry is fixed so P5 resolves to January 2027. Next: S2 harness part 2 (ORIENT item 7) with gupta958's title/body join ruling.
+
+### 2026-11-03T15:10:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:a85b901
+docs(agreements): P0 extension test record and handoff
+1 file changed, 6 insertions(+)
