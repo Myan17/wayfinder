@@ -217,7 +217,7 @@ S2 is complete only if every rule holds on the A1.
 1. This ADR, reviewed and merged.
 2. **Item 9c's canonical two-leg query and its harness** (gupta958, ruling 5). It needs no A1.
 3. The S2 harness. It is tested in CI on a small fixture, and S2-dev's numbers are marked as not
-   evidence.
+   evidence. Its inputs are pinned by Amendment 1, which merges first.
 4. The A1 run, by Myan, once ORIENT item 9b provisions the A1. **Only this step is blocked on the
    A1.**
 5. The results pull request. It commits the report and S2-7's output unchanged, fills in this
@@ -258,6 +258,123 @@ Second review (gupta958, 2026-10-19), also applied above:
 Third review (gupta958, 2026-10-19): the cold preflight cases restart Postgres, open a fresh
 connection, resolve the new backend pid and attach strace to it for each case. No attachment or pid
 crosses a cold reset.
+
+## Amendment 1 — S2's inputs, pinned before the harness (2026-10-22)
+
+The setup above names the corpus, the queries and the selectivity levels. It does not say how to
+produce them, and five of the choices are still open. The ADR's own premise is that a choice made
+while writing the harness is a choice made by the harness, so they are fixed here first, as
+ADR-0007 Amendment 1 did for S3-6. It changes no acceptance rule, counter, pass
+structure or calibration. It adds one obligation: the rerun after the real chunker lands (section 1).
+
+### 1. Chunks: ADR-0016's estimate rule, until the chunker exists
+
+There is no chunker yet: §9.4's leaf-and-residual chunking is P1 item 5. The "about 7,175 chunks"
+is ADR-0016's estimate: the seven-step file universe at each repository's as-of commit, with each
+file counted as `ceil(lines / 60)`. S2 uses that rule as its chunker:
+
+- one snapshot per repository, at the `as_of_commit` in `eval/datasets/s1/manifest.json`;
+- the file universe from `eval/miners/s1/universe.py`, imported and not rewritten;
+- each file cut into consecutive 60-line windows, with lines counted as `universe.lines` counts
+  them and the last window shorter; one window is one representation, and `representation.path` is
+  the file's path.
+
+By construction this gives the estimate's count. The harness checks that each repository's window
+count equals its `chunk_estimate` in the manifest, and refuses to run if any differs. It is not §9.4's
+chunker, and the report says so. The report gives the windows' token-length distribution under the
+embedder's tokenizer. Per-pair base commits (§14.2 step 3) serve retrieval quality. S2 measures
+cost, so one snapshot per repository is enough.
+
+**A rerun is required when the chunker lands** (gupta958). The windows stand in for §9.4's chunks
+only until P1 item 5 merges. After that, S2's SQL, rerank and indexing measurements are run again
+in full on the A1, over the real chunker's output and under this ADR: the hybrid SQL and rerank rows
+of S2-1, S2-2, S2-4, S2-5 for those stages, and S2-6, with S2-7 recomputed from the new report. The
+results pull request of that rerun replaces those values in the Decision and in §10.3. Until then,
+the Decision labels them **measured on 60-line windows**. Query embedding does not read chunks, so
+its values carry over.
+
+### 2. Corpus vectors are real
+
+The 7,175 windows are embedded with the pinned `nomic-embed-text`, by the ingestion Ollama
+container, through `db/s6_identity.py`'s build path, which is also S2-6's re-index. The two-leg
+query's top N feeds S2-2, and stand-in vectors would choose different passages. The 60k padding
+keeps ADR-0019's stand-in vectors.
+
+### 3. Selectivity: 100 pseudo-repositories
+
+S2-4 grants 1%, 10% and 100% of repositories. Four repositories cannot express 1%. The corpus is
+loaded as **100 pseudo-repository rows**, which is §14.2 step 5's mechanism. A file goes to
+pseudo-repository `int(sha256(f"{github_repo_id}/{path}".encode("utf-8")).hexdigest(), 16) % 100`:
+the hash input is the decimal repository id, a slash and the file's path from git, encoded as
+UTF-8, so the assignment is the same on every machine. All of a file's windows stay together. The three levels grant pseudo-repositories 0, 0–9 and 0–99. The report gives the
+fraction of representations each level actually admits, because files differ in size. At 60k, a
+padding copy stays in its source's pseudo-repository. This matches S3-6's fixture shape (100
+repositories, granted 1, 10, 100), so S2 times the same plans that S3-6 recorded.
+
+### 4. Queries: dev split, strong pairs, one per issue
+
+- **The set:** the distinct issues among the **strong** dev pairs in `eval/datasets/s1/pairs.jsonl`.
+  That is 874 issues. Weak pairs are excluded: ADR-0013's D-3 never pools them with strong pairs,
+  so S2 measures one set and not their mix. Their text is no different in kind, so this is a choice
+  of set, not a claim about cost.
+- **The text:** the issue's title and body (§14.2 step 4), fetched once from GitHub's REST API
+  (`GET /repos/{owner}/{repo}/issues/{number}`) by a committed script, into a local file outside
+  git. Issue text is not ours to redistribute, and it can be edited later. The dev run and the A1 run
+  use the same file. The report records its SHA-256, the fetch time and the count.
+- **Normalization and rejection:** §9.4.2 normalization. A query above 2,000 characters after
+  normalization is rejected, as §9.5 step 1 does in production. Rejected queries are not measured,
+  and the report gives their count. The token-length distribution of S2-3 is over the accepted set.
+- **The cold sample:** order the accepted queries by SHA-256 of `group_id`, then by issue number,
+  and take the first query of each of the first 50 distinct groups.
+
+### 5. Where S2-dev runs
+
+The process CPU clock of a host pid and a container's cgroup need a Linux host that runs Docker
+natively. Docker on macOS runs containers inside a virtual machine, where neither is reachable from
+the host. **S2-dev runs on CI's Ubuntu runner, never on a Mac.** The harness runs as root there and
+on the A1, because `drop_caches` and `strace -p` need it.
+
+**CI's S2 job** (gupta958) runs a small fixture against the pinned Postgres image, the pinned
+Ollama (0.34.2, ADR-0005's run, with the pinned model digest) and the pinned reranker, so every
+counter, the preflight and the calibration run. It runs in full **only when a pull request changes
+one of S2's inputs**:
+- the S2 harness, `eval/harness/s2/**`;
+- the retrieval query and what it reads: `apps/api/wayfinder/retrieval/**`,
+  `apps/api/wayfinder/authz/**` and `db/views/**`, which can change the generated SQL, the
+  authorization predicate or the queried views (gupta958);
+- the database inputs: `db/migrations/**`, `db/s6_identity.py`, `eval/datasets/s1/**`,
+  `eval/miners/s1/universe.py`, and `infra/spikes/s3/**`, which pins the database image;
+- the dependencies, `pyproject.toml` and `uv.lock`;
+- the model pins, which live in the harness;
+- the job's own workflow file.
+
+On any other pull request the job passes as a no-op, and says so in its log. It does not download
+Ollama's model. The job still reports a status, so it can be a required check. The model and the
+reranker are cached under a key that is their pinned digest. After every restore or download, the
+job checks the model's digest against `/api/tags` and the reranker files against their SHA-256,
+and fails on any mismatch. A cache is never trusted without that check. As ADR-0019 already says,
+the job's numbers are S2-dev's and never evidence.
+
+### Review rulings on Amendment 1 (gupta958, 2026-10-22)
+
+Relayed by Myan on #94. All are applied above:
+1. The 60-line chunking stand-in is accepted. S2's SQL, rerank and indexing measurements are rerun
+   after the real P1 chunker lands.
+2. The 100 pseudo-repositories are accepted. The hash input is UTF-8.
+3. Strong dev issues only. Weak pairs are not mixed into the query set.
+4. The full S2 CI job runs only when the harness, the retrieval query, the database inputs, the
+   dependencies, the model pins or its workflow change, and passes as a no-op otherwise. Caches
+   are keyed by pinned digest, and the digest is always verified.
+5. The trigger list covers all of `apps/api/wayfinder/retrieval/**`, `apps/api/wayfinder/authz/**`,
+   `db/views/**` and `infra/spikes/s3/**`, not only the two retrieval files the harness imports.
+
+### What this amendment leaves to the harness pull requests
+
+The exact `onnxruntime` and `tokenizers` versions are pinned in the lock file by the harness's
+first pull request, before any measurement, and the report records them. The harness lives in
+`eval/harness/s2/` (the eval-harness module), and its first pull request writes that module's card.
+It lands as several pull requests, each under the size limit: inputs (chunks, fixture, queries),
+counters and preflight, calibration, passes and report, then S2-7's recompute script.
 
 ## Decision
 
