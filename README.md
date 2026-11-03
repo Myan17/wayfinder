@@ -4,7 +4,7 @@ Permission-aware retrieval and question answering over a GitHub organization's c
 Ask *where* something is implemented, or *why* it behaves the way it does, and get an answer whose
 citations resolve to passages you are authorized to see, or an explicit refusal.
 
-**Status:** Phase 0 (spikes and foundations), gate G0 on 2026-10-11. Nothing is deployed. No claim in
+**Status:** Phase 0 (spikes and foundations), gate G0 on 2026-11-22. Nothing is deployed. No claim in
 this README is evidence until `manifests/` holds a release manifest that reproduces it.
 
 ## What it answers
@@ -115,7 +115,7 @@ along with task scope, contract-card freshness, commit identity and a 400-line p
 
 | Document | What it is |
 |---|---|
-| [`docs/DESIGN.md`](docs/DESIGN.md) | The design (v0.3.3), including what the system will not claim |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | The design (v0.3.6), including what the system will not claim |
 | [`ORIENT.md`](ORIENT.md) | The ordered work list and each item's status |
 | [`AGENTS.md`](AGENTS.md) | Operating rules for coding agents; read before any session |
 | [`docs/adr/`](docs/adr/) | Decision records; acceptance rules are written before each experiment |

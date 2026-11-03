@@ -6,7 +6,7 @@
 |---|---|
 | Author / owner | Myan Gupta |
 | Approver | Engineering Manager (reviewer of this document) |
-| Status | **Draft — for design review (v0.3.3, responds to the principal review of 2026-09-18)** |
+| Status | **Draft — for design review (v0.3.6, responds to the principal review of 2026-09-18)** |
 | Version | 0.3.6 |
 | Date | 2026-11-03 |
 | Supersedes | v0.2 (2026-09-17), archived at `docs/archive/DESIGN.v0.2.md`, SHA-256 `97c5886374e1488e6c8848186b1323d0ad599222b796c1fcd39fe0b4277f05e3` |

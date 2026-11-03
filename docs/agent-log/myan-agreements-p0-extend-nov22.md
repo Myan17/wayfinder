@@ -53,3 +53,19 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-03T15:10:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:b993bdd
 docs(agents): close task log for myan-agreements-p0-extend-nov22
 1 file changed, 3 insertions(+)
+
+### 2026-11-03T17:31:37Z · DECIDE · myan · claude-code/opus-5.5 · 6d0ca51
+Review of #98 (gupta958, relayed by myan, 2026-11-03): 'README.md line 7 still says G0 is 2026-10-11; change it to 2026-11-22. README.md line 118 still calls DESIGN v0.3.3; change it to v0.3.6. docs/DESIGN.md line 9 still calls the draft v0.3.3 while line 10 says v0.3.6; update the status line. Everything else in #98 is accepted: the dates, 560-hour arithmetic, revision-history row, README/platform scope, and orient.py year-rollover fix. Keep P3 and P4 at approximately 35 hours/week.' Then rebase onto main after #96 and ask for re-review.
+
+### 2026-11-03T17:31:37Z · TEST · myan · claude-code/opus-5.5 · 6d0ca51
+Rebased onto origin/main 9ca8981 (#96 merged). Old head 7bd3cf4 on d99ad47; clean rebase, no conflicts.
+
+### 2026-11-03T17:31:37Z · EDIT · myan · claude-code/opus-5.5 · 6d0ca51
+README.md line 7 (G0 on 2026-11-22) and line 118 (DESIGN v0.3.6); docs/DESIGN.md line 9 status (v0.3.6). A sweep of README, ORIENT, DESIGN, docs/team and docs/context for 'G0 on' dates and v0.3.0–v0.3.5 outside the revision history finds no other stale reference.
+
+### 2026-11-03T17:31:49Z · TEST · myan · claude-code/opus-5.5 · 6d0ca51
+uv run pytest → 397 passed, 25 skipped; orient.py → G0 closes 2026-11-22.
+
+### 2026-11-03T17:31:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:6d0ca51
+docs(agreements): README's G0 date and DESIGN version, and DESIGN's status line, say v0.3.6 (gupta958's review of #98)
+3 files changed, 15 insertions(+), 3 deletions(-)
