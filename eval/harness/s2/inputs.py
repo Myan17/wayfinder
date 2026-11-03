@@ -5,16 +5,19 @@
   repository's window count must equal its `chunk_estimate` in the S1 manifest.
 - Section 3: every file belongs to one of 100 pseudo-repositories, and S2-4's three levels grant
   0, 0-9 and 0-99.
-- Section 4, the query set, lands in the next part of the harness.
+- Section 4: the queries are the distinct issues among the strong dev pairs, normalized as
+  DESIGN 9.4.2 says, with inputs above 2,000 characters rejected; the cold sample is the first
+  query of each of the first 50 groups by SHA-256 of `group_id`.
 
 Everything here is a pure function except `snapshot`, which reads a local git directory. Nothing
-here touches the network.
+here touches the network; the issue text is fetched by a separate script.
 """
 
 from __future__ import annotations
 
 import hashlib
 import subprocess
+import unicodedata
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -23,6 +26,8 @@ from s1 import universe
 
 PSEUDO_REPOS = 100
 GRANTS: dict[int, range] = {1: range(1), 10: range(10), 100: range(100)}  # percent -> granted ids
+MAX_QUERY_CHARS = 2000  # DESIGN 9.5 step 1
+COLD_SAMPLE = 50
 
 
 @dataclass(frozen=True)
@@ -122,3 +127,61 @@ def admitted_fraction(ws: Iterable[Window], percent: int) -> float:
     ws = list(ws)
     granted = GRANTS[percent]
     return sum(w.pseudo_repo in granted for w in ws) / len(ws)
+
+
+@dataclass(frozen=True)
+class Issue:
+    github_repo_id: int
+    issue: int
+    group_id: str
+
+
+def strong_dev_issues(pairs: Iterable[Mapping]) -> list[Issue]:
+    """Section 4: the distinct issues among the strong dev pairs, in (repository, issue) order."""
+    seen: dict[tuple[int, int], str] = {}
+    for p in pairs:
+        if not (p["strong"] and p["split"] == "dev"):
+            continue
+        key = (p["github_repo_id"], p["issue"])
+        if seen.setdefault(key, p["group_id"]) != p["group_id"]:
+            raise ValueError(f"issue {key} appears in two groups")
+    return [Issue(r, i, g) for (r, i), g in sorted(seen.items())]
+
+
+def query_text(title: str, body: str | None) -> str:
+    """DESIGN 14.2 step 4, joined as gupta958 ruled (2026-11-03): the title alone when the body is
+    missing, empty or only whitespace, otherwise the title, two LF characters and the body. Nothing
+    is normalized here.
+    """
+    return f"{title}\n\n{body}" if body and body.strip() else title
+
+
+def normalize(text: str) -> str:
+    """DESIGN 9.4.2: Unicode NFC and trailing whitespace removed per line, nothing else.
+
+    Whitespace inside a line, quoted or not, is never collapsed.
+    """
+    return "\n".join(line.rstrip() for line in unicodedata.normalize("NFC", text).split("\n"))
+
+
+def query(title: str, body: str | None) -> str:
+    """The query S2 sends: DESIGN 9.4.2 normalization applied once, to the completed text."""
+    return normalize(query_text(title, body))
+
+
+def accepted(text: str) -> bool:
+    """DESIGN 9.5 step 1: a normalized query above 2,000 characters is rejected."""
+    return len(text) <= MAX_QUERY_CHARS
+
+
+def cold_sample(issues: Iterable[Issue]) -> list[Issue]:
+    """Section 4: order by SHA-256 of `group_id`, then issue number; first of each of 50 groups."""
+    ordered = sorted(issues, key=lambda q: (hashlib.sha256(q.group_id.encode()).hexdigest(), q.issue))
+    out, groups = [], set()
+    for q in ordered:
+        if q.group_id not in groups:
+            groups.add(q.group_id)
+            out.append(q)
+            if len(out) == COLD_SAMPLE:
+                break
+    return out

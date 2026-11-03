@@ -321,7 +321,9 @@ repositories, granted 1, 10, 100), so S2 times the same plans that S3-6 recorded
   (`GET /repos/{owner}/{repo}/issues/{number}`) by a committed script, into a local file outside
   git. Issue text is not ours to redistribute, and it can be edited later. The dev run and the A1 run
   use the same file. The report records its SHA-256, the fetch time and the count.
-- **Normalization and rejection:** §9.4.2 normalization. A query above 2,000 characters after
+- **The join:** the title alone when the body is missing or empty; otherwise the title, two LF
+  characters and the body (gupta958, 2026-11-03; §14.2 step 4 does not say).
+- **Normalization and rejection:** §9.4.2 normalization, applied once to the joined text. A query above 2,000 characters after
   normalization is rejected, as §9.5 step 1 does in production. Rejected queries are not measured,
   and the report gives their count. The token-length distribution of S2-3 is over the accepted set.
 - **The cold sample:** order the accepted queries by SHA-256 of `group_id`, then by issue number,
@@ -367,6 +369,9 @@ Relayed by Myan on #94. All are applied above:
    are keyed by pinned digest, and the digest is always verified.
 5. The trigger list covers all of `apps/api/wayfinder/retrieval/**`, `apps/api/wayfinder/authz/**`,
    `db/views/**` and `infra/spikes/s3/**`, not only the two retrieval files the harness imports.
+
+Later ruling (gupta958, 2026-11-03), relayed by Myan after #97 and applied in §4: how the title and
+body are joined, and that normalization runs once, on the joined query.
 
 ### What this amendment leaves to the harness pull requests
 
