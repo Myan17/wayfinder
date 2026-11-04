@@ -30,3 +30,10 @@ uv lock --check OK (51 packages). onnxruntime 1.31.0 and tokenizers 0.23.3 impor
 ### 2026-11-04T00:16:59Z · COMMIT · myan · claude-code/opus-5.5 · parent:0a95de8
 build(platform): pin onnxruntime and tokenizers for S2's reference reranker
 3 files changed, 382 insertions(+), 1 deletion(-)
+
+### 2026-11-04T00:16:59Z · HANDOFF · myan · claude-code/opus-5.5 · ee01ca2
+S2 part 6a: onnxruntime 1.31.0 and tokenizers 0.23.3 pinned in the s2 extra. Next: the reranker module (pinned-hash loading of the ARM64 ONNX artifact and tokenizer files, L-token truncation, intra_op_num_threads = 1), then the services wiring and passes.
+
+### 2026-11-04T00:17:00Z · COMMIT · myan · claude-code/opus-5.5 · parent:ee01ca2
+docs(agents): hand off the S2 dependency pin
+1 file changed, 3 insertions(+)
