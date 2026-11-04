@@ -33,3 +33,10 @@ BCR-1 as its own pull request (AGENTS.md §4): declare s6_identity's build path 
 ### 2026-11-04T23:26:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:a20aa6a
 docs(boundary): BCR-1, the S2 corpus load's use of s6_identity's build path
 2 files changed, 180 insertions(+)
+
+### 2026-11-04T23:26:17Z · HANDOFF · myan · claude-code/opus-5.5 · fa151cf
+BCR-1 open for the schema owners' decision. On acceptance: a schema PR adds start_line, seed_repository and pad_copy with tests, puts s6_identity.py and s6_ollama.py on the schema card's interface files, and refreshes hashes; then the eval-harness corpus load is written against the card.
+
+### 2026-11-04T23:26:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:fa151cf
+docs(agents): hand off BCR-1
+1 file changed, 3 insertions(+)
