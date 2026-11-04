@@ -47,3 +47,10 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-04T23:26:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:0b4e527
 docs(agents): close task log for myan-eval-harness-s2-corpus-bcr
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T23:26:28Z · TEST · myan · claude-code/opus-5.5 · 0dc2342
+Checked the BCR's claims against main a20aa6a. db/schema.sql:753 'occurrence_pkey PRIMARY KEY (generation_id, representation_id, path, start_line)'; repository.connection_id NOT NULL with repository_connection_id_fkey to connection (schema.sql:207, :1052), so a seed needs a connection row; index_chunk writes start_line 1 and looks up (repo_id, spec_id, input_hash) before embedding (s6_identity.py:126-170), so a copy would be reused; s6_ollama OPTIONS = {} and truncate false (s6_ollama.py:36, :79); s3_6.py imports s6_identity's Spec and stand_in (s3_6.py:34, :48). Guardrails: identity, ownership, size (149 changed lines), context-freshness, CODEOWNERS and gh-account pass. No code changed, so no test suite ran.
+
+### 2026-11-04T23:26:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:0dc2342
+docs(agents): record the checks behind BCR-1
+1 file changed, 3 insertions(+)
