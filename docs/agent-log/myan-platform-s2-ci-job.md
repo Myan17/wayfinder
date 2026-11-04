@@ -47,3 +47,13 @@ First full run of job s2 (run 41929037318): the scope step said full (ci.yml, s2
 ### 2026-11-04T22:54:22Z · COMMIT · myan · claude-code/opus-5.5 · parent:527dcb7
 ci(platform): run S2's job on Python 3.13
 2 files changed, 5 insertions(+)
+
+### 2026-11-04T23:01:56Z · TEST · myan · claude-code/opus-5.5 · 51d69a3
+Job s2 on 51d69a3, run 41929307293. Cache-miss path: CPython 3.13.18; scope full; both caches not found; reranker fetched and verified (5 files); model pulled, digest checked; both caches saved; eval/harness/tests as root: 95 passed in 38.95s, none skipped, so the real Docker reset and connect, the real reranker and the Linux counter tests all ran for the first time. Cache-hit path (s2 job re-run, job 126924172089): both caches restored by key, reranker --verify passed, model copied into the volume and checked against its digest without a pull, 95 passed in 40.28s. Every other job passed, including dispatcher with s2 in its needs. Not yet seen on CI: a no-op run, which the next pull request that changes no S2 input will show.
+
+### 2026-11-04T23:01:56Z · HANDOFF · myan · claude-code/opus-5.5 · 51d69a3
+S2 part 8 ready for gupta958: job s2 green on both cache paths. Open for ruling: eval/harness/tests/ added to the triggers; the unit and db jobs also run CPython 3.15.2 (uv's newest), not the stack's 3.13. Next: the corpus load through db/s6_identity.py, then the passes and report, which add the counter, preflight and calibration fixture to this job.
+
+### 2026-11-04T23:01:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:51d69a3
+docs(agents): record S2's CI job runs and hand off
+1 file changed, 6 insertions(+)
