@@ -28,7 +28,7 @@ verified_hashes:
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
-  "eval/harness/s2/reranker.py": "0dc1f01ab6bd988a"
+  "eval/harness/s2/reranker.py": "9ba0bfe1280984eb"
 verified_on: 2026-11-03
 ---
 
@@ -129,10 +129,8 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   padded to its longest pair, never to L (gupta958's ruling on #104). `length` must be in `L_GRID`.
   Pairs are tokenized one at a time on the calling thread, never with `encode_batch`, whose worker
   threads the thread clock cannot see.
-- `fetch` is all or nothing: it downloads into a staging directory beside `root`, verifies the whole
-  set there and only then renames it to `root`. On any failure, including an interrupted download
-  after earlier files succeeded, `root` does not exist and no staging file remains. A non-empty
-  `root` is refused.
+- `fetch` is all or nothing: it stages and verifies the whole set beside `root`, then renames it. On
+  any failure `root` does not exist and nothing staged remains. A non-empty `root` is refused.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 

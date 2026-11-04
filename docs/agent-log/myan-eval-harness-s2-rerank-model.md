@@ -61,3 +61,7 @@ Both blocking review issues fixed with regression tests that fail on the old cod
 ### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:c589118
 docs(agents): hand off the reranker review fixes
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:23:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:342ce2b
+refactor(eval-harness): tighten the reranker's docstrings and tests to fit the size limit
+3 files changed, 21 insertions(+), 45 deletions(-)

@@ -2,16 +2,13 @@
 
     PYTHONPATH=eval/harness uv run python -m s2.reranker --fetch ~/wayfinder-s2/reranker
 
-`cross-encoder/ms-marco-MiniLM-L6-v2` at one revision: its ARM64 int8 ONNX export and the four
-tokenizer files, each checked against its SHA-256 (and the export against its size). The harness
-refuses to run if any differs. The files are fetched once from the pinned revision and never
-committed. `verify` and `fetch` need only the standard library; `Reranker` needs the `s2` extra
-(`uv sync --extra dev --extra s2 --locked`), imported only when a `Reranker` is built.
+The ARM64 int8 ONNX export and four tokenizer files at one revision, each checked against its
+SHA-256 (the export also by size); S2 refuses to run if any differs. They are fetched once, never
+committed. `Reranker` needs the `s2` extra (`uv sync --extra dev --extra s2 --locked`).
 
-A rerank call scores N (query, passage) pairs. Each pair is encoded together and truncated to L
-tokens in total, special tokens included, cutting the longer side first, and the batch is padded
-to its longest pair, as the reference `CrossEncoder` does. Inference runs on the calling thread,
-with one intra-op and one inter-op thread (§10.5), so the harness thread clock sees all of it.
+A rerank call scores N (query, passage) pairs, each truncated to L tokens in total, longest side
+first, padded to the batch's longest pair (gupta958's ruling on #104). Tokenization and inference
+both run on the calling thread (§10.5), so the harness thread clock sees all of the call's CPU.
 """
 
 from __future__ import annotations
@@ -29,7 +26,6 @@ from pathlib import Path
 REPO = "cross-encoder/ms-marco-MiniLM-L6-v2"
 REVISION = "233902d25c440f23af6f7d6e94d2946bac0bee0a"
 MODEL = "onnx/model_qint8_arm64.onnx"
-MODEL_BYTES = 23_200_716
 PINS = {
     MODEL: "3573b6b9593cb2f75987a31815d409ca3dd8808629118fd20451bb1a5d90cec7",
     "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
@@ -37,7 +33,7 @@ PINS = {
     "vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
     "special_tokens_map.json": "3c3507f36dff57bce437223db3b3081d1e2b52ec3e56ee55438193ecb2c94dd6",
 }
-SIZES = {MODEL: MODEL_BYTES}
+SIZES = {MODEL: 23_200_716}
 N_GRID = (8, 16, 32, 50)  # ADR-0015's grid
 L_GRID = (128, 256)
 
@@ -47,16 +43,12 @@ class PinError(RuntimeError):
 
 
 def sha256(path: Path) -> str:
-    h = hashlib.sha256()
     with path.open("rb") as f:
-        for block in iter(lambda: f.read(1 << 20), b""):
-            h.update(block)
-    return h.hexdigest()
+        return hashlib.file_digest(f, "sha256").hexdigest()
 
 
 def verify(root: Path, pins: dict[str, str] = PINS, sizes: dict[str, int] = SIZES) -> None:
-    """Every pinned file exists under `root` with its size and SHA-256, or `PinError` names each one
-    that does not."""
+    """Every pinned file exists with its size and SHA-256, or `PinError` names each one that does not."""
     problems = []
     for name, digest in pins.items():
         f = root / name
@@ -79,8 +71,7 @@ Download = Callable[[str, Path], None]  # url -> write the body to this path
 
 def urllib_download(src: str, dest: Path) -> None:
     with urllib.request.urlopen(src, timeout=120) as resp, dest.open("wb") as out:
-        while block := resp.read(1 << 20):
-            out.write(block)
+        shutil.copyfileobj(resp, out, 1 << 20)
 
 
 def fetch(
@@ -119,12 +110,9 @@ class Encoded:
 
 
 def encode(tokenizer, query: str, passages: Sequence[str], length: int) -> Encoded:
-    """Each (query, passage) pair, truncated to `length` tokens in total, longest side first, and
-    padded to the batch's longest pair. `tokenizer` is a `tokenizers.Tokenizer`, which is reconfigured.
-
-    Pairs are encoded one at a time with `encode`, never `encode_batch`: the batch call runs on the
-    tokenizer's worker threads, where the harness thread clock cannot see the CPU (gupta958's review
-    of #104). Padding is applied here, matching what the batch call's padding produces."""
+    """Each pair truncated to `length` tokens, padded to the batch's longest. Pairs are encoded one
+    at a time with `encode`, never `encode_batch`, whose worker threads the harness thread clock
+    cannot see (gupta958's review of #104); the padding here equals the batch call's."""
     tokenizer.enable_truncation(max_length=length, strategy="longest_first")
     tokenizer.no_padding()
     pad = tokenizer.token_to_id("[PAD]")

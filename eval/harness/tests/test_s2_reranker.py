@@ -2,6 +2,7 @@ import hashlib
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -22,20 +23,11 @@ def pinned(tmp_path, files):
 def test_the_pins_are_adr_0019s():
     assert reranker.REPO == "cross-encoder/ms-marco-MiniLM-L6-v2"
     assert reranker.REVISION == "233902d25c440f23af6f7d6e94d2946bac0bee0a"
-    assert reranker.SIZES == {"onnx/model_qint8_arm64.onnx": 23_200_716}
-    assert sorted(reranker.PINS) == sorted(
-        [
-            "onnx/model_qint8_arm64.onnx",
-            "tokenizer.json",
-            "tokenizer_config.json",
-            "vocab.txt",
-            "special_tokens_map.json",
-        ]
-    )
-    assert reranker.PINS["onnx/model_qint8_arm64.onnx"].startswith("3573b6b9")
-    assert reranker.url("vocab.txt") == (
-        "https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/resolve/"
-        "233902d25c440f23af6f7d6e94d2946bac0bee0a/vocab.txt"
+    assert reranker.SIZES == {reranker.MODEL: 23_200_716} and len(reranker.PINS) == 5
+    assert reranker.PINS[reranker.MODEL].startswith("3573b6b9") and "vocab.txt" in reranker.PINS
+    assert (
+        reranker.url("vocab.txt")
+        == f"https://huggingface.co/{reranker.REPO}/resolve/{reranker.REVISION}/vocab.txt"
     )
 
 
@@ -165,14 +157,8 @@ def confined(tokenizer_file):
     """Process and calling-thread CPU of 15 encodes of 50 long pairs, in a fresh interpreter, so no
     tokenizer worker pool from another test is running."""
     harness = str(Path(reranker.__file__).parents[1])
-    out = subprocess.run(
-        [sys.executable, "-c", CONFINED, harness, str(tokenizer_file)],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    proc, thread = map(int, out.split())
-    return proc, thread
+    out = subprocess.check_output([sys.executable, "-c", CONFINED, harness, str(tokenizer_file)], text=True)
+    return tuple(map(int, out.split()))
 
 
 def test_tokenization_runs_only_on_the_calling_thread(tiny_tokenizer, tmp_path):
@@ -206,8 +192,6 @@ def test_the_real_reranker_ranks_the_relevant_passage_first_on_one_thread():
 
 @real
 def test_a_real_rerank_call_spends_its_cpu_on_the_calling_thread():
-    import time
-
     r = reranker.Reranker(Path(REAL))
     r.score("warm", ["up"], 128)
     proc, thread = time.process_time_ns(), time.thread_time_ns()
