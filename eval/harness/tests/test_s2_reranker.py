@@ -85,6 +85,11 @@ def test_a_failure_after_an_earlier_file_succeeded_leaves_nothing(tmp_path):
     with pytest.raises(PinError, match=r"t\.json: sha256"):
         reranker.fetch(tmp_path / "r", downloader({**BODIES, "t.json": b"tampered"}), PINS, {})
     assert not (tmp_path / "r").exists() and files_under(tmp_path) == []
+    # a caller-created empty root, file 2 interrupted: the root is kept, empty, and nothing else exists
+    (tmp_path / "r").mkdir()
+    with pytest.raises(ConnectionError):
+        reranker.fetch(tmp_path / "r", downloader(BODIES, fail_on="t.json"), PINS, {})
+    assert [p.name for p in tmp_path.iterdir()] == ["r"] and not any((tmp_path / "r").iterdir())
 
 
 def test_fetch_never_mixes_into_a_directory_that_has_files(tmp_path):

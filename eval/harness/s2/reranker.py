@@ -81,9 +81,10 @@ def fetch(
     sizes: dict[str, int] = SIZES,
 ) -> None:
     """All or nothing: download every pinned file into a staging directory beside `root`, verify the
-    complete set there, and only then rename the staging directory to `root`. Any failure, including
-    an interrupted download, removes the staging directory, so `root` either holds the full verified
-    set or does not exist. An existing non-empty `root` is refused rather than mixed with."""
+    complete set there, and only then rename it to `root`. Any failure, including an interrupted
+    download, removes the staging directory, so no downloaded or staged file remains and `root` holds
+    the full verified set or nothing. A `root` the caller created empty is left, still empty: fetch
+    never deletes a directory it did not create. A non-empty `root` is refused rather than mixed with."""
     if root.exists() and any(root.iterdir()):
         raise PinError(f"{root} already has files; --verify it, or remove it and fetch again")
     root.parent.mkdir(parents=True, exist_ok=True)
@@ -118,15 +119,8 @@ def encode(tokenizer, query: str, passages: Sequence[str], length: int) -> Encod
     pad = tokenizer.token_to_id("[PAD]")
     enc = [tokenizer.encode(query, p) for p in passages]
     width = max(len(e.ids) for e in enc)
-
-    def padded(rows, fill):
-        return [r + [fill] * (width - len(r)) for r in rows]
-
-    return Encoded(
-        padded([e.ids for e in enc], pad),
-        padded([e.attention_mask for e in enc], 0),
-        padded([e.type_ids for e in enc], 0),
-    )
+    fills = {"ids": pad, "attention_mask": 0, "type_ids": 0}  # a pair's three rows share its length
+    return Encoded(*([getattr(e, k) + [f] * (width - len(e.ids)) for e in enc] for k, f in fills.items()))
 
 
 class Reranker:
@@ -157,12 +151,11 @@ class Reranker:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--fetch", type=Path, help="download the pinned files here, then verify them")
-    ap.add_argument("--verify", type=Path, help="verify an existing directory")
+    one = ap.add_mutually_exclusive_group(required=True)
+    one.add_argument("--fetch", type=Path, help="download the pinned files here, then verify them")
+    one.add_argument("--verify", type=Path, help="verify an existing directory")
     args = ap.parse_args(argv)
     root = args.fetch or args.verify
-    if root is None:
-        ap.error("give --fetch or --verify")
     try:
         fetch(root) if args.fetch else verify(root)
     except PinError as e:

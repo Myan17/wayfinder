@@ -72,3 +72,13 @@ After the size trim (pins test reads the module's constants, hashlib.file_digest
 ### 2026-11-04T01:24:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:c9c6b65
 docs(agents): log the size trim's test run
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:39:14Z · DECIDE · myan · claude-code/opus-5.5 · a978e63
+gupta958's follow-up on #104: a caller-created empty root that hits a failed second download. Chose to change the contract rather than delete the root: fetch never deletes a directory it did not create. On any failure no downloaded or staged file remains; a caller-created empty root is left empty; otherwise root does not exist.
+
+### 2026-11-04T01:39:14Z · TEST · myan · claude-code/opus-5.5 · a978e63
+New case in test_a_failure_after_an_earlier_file_succeeded_leaves_nothing: empty root created first, second download interrupted; afterwards tmp_path holds only the empty root (no staging directory, no files). test_s2_reranker.py 13 passed with WAYFINDER_S2_RERANKER; uv run pytest (dev + s2) 452 passed, 30 skipped. To stay under 400 lines, encode's padding and the CLI's argument check are shorter (argparse required mutually exclusive group); the padding-equals-batch test still passes.
+
+### 2026-11-04T01:39:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:a978e63
+fix(eval-harness): state and test fetch's contract for a caller-created empty root
+4 files changed, 23 insertions(+), 18 deletions(-)

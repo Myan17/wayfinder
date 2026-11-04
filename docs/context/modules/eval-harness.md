@@ -28,7 +28,7 @@ verified_hashes:
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
-  "eval/harness/s2/reranker.py": "9ba0bfe1280984eb"
+  "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
 verified_on: 2026-11-03
 ---
 
@@ -130,7 +130,8 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   Pairs are tokenized one at a time on the calling thread, never with `encode_batch`, whose worker
   threads the thread clock cannot see.
 - `fetch` is all or nothing: it stages and verifies the whole set beside `root`, then renames it. On
-  any failure `root` does not exist and nothing staged remains. A non-empty `root` is refused.
+  any failure no downloaded or staged file remains; a `root` the caller created empty is left empty,
+  otherwise `root` does not exist (gupta958's review of #104). A non-empty `root` is refused.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
