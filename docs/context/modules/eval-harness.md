@@ -10,6 +10,7 @@ interface_files:
   - eval/harness/s2/counters.py
   - eval/harness/s2/preflight.py
   - eval/harness/s2/calibration.py
+  - eval/harness/s2/reranker.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -27,6 +28,7 @@ verified_hashes:
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
+  "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
 verified_on: 2026-11-03
 ---
 
@@ -79,6 +81,11 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   clock, sleep and `USER_HZ`; `Machine.linux()` is the real one. `Calibration` gives the three
   `Window`s (executed, `iowait` and `steal` seconds, elapsed), the noise, the reference and `ratio`.
   `accounting(kernel_config())` names the kernel's CPU-time accounting for S2-8.
+- **`s2.reranker`** (`python -m s2.reranker --fetch <dir>` or `--verify <dir>`): the ADR-0019 pins
+  (`REPO`, `REVISION`, `PINS`, `SIZES`), `N_GRID` and `L_GRID`; `verify(root)`, `fetch(root)` and
+  `PinError`; `Reranker(root)` with `score(query, passages, length) -> list[float]`, one logit per
+  passage in input order; and `encode(tokenizer, query, passages, length)`. `Reranker` needs the
+  `s2` extra (`uv sync --extra dev --extra s2 --locked`); the rest needs only the standard library.
 
 ## Invariants a caller may rely on
 
@@ -115,6 +122,16 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   times its elapsed time, minus the harness's process CPU except on `rerank`. The noise gate fails
   when `|b_after - b_before|` times the elapsed time exceeds 1% of the reference, and the check fails
   when the per-call sum is outside 95% to 105% of it, both bounds inclusive. `iowait` and `steal` are reported, never added.
+- `Reranker` is built only from files that pass `verify`: every SHA-256 and the export's size. It runs
+  on the calling thread with one intra-op and one inter-op thread, sequential execution and only the
+  CPU provider. Each (query, passage) pair is truncated to `length` tokens in total, special tokens
+  included, longest side first, so a query longer than L is cut rather than failing; the batch is
+  padded to its longest pair, never to L (gupta958's ruling on #104). `length` must be in `L_GRID`.
+  Pairs are tokenized one at a time on the calling thread, never with `encode_batch`, whose worker
+  threads the thread clock cannot see.
+- `fetch` is all or nothing: it stages and verifies the whole set beside `root`, then renames it. On
+  any failure no downloaded or staged file remains; a `root` the caller created empty is left empty,
+  otherwise `root` does not exist (gupta958's review of #104). A non-empty `root` is refused.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
@@ -133,6 +150,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | A window count differs from the manifest | `count_problems` returns one line per repository | Refuse to run S2 (Amendment 1 §1) |
 | A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids | `CounterError` | S2 stops as an error (ADR-0019) |
 | The backend's clocks disagree, or it creates a child process | `CounterError` from `check_clock` | S2 stops as an error |
+| A reranker file is missing, resized or differs from its SHA-256, or `fetch` is pointed at a non-empty directory | `PinError` naming each file, from `verify`, `fetch` or `Reranker`; the CLI exits 1 | Refuse to run S2 (ADR-0019) |
 | The calibration's background moves more than 1%, its per-call sum is outside 95% to 105% of the reference, a call reports no CPU, `/proc/stat` goes backwards, or the kernel config sets other than one accounting option | `CounterError` from `s2.calibration` | S2 stops as an error (ADR-0019) |
 | strace output has a creation that cannot be parsed, or a call that never resumes | `ValueError` from `classify` | Treat as an error; never assume none |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
@@ -158,6 +176,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_fetch_issues.py` (all seven tests) | The pinned endpoint, stop on any non-200 or pull request, names from the manifest, the meta file, refusal inside git, including a missing subdirectory of a checkout from outside it |
 | `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
 | `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, no pid crossing a cold reset, and thread names |
+| `eval/harness/tests/test_s2_reranker.py` | The pins and URL, verification naming each failure, all-or-nothing fetch (a later file failing after an earlier one succeeded, a tampered file, a non-empty root), the CLI's refusal, no reranker from unverified files, pair truncation, per-pair padding equal to the batch call's, tokenizer CPU on the calling thread (fresh interpreter), the L grid; with `WAYFINDER_S2_RERANKER` set, the real model ranking a relevant passage first at both L, and a rerank call's CPU on the calling thread |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake

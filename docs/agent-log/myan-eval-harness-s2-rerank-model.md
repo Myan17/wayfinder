@@ -1,0 +1,91 @@
+# Task log — myan-eval-harness-s2-rerank-model
+
+| Field | Value |
+|---|---|
+| Task | S2 harness part 6b: the pinned reference reranker (ORIENT item 7) |
+| Module | eval-harness |
+| Branch | `myan/eval-harness/s2-rerank-model` |
+| Worktree | `../wayfinder-wt/myan-eval-harness-s2-rerank-model` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-11-04T00:55Z/24535 |
+| Started | 2026-11-04T00:55:13Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-11-04T00:55:14Z · PLAN · myan · claude-code/opus-5.5 · 303dca6
+Add s2/reranker.py: the ADR-0019 pins as data; verify(dir) checks every file's SHA-256 and the artifact's size and refuses on any difference; fetch(dest) downloads the five files from the pinned revision's resolve URLs and verifies before keeping them; Reranker loads only verified files with intra_op = inter_op = 1, sequential execution and the CPU provider, and score(query, passages, length) encodes each (query, passage) pair truncated to length tokens in total, longest_first, padded to the batch's longest, as the reference CrossEncoder does. Tests use a tiny in-memory WordPiece tokenizer for truncation and real files only when WAYFINDER_S2_RERANKER points at them. Rejected: truncating the passage alone to L, which fails on a query longer than L, and dynamic padding to L, which inflates CPU for short pairs.
+
+### 2026-11-04T00:57:23Z · TEST · myan · claude-code/opus-5.5 · 303dca6
+Fetched the five pinned files from the revision's resolve URLs with python -m s2.reranker --fetch: all five SHA-256s and the export's 23,200,716 bytes match ADR-0019. Model inputs are input_ids, attention_mask, token_type_ids (int64) and the output logits [batch, 1]. With WAYFINDER_S2_RERANKER set: test_s2_reranker.py 9 passed (Berlin example scores about 8.6 and -11.2 at L 128). In the dev-only env (CI's unit sync): 7 passed, 2 skipped (no tokenizers; no model dir). uv run pytest in dev + s2: 449 passed, 29 skipped. ruff clean; context-freshness OK.
+
+### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:303dca6
+feat(eval-harness): add S2's pinned reference reranker
+5 files changed, 347 insertions(+), 1 deletion(-)
+
+### 2026-11-04T00:57:24Z · HANDOFF · myan · claude-code/opus-5.5 · 4192104
+S2 part 6b: s2.reranker. Open for gupta958: L as the pair's total length (longest_first), padding to the batch's longest. Next: services wiring (compose, cgroups, reset, readiness), the corpus load through db/s6_identity.py, then the passes and report. The S2 CI job (Amendment 1 §5) should sync dev + s2 and fetch/verify the reranker into its digest-keyed cache, so the tokenizer and real-model tests run there.
+
+### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:4192104
+docs(agents): hand off the S2 reranker
+1 file changed, 3 insertions(+)
+
+### 2026-11-04T00:57:24Z · HANDOFF · myan · claude-code/opus-5.5 · 5944c08
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:5944c08
+docs(agents): close task log for myan-eval-harness-s2-rerank-model
+1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:21:45Z · DECIDE · myan · claude-code/opus-5.5 · 484b1c1
+gupta958's review of #104. (1) encode_batch runs on the tokenizer's worker threads: reproduced here, 2000 long pairs gave wall 0.40 s, process 3.26 s, calling thread 0.08 s. Sequential encode in a fresh process: process 2.22 s, thread 2.22 s. encode now tokenizes one pair at a time and pads to the batch's longest itself. (2) fetch now stages the whole set beside root, verifies there and renames to root, removing the staging directory on any failure; a non-empty root is refused. (3) Truncation ruling accepted: L total tokens per pair, special tokens included, longest_first, padding to the batch maximum only.
+
+### 2026-11-04T01:21:45Z · TEST · myan · claude-code/opus-5.5 · 484b1c1
+Against the old module the new tests fail (4 failed: later-file failure, non-empty root, tokenizer confinement, real-model confinement). With the fix, WAYFINDER_S2_RERANKER set: test_s2_reranker.py 13 passed. Per-pair padding equals encode_batch's on 4 pairs incl. an empty passage. uv run pytest (dev + s2): 452 passed, 30 skipped. ruff clean; context-freshness --fix eval-harness.
+
+### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:484b1c1
+fix(eval-harness): keep tokenizer CPU on the calling thread and make fetch all or nothing
+4 files changed, 156 insertions(+), 43 deletions(-)
+
+### 2026-11-04T01:21:46Z · HANDOFF · myan · claude-code/opus-5.5 · c589118
+Both blocking review issues fixed with regression tests that fail on the old code. Ready for gupta958's re-review.
+
+### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:c589118
+docs(agents): hand off the reranker review fixes
+1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:23:07Z · COMMIT · myan · claude-code/opus-5.5 · parent:342ce2b
+refactor(eval-harness): tighten the reranker's docstrings and tests to fit the size limit
+3 files changed, 21 insertions(+), 45 deletions(-)
+
+### 2026-11-04T01:24:16Z · TEST · myan · claude-code/opus-5.5 · c9c6b65
+After the size trim (pins test reads the module's constants, hashlib.file_digest, shutil.copyfileobj, shorter docstrings and card bullet; behaviour unchanged): test_s2_reranker.py 13 passed with WAYFINDER_S2_RERANKER set; python -m s2.reranker --verify on the fetched files passes; uv run pytest (dev + s2) 452 passed, 30 skipped. The refactor commit was amended once before push to fold in the last trims, so its COMMIT entry's file stats are from before the amend.
+
+### 2026-11-04T01:24:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:c9c6b65
+docs(agents): log the size trim's test run
+1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:39:14Z · DECIDE · myan · claude-code/opus-5.5 · a978e63
+gupta958's follow-up on #104: a caller-created empty root that hits a failed second download. Chose to change the contract rather than delete the root: fetch never deletes a directory it did not create. On any failure no downloaded or staged file remains; a caller-created empty root is left empty; otherwise root does not exist.
+
+### 2026-11-04T01:39:14Z · TEST · myan · claude-code/opus-5.5 · a978e63
+New case in test_a_failure_after_an_earlier_file_succeeded_leaves_nothing: empty root created first, second download interrupted; afterwards tmp_path holds only the empty root (no staging directory, no files). test_s2_reranker.py 13 passed with WAYFINDER_S2_RERANKER; uv run pytest (dev + s2) 452 passed, 30 skipped. To stay under 400 lines, encode's padding and the CLI's argument check are shorter (argparse required mutually exclusive group); the padding-equals-batch test still passes.
+
+### 2026-11-04T01:39:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:a978e63
+fix(eval-harness): state and test fetch's contract for a caller-created empty root
+4 files changed, 23 insertions(+), 18 deletions(-)
+
+### 2026-11-04T01:39:14Z · HANDOFF · myan · claude-code/opus-5.5 · 077210f
+Empty-root contract stated and tested. Ready for gupta958's re-review.
+
+### 2026-11-04T01:39:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:077210f
+docs(agents): hand off the empty-root contract fix
+1 file changed, 3 insertions(+)
