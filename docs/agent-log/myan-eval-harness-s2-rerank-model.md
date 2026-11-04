@@ -54,3 +54,10 @@ Against the old module the new tests fail (4 failed: later-file failure, non-emp
 ### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:484b1c1
 fix(eval-harness): keep tokenizer CPU on the calling thread and make fetch all or nothing
 4 files changed, 156 insertions(+), 43 deletions(-)
+
+### 2026-11-04T01:21:46Z · HANDOFF · myan · claude-code/opus-5.5 · c589118
+Both blocking review issues fixed with regression tests that fail on the old code. Ready for gupta958's re-review.
+
+### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:c589118
+docs(agents): hand off the reranker review fixes
+1 file changed, 3 insertions(+)
