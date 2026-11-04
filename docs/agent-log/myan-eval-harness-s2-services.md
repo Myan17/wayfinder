@@ -30,3 +30,10 @@ test_s2_services.py: 6 passed, 1 skipped (the real Docker test, which needs Linu
 ### 2026-11-04T15:47:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:43b6b0c
 feat(eval-harness): add S2's services: compose, readiness, cold reset, backend pid
 6 files changed, 376 insertions(+), 2 deletions(-)
+
+### 2026-11-04T15:47:55Z · HANDOFF · myan · claude-code/opus-5.5 · ae6cc1b
+S2 part 7: s2.services and compose.yml. The real Docker test has not run anywhere yet. Next: S2's CI job (Amendment 1 §5: trigger list, no-op otherwise, digest-keyed caches with verification, dev + s2 sync, arm runner, root), which runs this test and the reranker's real tests; then the corpus load and the passes and report.
+
+### 2026-11-04T15:47:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:ae6cc1b
+docs(agents): hand off the S2 services
+1 file changed, 3 insertions(+)
