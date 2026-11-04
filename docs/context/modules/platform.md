@@ -57,7 +57,7 @@ make go-build    # ingestd for linux/arm64, versioned with the commit
 The release-manifest format (DESIGN §16.9): `infra/manifest/release_manifest.py` (`validate`, `cache-key`;
 its docstring is the spec) and `infra/manifest/example.json`, where `unpinned-until-…` marks values not yet chosen.
 
-And `.github/workflows/ci.yml` (jobs `unit`, `db`, `go`, `dispatcher`). The Go module is
+And `.github/workflows/ci.yml` (jobs `unit`, `db`, `go`, `s2`, `dispatcher`). The Go module is
 `apps/ingestd` (`go.mod`, `cmd/ingestd`); its `internal/` packages belong to their own modules. Branch protection requires
 `dispatcher` only; it passes only when every job in its `needs` reports `success`.
 
@@ -88,6 +88,12 @@ the Terraform module and the load-test stub.
 - CI runs `make test` (job `unit`), and `make db-up db-test schema-check` (job `db`, on
   `ubuntu-24.04-arm` because the pinned image is arm64). A skipped, cancelled or failed job fails
   `dispatcher` (DESIGN §16.1). `make lint` is **not** gated yet: `main` is not lint-clean.
+- Job `s2` (ADR-0019 Amendment 1 §5) runs in full on `ubuntu-24.04-arm` only when `s2.ci changed`
+  says one of S2's inputs changed: `uv sync --extra dev --extra s2 --locked`, the reranker and the
+  Ollama model restored from caches keyed by their pinned digests and verified after every restore
+  (or fetched, verified and saved), then `eval/harness/tests` as root with `WAYFINDER_S2_DOCKER=1`
+  and `WAYFINDER_S2_RERANKER`. Otherwise it passes as a no-op and downloads nothing. Only Ollama's
+  `models` directory is cached, never its key. Caches live in `.s2-cache/`, which git ignores.
 - A suite counts only once it is in `dispatcher`'s `needs`; a job outside that list can go red
   without blocking a merge.
 - Every action in `ci.yml` is pinned by commit SHA (DESIGN §18.2).
@@ -129,6 +135,7 @@ _None._
 | `ci.yml` job `unit` | `make test` passes on every pull request and on `main` |
 | `ci.yml` job `db` | Schema tests on the pinned image, and `db/schema.sql` drift |
 | `ci.yml` job `go` | `make go-test` (gofmt clean, vet, tests) and `make go-build` (linux/arm64) |
+| `ci.yml` job `s2` | On a change to S2's inputs: the harness's tests with real Docker services and the real reranker, as root; a no-op otherwise |
 | `ci.yml` job `dispatcher` | No required suite was skipped, cancelled or failed |
 | `infra/manifest/tests/test_release_manifest.py` | Strict validation; each input moves exactly its own keys; commit and platform move none |
 | _not yet wired_ `make lint` | After the cross-module lint cleanup |
