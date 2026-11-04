@@ -27,12 +27,12 @@ design_sections:
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
   "eval/harness/s2/calibration.py": "bec8e7bd551d3503"
-  "eval/harness/s2/compose.yml": "58dd27aabc5ff865"
+  "eval/harness/s2/compose.yml": "2603564f894d2987"
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
-  "eval/harness/s2/services.py": "67b977828627408f"
+  "eval/harness/s2/services.py": "ab535ea544cb493b"
 verified_on: 2026-11-04
 ---
 
@@ -145,7 +145,8 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 - Every compose image is pinned by its linux/arm64 digest (ParadeDB at ADR-0007's, Ollama 0.34.2's),
   Postgres runs with `max_parallel_workers_per_gather = 0`, and data lives on named volumes, never
   tmpfs, so a cold pass reads from disk. Postgres, the query Ollama and the ingestion Ollama are
-  separate containers, so separate cgroups.
+  separate containers, so separate cgroups. Every published port is bound to `127.0.0.1`, and `DSN` and
+  `OLLAMA` address `127.0.0.1`: the password is a fixed local value and Ollama has no authentication.
 - `reset` is ADR-0019's steps 1 to 4 in order: `compose stop postgres ollama-query`, `sync`, `3` to
   `drop_caches`, `compose start`, then `pg_isready`, `/api/version` equal to 0.34.2, and the model's
   digest from `/api/tags`. Steps 5 and 6 belong to the cold pass. `connect` always opens a new
@@ -196,7 +197,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
 | `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, no pid crossing a cold reset, and thread names |
 | `eval/harness/tests/test_s2_reranker.py` | The pins and URL, verification naming each failure, all-or-nothing fetch (a later file failing after an earlier one succeeded, a tampered file, a non-empty root), the CLI's refusal, no reranker from unverified files, pair truncation, per-pair padding equal to the batch call's, tokenizer CPU on the calling thread (fresh interpreter), the L grid; with `WAYFINDER_S2_RERANKER` set, the real model ranking a relevant passage first at both L, and a rerank call's CPU on the calling thread |
-| `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
+| `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; every published port on loopback; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake

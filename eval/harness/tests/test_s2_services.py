@@ -66,9 +66,20 @@ def test_the_compose_file_pins_every_image_by_arm64_digest_and_keeps_data_on_vol
     assert images[1] == images[2] and "max_parallel_workers_per_gather=0" in body
     assert "tmpfs" not in body  # drop_caches cannot evict tmpfs
     assert re.findall(r"- (\w[\w-]*):/", body) == ["pgdata", "query-models", "ingest-models"]
-    ports = re.findall(r'- "(\d+):(?:5432|11434)"', body)
+    ports = re.findall(r'- "127\.0\.0\.1:(\d+):(?:5432|11434)"', body)
     assert ports == [services.DSN.split(":")[-1].split("/")[0], "11435", "11436"]
     assert [services.OLLAMA[s][-5:] for s in ("ollama-query", "ollama-ingest")] == ports[1:]
+    assert "@127.0.0.1:" in services.DSN
+    assert all(u.startswith("http://127.0.0.1:") for u in services.OLLAMA.values())
+
+
+def test_every_published_port_is_bound_to_loopback():
+    """A port without a host IP is published on every interface: the fixed password and an
+    unauthenticated Ollama would be reachable from the network."""
+    body = "\n".join(line.split("#")[0] for line in services.COMPOSE.read_text().splitlines())
+    published = re.findall(r"ports:\n((?:\s+- .+\n)+)", body + "\n")
+    entries = [e.strip().removeprefix("- ").strip('"') for block in published for e in block.splitlines()]
+    assert len(entries) == 3 and all(e.startswith("127.0.0.1:") for e in entries), entries
 
 
 def test_a_services_host_pid_and_cgroup_come_from_its_running_container(tmp_path):
@@ -95,7 +106,7 @@ def test_the_reset_is_adr_0019s_steps_1_to_4_in_order(tmp_path):
     assert v[:3] == ["stop postgres ollama-query", "sync", "start postgres ollama-query"]
     assert v[3:] == ["exec -T postgres pg_isready -U wayfinder -d s2"] * 3  # two failures, then ready
     assert [u.rsplit("/", 1)[1] for u in http.state["urls"]] == ["version", "version", "tags"]
-    assert all(u.startswith("http://localhost:11435/") for u in http.state["urls"])
+    assert all(u.startswith("http://127.0.0.1:11435/") for u in http.state["urls"])
 
 
 def test_drop_caches_is_written_between_sync_and_start(tmp_path):

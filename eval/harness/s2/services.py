@@ -22,8 +22,8 @@ PROJECT = "wayfinder-s2"
 OLLAMA_VERSION = "0.34.2"
 MODEL = "nomic-embed-text:latest"
 MODEL_DIGEST = "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"  # ADR-0019
-OLLAMA = {"ollama-query": "http://localhost:11435", "ollama-ingest": "http://localhost:11436"}
-DSN = "postgresql://wayfinder:s2_local_only_not_a_secret@localhost:55433/s2"
+OLLAMA = {"ollama-query": "http://127.0.0.1:11435", "ollama-ingest": "http://127.0.0.1:11436"}
+DSN = "postgresql://wayfinder:s2_local_only_not_a_secret@127.0.0.1:55433/s2"
 COLD = ("postgres", "ollama-query")  # what a cold reset restarts (ADR-0019 step 1)
 READY_S = 120
 

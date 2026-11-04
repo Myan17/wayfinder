@@ -44,3 +44,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-04T15:47:55Z · COMMIT · myan · claude-code/opus-5.5 · parent:186013c
 docs(agents): close task log for myan-eval-harness-s2-services
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T18:17:21Z · DECIDE · myan · claude-code/opus-5.5 · 7196aa1
+gupta958's review of #105: publish every port on loopback only (127.0.0.1:55433, :11435, :11436), since the Postgres password is a fixed local value and Ollama has no authentication. DSN and OLLAMA use 127.0.0.1, not localhost, so they never resolve to ::1 while the ports bind IPv4 loopback.
+
+### 2026-11-04T18:17:21Z · TEST · myan · claude-code/opus-5.5 · 7196aa1
+uv run pytest eval/harness/tests/test_s2_services.py: 7 passed, 1 skipped (the new test_every_published_port_is_bound_to_loopback). Mutation checks: dropping the host IP from 11436, or binding 55433 to 0.0.0.0, fails 2 tests each. The compose file parses under PyYAML with the three loopback ports. Full suite (dev + s2): 459 passed, 31 skipped. ruff clean; context-freshness --fix eval-harness. NOT RUN: docker compose config, because Docker on this Mac hangs.
+
+### 2026-11-04T18:17:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:7196aa1
+fix(eval-harness): publish S2's ports on loopback only
+4 files changed, 24 insertions(+), 11 deletions(-)

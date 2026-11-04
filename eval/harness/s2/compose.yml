@@ -6,6 +6,7 @@
 #
 # Data lives on named volumes, not tmpfs as in spike S3: a cold pass drops the page cache and must
 # then read from disk, and drop_caches cannot evict tmpfs. `docker compose stop` keeps the volumes.
+# Every port is published on loopback only: the password is a fixed local value, and Ollama has no auth.
 name: wayfinder-s2
 services:
   postgres:
@@ -17,7 +18,7 @@ services:
       POSTGRES_PASSWORD: s2_local_only_not_a_secret
       POSTGRES_DB: s2
     ports:
-      - "55433:5432"
+      - "127.0.0.1:55433:5432"
     volumes:
       - pgdata:/var/lib/postgresql   # Postgres 18 images want the mount here, not at /data
   ollama-query:
@@ -28,7 +29,7 @@ services:
       OLLAMA_MAX_LOADED_MODELS: "1"
       OLLAMA_KEEP_ALIVE: "-1"        # loaded once per start; a cold pass restarts the container
     ports:
-      - "11435:11434"
+      - "127.0.0.1:11435:11434"
     volumes:
       - query-models:/root/.ollama
   ollama-ingest:
@@ -39,7 +40,7 @@ services:
       OLLAMA_MAX_LOADED_MODELS: "1"
       OLLAMA_KEEP_ALIVE: "-1"
     ports:
-      - "11436:11434"
+      - "127.0.0.1:11436:11434"
     volumes:
       - ingest-models:/root/.ollama
 volumes:
