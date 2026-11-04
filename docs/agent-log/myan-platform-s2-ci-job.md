@@ -33,3 +33,10 @@ uv run pytest (dev + s2): 478 passed, 31 skipped; eval/harness/tests in dev only
 ### 2026-11-04T22:51:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:f89f8f5
 ci(platform): add S2's CI job, in full only when S2's inputs change
 8 files changed, 354 insertions(+), 3 deletions(-)
+
+### 2026-11-04T22:51:59Z · HANDOFF · myan · claude-code/opus-5.5 · 9161f98
+S2 part 8: CI's s2 job and s2.ci. Pushed to get the job's first full run on the arm runner; the result is recorded in a TEST entry before the brief.
+
+### 2026-11-04T22:52:00Z · COMMIT · myan · claude-code/opus-5.5 · parent:9161f98
+docs(agents): hand off S2's CI job for its first run
+1 file changed, 3 insertions(+)
