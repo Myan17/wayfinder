@@ -53,12 +53,92 @@ jobs:
       - name: arm64 build (DESIGN 16.1)
         run: make go-build
 
+  s2:
+    # Spike S2's CI job (ADR-0019 Amendment 1 §5). It runs in full only when a change touches one of
+    # S2's inputs, listed in eval/harness/s2/ci.py; otherwise it passes as a no-op that says so and
+    # downloads nothing. Either way it reports a status, so the dispatcher requires it. Its numbers
+    # are S2-dev's, never evidence. The arm runner runs the pinned linux/arm64 images natively, and
+    # the tests run as root, which drop_caches needs.
+    name: s2
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: eval/harness
+      MODELS: .s2-cache/ollama-models  # Ollama's models directory only, never its key
+      RERANKER: .s2-cache/reranker
+      COMPOSE: docker compose -p wayfinder-s2 -f eval/harness/s2/compose.yml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0  # the diff is against the merge base
+      - name: did any S2 input change?
+        id: scope
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python3 -m s2.ci changed "$BASE" "$HEAD"
+      - if: steps.scope.outputs.mode == 'full'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - if: steps.scope.outputs.mode == 'full'
+        run: uv sync --extra dev --extra s2 --locked
+      - if: steps.scope.outputs.mode == 'full'
+        id: keys
+        run: uv run --no-sync python -m s2.ci keys
+      - if: steps.scope.outputs.mode == 'full'
+        id: model-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ${{ env.MODELS }}
+          key: ${{ steps.keys.outputs.model }}
+      - if: steps.scope.outputs.mode == 'full'
+        id: reranker-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ${{ env.RERANKER }}
+          key: ${{ steps.keys.outputs.reranker }}
+      - name: reranker, verified against its pinned SHA-256s
+        if: steps.scope.outputs.mode == 'full'
+        env:
+          HIT: ${{ steps.reranker-cache.outputs.cache-hit }}
+        run: uv run --no-sync python -m s2.reranker "$([ "$HIT" = true ] && echo --verify || echo --fetch)" "$RERANKER"
+      - name: model, verified against its pinned digest
+        if: steps.scope.outputs.mode == 'full'
+        env:
+          HIT: ${{ steps.model-cache.outputs.cache-hit }}
+        run: |
+          mkdir -p "$MODELS"
+          if [ "$HIT" = true ]; then
+            $COMPOSE run --rm --no-deps -v "$PWD/$MODELS:/cache" --entrypoint sh ollama-query -c 'mkdir -p /root/.ollama/models && cp -a /cache/. /root/.ollama/models/'
+            uv run --no-sync python -m s2.ci model --restored
+          else
+            uv run --no-sync python -m s2.ci model --pulled
+            $COMPOSE run --rm --no-deps -v "$PWD/$MODELS:/cache" --entrypoint sh ollama-query -c 'cp -a /root/.ollama/models/. /cache/ && chmod -R a+rX /cache'
+          fi
+      - if: steps.scope.outputs.mode == 'full' && steps.model-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ${{ env.MODELS }}
+          key: ${{ steps.keys.outputs.model }}
+      - if: steps.scope.outputs.mode == 'full' && steps.reranker-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ${{ env.RERANKER }}
+          key: ${{ steps.keys.outputs.reranker }}
+      - name: the harness's tests, real services and reranker included, as root
+        if: steps.scope.outputs.mode == 'full'
+        env:
+          WAYFINDER_S2_DOCKER: "1"
+          WAYFINDER_S2_RERANKER: ${{ env.RERANKER }}
+        run: |
+          sudo --preserve-env=WAYFINDER_S2_DOCKER,WAYFINDER_S2_RERANKER .venv/bin/python -m pytest \
+            -p no:cacheprovider -rs eval/harness/tests
+
   dispatcher:
     # DESIGN 16.1: a skipped or cancelled suite must never count as a pass. This job always runs and
     # fails unless every required job reports success. Branch protection requires this job only.
     name: dispatcher
     if: always()
-    needs: [unit, db, go]
+    needs: [unit, db, go, s2]
     runs-on: ubuntu-24.04
     steps:
       - env:

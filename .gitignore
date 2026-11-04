@@ -31,3 +31,4 @@ out/
 clones/
 eval/results/local/
 bin/
+.s2-cache/
