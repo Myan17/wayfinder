@@ -1,0 +1,49 @@
+# Spike S2 only (ADR-0019). Not the development stack and not a deployment artifact.
+#
+# Every image is pinned by digest, at linux/arm64, the A1's architecture and CI's arm runner's.
+# Each service is its own container, so each is its own cgroup: the query embedder's CPU is read
+# from its cgroup alone, and the ingestion embedder never shares it (ADR-0019 Setup).
+#
+# Data lives on named volumes, not tmpfs as in spike S3: a cold pass drops the page cache and must
+# then read from disk, and drop_caches cannot evict tmpfs. `docker compose stop` keeps the volumes.
+# Every port is published on loopback only: the password is a fixed local value, and Ollama has no auth.
+name: wayfinder-s2
+services:
+  postgres:
+    # paradedb/paradedb:0.25.9, ADR-0007's digest (infra/spikes/s3/compose.yml)
+    image: paradedb/paradedb@sha256:c17153b8b7307734c3aede0393dfe8fa447f4a528ec028b1c3937186ab3ee242
+    command: ["postgres", "-c", "max_parallel_workers_per_gather=0"]  # a call's work stays in its backend
+    environment:
+      POSTGRES_USER: wayfinder
+      POSTGRES_PASSWORD: s2_local_only_not_a_secret
+      POSTGRES_DB: s2
+    ports:
+      - "127.0.0.1:55433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql   # Postgres 18 images want the mount here, not at /data
+  ollama-query:
+    # ollama/ollama:0.34.2, linux/arm64 (ADR-0005's run); /api/version is checked at every start
+    image: ollama/ollama@sha256:e87cf5987f7636ec530ca54b598672688143f0f9c6e0350d1392f78e5d9170ef
+    environment:
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "-1"        # loaded once per start; a cold pass restarts the container
+    ports:
+      - "127.0.0.1:11435:11434"
+    volumes:
+      - query-models:/root/.ollama
+  ollama-ingest:
+    # The same image, used only for the corpus build and S2-6's re-index. Its OS priority (§10.5)
+    # is set by the S2-6 part, not here.
+    image: ollama/ollama@sha256:e87cf5987f7636ec530ca54b598672688143f0f9c6e0350d1392f78e5d9170ef
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "-1"
+    ports:
+      - "127.0.0.1:11436:11434"
+    volumes:
+      - ingest-models:/root/.ollama
+volumes:
+  pgdata:
+  query-models:
+  ingest-models:

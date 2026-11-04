@@ -11,6 +11,8 @@ interface_files:
   - eval/harness/s2/preflight.py
   - eval/harness/s2/calibration.py
   - eval/harness/s2/reranker.py
+  - eval/harness/s2/services.py
+  - eval/harness/s2/compose.yml
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -25,11 +27,13 @@ design_sections:
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
   "eval/harness/s2/calibration.py": "bec8e7bd551d3503"
+  "eval/harness/s2/compose.yml": "2603564f894d2987"
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
-verified_on: 2026-11-03
+  "eval/harness/s2/services.py": "ab535ea544cb493b"
+verified_on: 2026-11-04
 ---
 
 # eval-harness
@@ -86,6 +90,12 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `PinError`; `Reranker(root)` with `score(query, passages, length) -> list[float]`, one logit per
   passage in input order; and `encode(tokenizer, query, passages, length)`. `Reranker` needs the
   `s2` extra (`uv sync --extra dev --extra s2 --locked`); the rest needs only the standard library.
+- **`s2.services`** and **`s2/compose.yml`**: `compose(*args)`, `host_pid(run, service)`,
+  `cgroup(run, service)`, `wait(probe, what)`, `postgres_ready(run)`, `ollama_ready(http, service)`,
+  `check_model(http, service)`, `pull_model(http, service)`, `up(run, http)`, `reset(run, http)` and
+  `connect(run) -> (connection, backend host pid)`; `ServiceError`; the constants `PROJECT`,
+  `OLLAMA_VERSION`, `MODEL`, `MODEL_DIGEST`, `OLLAMA` and `DSN`. `Run` and `Http` are injected;
+  `subprocess_run` and `urllib_http` are the real ones.
 
 ## Invariants a caller may rely on
 
@@ -132,6 +142,15 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 - `fetch` is all or nothing: it stages and verifies the whole set beside `root`, then renames it. On
   any failure no downloaded or staged file remains; a `root` the caller created empty is left empty,
   otherwise `root` does not exist (gupta958's review of #104). A non-empty `root` is refused.
+- Every compose image is pinned by its linux/arm64 digest (ParadeDB at ADR-0007's, Ollama 0.34.2's),
+  Postgres runs with `max_parallel_workers_per_gather = 0`, and data lives on named volumes, never
+  tmpfs, so a cold pass reads from disk. Postgres, the query Ollama and the ingestion Ollama are
+  separate containers, so separate cgroups. Every published port is bound to `127.0.0.1`, and `DSN` and
+  `OLLAMA` address `127.0.0.1`: the password is a fixed local value and Ollama has no authentication.
+- `reset` is ADR-0019's steps 1 to 4 in order: `compose stop postgres ollama-query`, `sync`, `3` to
+  `drop_caches`, `compose start`, then `pg_isready`, `/api/version` equal to 0.34.2, and the model's
+  digest from `/api/tags`. Steps 5 and 6 belong to the cold pass. `connect` always opens a new
+  connection, so a new backend, and resolves its host pid only inside the Postgres cgroup.
 - `cold_sample` orders by SHA-256 of `group_id`, then by issue number. It takes the first issue of
   each of the first 50 distinct groups, whatever order the input is in.
 
@@ -151,6 +170,7 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
 | A counter is missing, unreadable, coarser than 10 µs or not cgroup v2; a backend pid matches 0 or 2+ host pids | `CounterError` | S2 stops as an error (ADR-0019) |
 | The backend's clocks disagree, or it creates a child process | `CounterError` from `check_clock` | S2 stops as an error |
 | A reranker file is missing, resized or differs from its SHA-256, or `fetch` is pointed at a non-empty directory | `PinError` naming each file, from `verify`, `fetch` or `Reranker`; the CLI exits 1 | Refuse to run S2 (ADR-0019) |
+| A container is not running, not ready within 120 s, runs another Ollama version, or the model's digest differs | `ServiceError` | S2 stops as an error (ADR-0019) |
 | The calibration's background moves more than 1%, its per-call sum is outside 95% to 105% of the reference, a call reports no CPU, `/proc/stat` goes backwards, or the kernel config sets other than one accounting option | `CounterError` from `s2.calibration` | S2 stops as an error (ADR-0019) |
 | strace output has a creation that cannot be parsed, or a call that never resumes | `ValueError` from `classify` | Treat as an error; never assume none |
 | An issue is in two groups | `ValueError` from `strong_dev_issues` | Refuse the dataset |
@@ -177,6 +197,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_counters.py` | cgroup lookup and `usage_usec`, `NSpid` matching inside the cgroup only, `schedstat`, executed CPU, the resolution and v2 checks; on Linux, the real process clock counting an exited thread, real resolution, an unknown pid |
 | `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, no pid crossing a cold reset, and thread names |
 | `eval/harness/tests/test_s2_reranker.py` | The pins and URL, verification naming each failure, all-or-nothing fetch (a later file failing after an earlier one succeeded, a tampered file, a non-empty root), the CLI's refusal, no reranker from unverified files, pair truncation, per-pair padding equal to the batch call's, tokenizer CPU on the calling thread (fresh interpreter), the L grid; with `WAYFINDER_S2_RERANKER` set, the real model ranking a relevant passage first at both L, and a rerank call's CPU on the calling thread |
+| `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; every published port on loopback; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake
