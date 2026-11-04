@@ -30,3 +30,10 @@ Fetched the five pinned files from the revision's resolve URLs with python -m s2
 ### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:303dca6
 feat(eval-harness): add S2's pinned reference reranker
 5 files changed, 347 insertions(+), 1 deletion(-)
+
+### 2026-11-04T00:57:24Z · HANDOFF · myan · claude-code/opus-5.5 · 4192104
+S2 part 6b: s2.reranker. Open for gupta958: L as the pair's total length (longest_first), padding to the batch's longest. Next: services wiring (compose, cgroups, reset, readiness), the corpus load through db/s6_identity.py, then the passes and report. The S2 CI job (Amendment 1 §5) should sync dev + s2 and fetch/verify the reranker into its digest-keyed cache, so the tokenizer and real-model tests run there.
+
+### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:4192104
+docs(agents): hand off the S2 reranker
+1 file changed, 3 insertions(+)
