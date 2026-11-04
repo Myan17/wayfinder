@@ -44,3 +44,7 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-04T00:17:00Z · COMMIT · myan · claude-code/opus-5.5 · parent:a8a0225
 docs(agents): close task log for myan-eval-harness-s2-reranker
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T00:17:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:26c3e45
+docs(platform): record the s2 extra on the platform card
+1 file changed, 6 insertions(+), 2 deletions(-)

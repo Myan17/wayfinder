@@ -19,8 +19,8 @@ design_sections:
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
   "Makefile": "ebbf6d58abfff743"
-  "pyproject.toml": "c4eedb4857c2062a"
-verified_on: 2026-11-02
+  "pyproject.toml": "59664390df540831"
+verified_on: 2026-11-03
 ---
 
 # platform
@@ -70,6 +70,9 @@ Plus the Python project definition:
   `psycopg[binary]` (DESIGN §12 names psycopg 3 as the database driver; spike S3 is its first use)
   and `jsonschema[format-nongpl]` (eval-data validates the S1 pairs file against `$defs/pair`; the
   extra brings the date-time format checker without a GPL dependency)
+- the `s2` extra pins `onnxruntime==1.31.0` and `tokenizers==0.23.3` exactly, for S2's reference
+  reranker (ADR-0019 Amendment 1). `make setup` and CI's dev sync do not install it; S2 syncs it with
+  `--extra s2`
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
 
 Not yet part of the interface (planned): `make up`, `make load`, `make deploy`, the Compose stack,
@@ -165,3 +168,4 @@ by CI on every pull request.
 | 2026-10-04 | `jsonschema[format-nongpl]` added to the dev extra and locked, for eval-data's pairs-file checks (gupta958's review of #56) | — |
 | 2026-10-19 | `make db-test` also runs `apps/api/tests/retrieval`, retrieval's SQL tests against the pinned database (ADR-0007 Amendment 1 step 3) | — |
 | 2026-11-03 | `eval/harness/tests` collected and `eval/harness` on the pythonpath, for S2's inputs (eval-harness, ADR-0019 Amendment 1) | — |
+| 2026-11-03 | `s2` extra: `onnxruntime==1.31.0` and `tokenizers==0.23.3`, locked, the newest released before 2026-10-20 (eval-harness, ADR-0019 Amendment 1) | — |
