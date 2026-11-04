@@ -82,3 +82,10 @@ New case in test_a_failure_after_an_earlier_file_succeeded_leaves_nothing: empty
 ### 2026-11-04T01:39:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:a978e63
 fix(eval-harness): state and test fetch's contract for a caller-created empty root
 4 files changed, 23 insertions(+), 18 deletions(-)
+
+### 2026-11-04T01:39:14Z · HANDOFF · myan · claude-code/opus-5.5 · 077210f
+Empty-root contract stated and tested. Ready for gupta958's re-review.
+
+### 2026-11-04T01:39:15Z · COMMIT · myan · claude-code/opus-5.5 · parent:077210f
+docs(agents): hand off the empty-root contract fix
+1 file changed, 3 insertions(+)
