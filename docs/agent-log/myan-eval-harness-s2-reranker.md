@@ -55,3 +55,13 @@ Platform card updated for the s2 extra after check_context_freshness flagged it.
 ### 2026-11-04T00:17:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:1e2dfd5
 docs(agents): log the platform card update
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T00:46:02Z · DECIDE · myan · claude-code/opus-5.5 · 48f32ca
+gupta958's review of #103: the documented S2 sync is uv sync --extra dev --extra s2 --locked. uv sync --extra s2 alone removes the dev extra, including psycopg, which S2's SQL stage needs.
+
+### 2026-11-04T00:46:02Z · TEST · myan · claude-code/opus-5.5 · 48f32ca
+uv sync --extra s2 --locked, then import psycopg: ModuleNotFoundError (the defect confirmed). uv sync --extra dev --extra s2 --locked: psycopg 3.3.6, onnxruntime 1.31.0 and tokenizers 0.23.3 import together; uv run --no-sync pytest 441 passed, 28 skipped in that environment. context-freshness --fix platform.
+
+### 2026-11-04T00:46:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:48f32ca
+docs(platform): document S2's sync as the dev and s2 extras together
+2 files changed, 9 insertions(+), 2 deletions(-)

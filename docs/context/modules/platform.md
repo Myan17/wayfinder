@@ -71,8 +71,9 @@ Plus the Python project definition:
   and `jsonschema[format-nongpl]` (eval-data validates the S1 pairs file against `$defs/pair`; the
   extra brings the date-time format checker without a GPL dependency)
 - the `s2` extra pins `onnxruntime==1.31.0` and `tokenizers==0.23.3` exactly, for S2's reference
-  reranker (ADR-0019 Amendment 1). `make setup` and CI's dev sync do not install it; S2 syncs it with
-  `--extra s2`
+  reranker (ADR-0019 Amendment 1). `make setup` and CI's dev sync do not install it. S2 syncs both
+  extras together, `uv sync --extra dev --extra s2 --locked`, because `uv sync --extra s2` alone
+  removes the dev extra and with it psycopg, which S2's SQL stage needs (gupta958's review of #103)
 - ruff: line length 110, target py313, rule set `E,F,I,UP,B,SIM,RUF`
 
 Not yet part of the interface (planned): `make up`, `make load`, `make deploy`, the Compose stack,
