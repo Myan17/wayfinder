@@ -54,3 +54,10 @@ uv run pytest eval/harness/tests/test_s2_services.py: 7 passed, 1 skipped (the n
 ### 2026-11-04T18:17:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:7196aa1
 fix(eval-harness): publish S2's ports on loopback only
 4 files changed, 24 insertions(+), 11 deletions(-)
+
+### 2026-11-04T18:17:21Z · HANDOFF · myan · claude-code/opus-5.5 · 2d8b6a6
+Review fix applied: S2's ports are loopback-only, with a regression test. Ready for gupta958's re-review.
+
+### 2026-11-04T18:17:21Z · COMMIT · myan · claude-code/opus-5.5 · parent:2d8b6a6
+docs(agents): hand off the loopback fix
+1 file changed, 3 insertions(+)
