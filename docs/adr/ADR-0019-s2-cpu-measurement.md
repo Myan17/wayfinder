@@ -276,8 +276,9 @@ file counted as `ceil(lines / 60)`. S2 uses that rule as its chunker:
 - one snapshot per repository, at the `as_of_commit` in `eval/datasets/s1/manifest.json`;
 - the file universe from `eval/miners/s1/universe.py`, imported and not rewritten;
 - each file cut into consecutive 60-line windows, with lines counted as `universe.lines` counts
-  them and the last window shorter; one window is one representation, and `representation.path` is
-  the file's path.
+  them and the last window shorter; one window is one occurrence, and identical embedded inputs in
+  the same pseudo-repository may share a representation (BCR-1); `representation.path` is the
+  file's path. The report gives the window (occurrence) count and the distinct representation count.
 
 By construction this gives the estimate's count. The harness checks that each repository's window
 count equals its `chunk_estimate` in the manifest, and refuses to run if any differs. It is not §9.4's

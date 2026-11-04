@@ -123,6 +123,46 @@ def new_generation(conn, repo_id: int, spec: Spec, *, desired: int, base: int | 
     ).fetchone()[0]
 
 
+def line_count(body: str) -> int:
+    """`universe.lines`' rule: the newlines, plus one when a non-empty body lacks a final newline."""
+    return body.count("\n") + (1 if body and not body.endswith("\n") else 0)
+
+
+def seed_connection(conn, *, account_login: str = "s2", valid: str = "1 day") -> int:
+    """One read-only connection. S2 puts all 100 pseudo-repositories under one, as S3-6 does (BCR-1)."""
+    return conn.execute(
+        "INSERT INTO connection (mode, account_login, state, state_observed_at, state_valid_until,"
+        " egress_policy, config) VALUES ('public_readonly', %s, 'active', now(), now() + %s::interval,"
+        " '{}', '{}') RETURNING id",
+        (account_login, valid),
+    ).fetchone()[0]
+
+
+def seed_repository(
+    conn,
+    *,
+    connection_id: int,
+    github_repo_id: int,
+    full_name: str,
+    visibility: str = "private",
+    valid: str = "1 day",
+) -> int:
+    """An active repository with a visibility lease of `valid`. A private one is admitted only by a grant."""
+    return conn.execute(
+        "INSERT INTO repository (connection_id, github_repo_id, full_name, default_branch, visibility,"
+        " visibility_observed_at, visibility_valid_until, serving_state, data_class)"
+        " VALUES (%s, %s, %s, 'main', %s, now(), now() + %s::interval, 'active', %s) RETURNING id",
+        (
+            connection_id,
+            github_repo_id,
+            full_name,
+            visibility,
+            valid,
+            "public" if visibility == "public" else "private",
+        ),
+    ).fetchone()[0]
+
+
 def index_chunk(
     conn,
     embed: Embedder,
@@ -133,8 +173,12 @@ def index_chunk(
     header: str = T_HEADER,
     body: str = T_BODY,
     path: str = T_PATH,
+    start_line: int = 1,
 ) -> int:
-    """§8.5's reuse step: look up (repo, spec, input hash), embed only on a miss, add the occurrence."""
+    """§8.5's reuse step: look up (repo, spec, input hash), embed only on a miss, add the occurrence at
+    `start_line`. Identical bodies in one file share a representation, never an occurrence (BCR-1)."""
+    if start_line < 1:
+        raise ValueError(f"start_line must be at least 1, not {start_line}")
     text = embedded_input(spec.doc_template, header, body)
     ihash = input_hash(text)
     chash = hashlib.sha256(body.encode("utf-8")).digest()
@@ -164,8 +208,58 @@ def index_chunk(
             )
         conn.execute(
             "INSERT INTO occurrence (repo_id, generation_id, representation_id, path, blob_sha, start_line,"
-            " end_line) VALUES (%s, %s, %s, %s, %s, 1, %s)",
-            (repo_id, generation_id, rep, path, chash.hex()[:40], body.count("\n")),
+            " end_line) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (
+                repo_id,
+                generation_id,
+                rep,
+                path,
+                chash.hex()[:40],
+                start_line,
+                start_line + line_count(body) - 1,
+            ),
+        )
+    return rep
+
+
+PAD = " · s2-pad:{row}"  # visible in the stored header, so the hash is of what is stored
+
+
+def pad_copy(conn, *, repo_id: int, generation_id: int, spec: Spec, source: int, row: int) -> int:
+    """A scale-padding copy of `source` (ADR-0019 Setup, BCR-1): a new representation, vector and
+    occurrence in `generation_id`, so activation makes it live. Its header is the source's plus
+    `PAD`; its input hash is that exact stored input's; its vector is `stand_in` over that input, so
+    it is seeded by the row and the input. It sits at the source's first occurrence in the same
+    generation, by path then start line. No embedder is called. `row` must be unique within a run:
+    reusing one for the same source violates (repo_id, spec_id, input_hash)."""
+    if row < 0:
+        raise ValueError(f"row must be at least 0, not {row}")
+    found = conn.execute(
+        "SELECT r.header, r.body_text, r.content_hash, o.path, o.blob_sha, o.start_line, o.end_line"
+        " FROM representation r JOIN occurrence o ON o.representation_id = r.id AND o.generation_id = %s"
+        " WHERE r.id = %s AND r.repo_id = %s AND r.spec_id = %s ORDER BY o.path, o.start_line LIMIT 1",
+        (generation_id, source, repo_id, spec.id),
+    ).fetchone()
+    if found is None:
+        raise ValueError(f"representation {source} has no occurrence in generation {generation_id}")
+    header, body, chash, path, blob, start, end = found
+    header += PAD.format(row=row)
+    text = embedded_input(spec.doc_template, header, body)
+    with conn.transaction():
+        rep = conn.execute(
+            "INSERT INTO representation (repo_id, spec_id, input_hash, content_hash, header, body_text, path)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+            (repo_id, spec.id, input_hash(text), chash, header, body, path),
+        ).fetchone()[0]
+        conn.execute(
+            "INSERT INTO vector_d768 (representation_id, repo_id, spec_id, embedding)"
+            " VALUES (%s, %s, %s, %s::halfvec)",
+            (rep, repo_id, spec.id, vector_text(stand_in(spec, text))),
+        )
+        conn.execute(
+            "INSERT INTO occurrence (repo_id, generation_id, representation_id, path, blob_sha, start_line,"
+            " end_line) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (repo_id, generation_id, rep, path, blob, start, end),
         )
     return rep
 

@@ -8,6 +8,8 @@ interface_files:
   - db/views/eligible_repo.sql
   - db/views/retrieval_rows.sql
   - db/schema.sql
+  - db/s6_identity.py
+  - db/s6_ollama.py
 tables_owned:
   - "(the schema itself)"
 depends_on: []
@@ -16,10 +18,12 @@ design_sections:
   - "DESIGN §9.3.5–9.3.6 (activation, deletion closure)"
   - "DESIGN §18.3 (immutable migrations)"
 verified_hashes:
+  "db/s6_identity.py": "310f4f53aa0e228d"
+  "db/s6_ollama.py": "6063a90702ce584e"
   "db/schema.sql": "2eee78944b8f3f27"
   "db/views/eligible_repo.sql": "4c23a29fabcc67cc"
   "db/views/retrieval_rows.sql": "acf9bb56c489f0f7"
-verified_on: 2026-10-19
+verified_on: 2026-11-04
 ---
 
 # schema
@@ -49,6 +53,30 @@ the result instead of replaying migrations. **It lands in its own pull request a
 migration pull request merges** (a dump beside a migration exceeds AGENTS.md §2.2's limit). ORIENT.md
 item 3's CI adds a drift check against a fresh dump.
 
+**The S2/S6 build path (BCR-1)**, for spikes only: S6, S2's corpus load and S2-6's re-index. Nothing
+in production calls it.
+
+```text
+db/s6_identity.py
+  DIMENSION = 768; Spec(id, model_ref, model_digest, doc_template); Embedder = (Spec, text) -> list[float]
+  embedded_input(template, header, body) -> str   # one substitution pass
+  input_hash(text) -> bytes                       # SHA-256 of the UTF-8 embedded input
+  stand_in(spec, text) -> list[float]             # ADR-0005's stand-in
+  line_count(body) -> int                         # universe.lines' rule
+  capture_spec(conn, *, model_ref, model_digest, runtime, doc_template) -> Spec
+  seed_connection(conn, *, account_login="s2", valid="1 day") -> connection_id
+  seed_repository(conn, *, connection_id, github_repo_id, full_name, visibility="private", valid="1 day") -> repo_id
+  push_and_claim(conn, repo_id) -> (desired, claim)
+  new_generation(conn, repo_id, spec, *, desired, base) -> generation_id
+  index_chunk(conn, embed, *, repo_id, generation_id, spec, header, body, path, start_line=1) -> representation_id
+  pad_copy(conn, *, repo_id, generation_id, spec, source, row) -> representation_id;  PAD = " · s2-pad:{row}"
+  finish_build(conn, generation_id); activate(conn, *, repo_id, new, base, desired, claim); ActivationRefused
+db/s6_ollama.py   (its S6-5 report runner is not a consumer contract)
+  Ollama(base): .version(), .digest(name), .embed(model, text)  # truncate false
+  embedder(client, counter) -> Embedder                          # refuses once the alias names another digest
+  TEMPLATE = "search_document: {header}\n{body}"
+```
+
 ## Invariants a caller may rely on
 
 - **Migrations are immutable once merged.** Fixes are new migrations; CI rejects edits to files
@@ -65,6 +93,19 @@ item 3's CI adds a drift check against a fresh dump.
   `public`/`private`; both are `CHECK`s, not conventions.
 - **Authorization facts carry leases** (`visibility_valid_until`, `user_access_state.valid_until`) and
   monotonic `authorization_revision` counters. A migration must not drop or default these away.
+- **Build path (BCR-1).** `index_chunk` reuses a representation on `(repo_id, spec_id, input_hash)`
+  and always adds an occurrence at `start_line` (at least 1), ending at
+  `start_line + line_count(body) - 1`. Identical windows of one file share a representation, never an
+  occurrence.
+- `seed_repository` puts each repository under the caller's `connection_id`. S2 uses one connection
+  for all 100 pseudo-repositories. A private repository is eligible, and only a grant admits it.
+- `pad_copy` writes a representation, its vector and an occurrence in the target generation, so
+  activation makes the copy live.
+  - Its header is the source's plus `PAD`, its input hash is that stored input's, and its vector is
+    `stand_in` over that input.
+  - Its location is the source's first occurrence in that generation, by path then start line.
+  - A `row` is used once per run; reusing one for the same source is a unique violation. It never
+    calls an embedder.
 - Naming: `snake_case`, singular table names, `*_at` for timestamps, `*_id` for foreign keys.
 
 ## What this module will never do
@@ -116,6 +157,7 @@ item 3's CI adds a drift check against a fresh dump.
 | `db/tests/test_views.py::test_view_files_match_migration` | `db/views/*.sql` match what the migration creates |
 | `db/tests/test_bm25_path.py` (all) | `rep_bm25`'s six fields each match their example (split identifiers in `header` and `body_text`, whole dotted identifiers in `header_ident` and `body_ident`, Unicode ones included (`größe_berechnen`, `変数`), with their ASCII fragments not matching, path segments in `path`, split segments in `path_code`), and the unsplit fields do not match parts; an occurrence's path must equal its representation's; `path` is required; the migration refuses a `representation` table with rows, and its rollback refuses once rows exist (rollback is pre-ingestion only) |
 | `db/tests/test_s6_identity.py` (all) | Spike S6 (ADR-0005) on `db/s6_identity.py`, the build path both embedders share: S6-1 (a second specification creates new rows), S6-2 (the first specification's rows unchanged), S6-3 (reuse never crosses specifications, in embedder calls), S6-4 (serving follows the active generation: a building specification returns nothing even as the exact nearest vector, and after §9.3.5's activation the old one returns nothing while its rows remain with `live` false), for a digest pair and a template pair; activation refused without the claim, after it expires, before `ready`, on a chunk-count mismatch, for a `failed` build, after a newer push, from a stale base, when another generation was activated underneath, and when the generation's own `repo_id`, `base_generation_id` or `desired_generation` differs from what the caller passes (a caller cannot substitute current values); the v0.2 `(repo_id, content_hash)` control loses B's vector; one spec row per identity key; the embedded input is substituted once and hashed as UTF-8 |
+| `db/tests/test_s2_build_path.py` (all; the database cases run in `make db-test`) | BCR-1: `line_count` is `universe.lines`' rule; a `start_line` below 1 is refused before any write; identical windows of one file share a representation at their own lines; one connection holds 100 private pseudo-repositories, all eligible and none public; a pad copy's header, hash, vector and location, a reused row refused, a source absent from the generation refused; 60,000 means 60,000 live representations and vectors after activation |
 | `db/tests/test_s6_ollama.py` (all) | `db/s6_ollama.py`'s S6-5 sequence on a fake Ollama: it passes when the alias moves to another digest; it fails when both models share a digest, or when a capture keyed on the alias returns the old row; the embedder refuses once the alias names another digest; repeatability reports a difference (byte equality, maximum absolute difference, cosine distance) without failing S6-5. Cleanup: the run uses a fresh alias, refuses one that already exists and leaves it alone, deletes nothing when its first copy fails, deletes its alias when it fails midway, and drops its temporary database even when the alias delete fails. Only Myan's real run is evidence |
 
 ## Fake
@@ -143,3 +185,4 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-10-19 | S6's evidence: Myan's S6-5 report `db/evidence/s6-ollama.json`, committed unchanged; ADR-0005 accepted | — |
 | 2026-10-19 | `retrieval_rows` described as retrieval's location shape; the base-table scans are documented on the indexing card (ADR-0007 Amendment 1) | — |
 | 2026-10-19 | Migration `_representation_path_bm25`: `representation.path` (NOT NULL, `UNIQUE (id, repo_id, path)`), `occurrence`'s path held equal by a foreign key, `rep_bm25` rebuilt with six code-aware fields (identifiers by Unicode XID); up and down both refuse a table with rows, so rollback is pre-ingestion only. Callers now pass `path` (`db/s6_identity.py`, the S5 spike, test seeds) | — |
+| 2026-11-04 | The S2/S6 build path becomes interface: `db/s6_identity.py` and `db/s6_ollama.py` are interface files; `index_chunk(start_line)`, `line_count`, `seed_connection`, `seed_repository`, `pad_copy`; no table changes | BCR-1 |
