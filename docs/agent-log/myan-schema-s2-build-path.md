@@ -33,3 +33,10 @@ Local, no database (Docker hangs on this Mac): pytest db/tests/test_s2_build_pat
 ### 2026-11-04T23:52:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:cccc46d
 feat(schema): BCR-1's S2/S6 build path: start_line, repository seeds, pad_copy
 6 files changed, 299 insertions(+), 7 deletions(-)
+
+### 2026-11-04T23:52:35Z · HANDOFF · myan · claude-code/opus-5.5 · 45df802
+Pushed for CI's db job, which runs the database cases; result recorded before the brief.
+
+### 2026-11-04T23:52:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:45df802
+docs(agents): hand off the build path for its CI run
+1 file changed, 3 insertions(+)
