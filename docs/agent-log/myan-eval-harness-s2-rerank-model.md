@@ -44,3 +44,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-04T00:57:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:5944c08
 docs(agents): close task log for myan-eval-harness-s2-rerank-model
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T01:21:45Z · DECIDE · myan · claude-code/opus-5.5 · 484b1c1
+gupta958's review of #104. (1) encode_batch runs on the tokenizer's worker threads: reproduced here, 2000 long pairs gave wall 0.40 s, process 3.26 s, calling thread 0.08 s. Sequential encode in a fresh process: process 2.22 s, thread 2.22 s. encode now tokenizes one pair at a time and pads to the batch's longest itself. (2) fetch now stages the whole set beside root, verifies there and renames to root, removing the staging directory on any failure; a non-empty root is refused. (3) Truncation ruling accepted: L total tokens per pair, special tokens included, longest_first, padding to the batch maximum only.
+
+### 2026-11-04T01:21:45Z · TEST · myan · claude-code/opus-5.5 · 484b1c1
+Against the old module the new tests fail (4 failed: later-file failure, non-empty root, tokenizer confinement, real-model confinement). With the fix, WAYFINDER_S2_RERANKER set: test_s2_reranker.py 13 passed. Per-pair padding equals encode_batch's on 4 pairs incl. an empty passage. uv run pytest (dev + s2): 452 passed, 30 skipped. ruff clean; context-freshness --fix eval-harness.
+
+### 2026-11-04T01:21:46Z · COMMIT · myan · claude-code/opus-5.5 · parent:484b1c1
+fix(eval-harness): keep tokenizer CPU on the calling thread and make fetch all or nothing
+4 files changed, 156 insertions(+), 43 deletions(-)

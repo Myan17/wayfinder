@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import os
+import shutil
 import sys
 import urllib.request
 from collections.abc import Callable, Sequence
@@ -88,23 +89,25 @@ def fetch(
     pins: dict[str, str] = PINS,
     sizes: dict[str, int] = SIZES,
 ) -> None:
-    """Download each pinned file from the pinned revision, then verify all of them. A file that fails
-    is deleted, so a bad download is never left looking like a pinned one."""
-    for name in pins:
-        dest = root / name
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        part = dest.with_name(dest.name + ".part")
-        try:
-            download(url(name), part)
-        except BaseException:
-            part.unlink(missing_ok=True)  # an interrupted download leaves nothing behind
-            raise
-        part.replace(dest)
+    """All or nothing: download every pinned file into a staging directory beside `root`, verify the
+    complete set there, and only then rename the staging directory to `root`. Any failure, including
+    an interrupted download, removes the staging directory, so `root` either holds the full verified
+    set or does not exist. An existing non-empty `root` is refused rather than mixed with."""
+    if root.exists() and any(root.iterdir()):
+        raise PinError(f"{root} already has files; --verify it, or remove it and fetch again")
+    root.parent.mkdir(parents=True, exist_ok=True)
+    staging = root.with_name(f".{root.name}.staging-{os.getpid()}")
+    shutil.rmtree(staging, ignore_errors=True)
     try:
-        verify(root, pins, sizes)
-    except PinError:
         for name in pins:
-            (root / name).unlink(missing_ok=True)
+            (staging / name).parent.mkdir(parents=True, exist_ok=True)
+            download(url(name), staging / name)
+        verify(staging, pins, sizes)
+        if root.exists():
+            root.rmdir()  # empty, checked above
+        staging.rename(root)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
         raise
 
 
@@ -117,11 +120,25 @@ class Encoded:
 
 def encode(tokenizer, query: str, passages: Sequence[str], length: int) -> Encoded:
     """Each (query, passage) pair, truncated to `length` tokens in total, longest side first, and
-    padded to the batch's longest pair. `tokenizer` is a `tokenizers.Tokenizer`, which is reconfigured."""
+    padded to the batch's longest pair. `tokenizer` is a `tokenizers.Tokenizer`, which is reconfigured.
+
+    Pairs are encoded one at a time with `encode`, never `encode_batch`: the batch call runs on the
+    tokenizer's worker threads, where the harness thread clock cannot see the CPU (gupta958's review
+    of #104). Padding is applied here, matching what the batch call's padding produces."""
     tokenizer.enable_truncation(max_length=length, strategy="longest_first")
-    tokenizer.enable_padding(pad_id=tokenizer.token_to_id("[PAD]"), pad_token="[PAD]")
-    enc = tokenizer.encode_batch([(query, p) for p in passages])
-    return Encoded([e.ids for e in enc], [e.attention_mask for e in enc], [e.type_ids for e in enc])
+    tokenizer.no_padding()
+    pad = tokenizer.token_to_id("[PAD]")
+    enc = [tokenizer.encode(query, p) for p in passages]
+    width = max(len(e.ids) for e in enc)
+
+    def padded(rows, fill):
+        return [r + [fill] * (width - len(r)) for r in rows]
+
+    return Encoded(
+        padded([e.ids for e in enc], pad),
+        padded([e.attention_mask for e in enc], 0),
+        padded([e.type_ids for e in enc], 0),
+    )
 
 
 class Reranker:
