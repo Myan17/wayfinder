@@ -4,9 +4,9 @@ title: The S2 corpus load's use of db/s6_identity.py's build path
 requester: myan
 owner: joint (schema)
 modules: [schema, eval-harness]
-status: proposed
+status: accepted-as-amended   # gupta958, relayed by Myan on #107
 opened: 2026-11-04
-decided: —
+decided: 2026-11-04
 labels: [schema]
 ---
 
@@ -136,10 +136,63 @@ would then propose an Amendment 2 to ADR-0019 that names the harness's own loade
 
 ## Owner's decision
 
-- **Decision:** <accept / amend / refuse>
-- **Reasoning:** <written by the owner, not the requester>
-- **If amended, the contract that was actually agreed:** <…>
-- **Follow-up owed:** <card updated? fake published? consumers notified?>
+Relayed by Myan from gupta958 on #107, 2026-11-04. Recorded as ruled.
+
+- **Decision:** amend. The shared S2/S6 build path becomes an explicit schema interface, with the
+  identity, repository-shape and padding corrections below.
+- **Reasoning:** the proposal was right in direction, but four parts of it were wrong:
+  - its `end_line` was wrong for a last line with no newline;
+  - one connection per repository does not match S3-6's fixture;
+  - a hash with a hidden suffix would no longer be the SHA-256 of the stored input;
+  - padding with no occurrence in the target generation would never become live.
+- **If amended, the contract that was actually agreed:**
+  1. **Interface files.** `db/s6_identity.py` and `db/s6_ollama.py` go on the schema card's interface
+     files, with verified hashes. `s6_ollama`'s public surface is `Ollama`, `embedder` and `TEMPLATE`.
+     Its S6 report runner is not a consumer contract.
+  2. **`index_chunk(..., start_line: int = 1)`.**
+     - It rejects `start_line < 1`.
+     - `end_line` uses `universe.lines`' rule: `end_line = start_line + n - 1`, where `n` is the
+       newline count plus one when a non-empty body lacks a final newline.
+     - Not `start_line + body.count("\n") - 1`.
+  3. **Repositories.**
+     - `seed_connection(conn, ...) -> connection_id`.
+     - `seed_repository(conn, *, connection_id, github_repo_id, full_name, visibility="private") -> repo_id`.
+     - S2 creates **one** connection and puts all 100 pseudo-repositories under it, as S3-6's fixture
+       does. There is never one connection per repository.
+  4. **`pad_copy`.** It creates a representation, its vector **and an occurrence in the target
+     generation**, so activation makes the copy live.
+     - The stored header carries a visible deterministic suffix, `"{source header} · s2-pad:{row}"`.
+     - `input_hash` is the SHA-256 of that exact stored embedded input. A suffix is never added to
+       the hash alone.
+     - The stand-in vector is seeded deterministically by the row and that input.
+     - The occurrence copies a deterministic source occurrence location: its path and lines.
+     - `row` is unique within the run.
+     - Tests prove that the 60k target means **60,000 live representations after activation**.
+  5. **Window header.** `"{owner/name} · {path}"`. No line number, so identical embedded inputs
+     stay eligible for representation reuse.
+  6. **Counting.**
+     - The report gives the window (occurrence) count and the distinct representation count.
+     - Each repository's window count is still checked against `chunk_estimate`, and the total
+       stays 7,175.
+     - 60k means 60,000 live representations.
+     - ADR-0019's "one window is one representation" becomes "one window is one occurrence;
+       identical embedded inputs in the same pseudo-repository may share a representation."
+  7. **Over-long windows fail the load.**
+     - `truncate: false` stays. S2 inputs are never silently cut.
+     - The failure names the repository, path, start line and measured token count.
+     - If real data exceeds the context, an ADR amendment with an explicit truncation rule comes
+       back first.
+- **Follow-up owed:**
+  - A schema PR with items 1–4: code, tests, card and hashes.
+  - ADR-0019's wording (item 6), in that PR or the corpus load's, under `Scope: agreements`.
+  - The corpus load against the card (items 5–7).
+
+Rulings on #106's open questions, from the same message:
+- `eval/harness/tests/**` stays an S2 CI trigger.
+- `unit` and `db` are pinned to Python 3.13 in a separate platform PR.
+- The counter, preflight and calibration fixture may land with the passes PR. It must be in that
+  same PR, run green in the S2 job, and be reviewed before the passes or any S2 measurement is
+  accepted.
 
 ## Closure checklist (owner)
 

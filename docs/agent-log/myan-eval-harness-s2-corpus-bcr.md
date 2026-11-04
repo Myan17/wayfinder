@@ -54,3 +54,13 @@ Checked the BCR's claims against main a20aa6a. db/schema.sql:753 'occurrence_pke
 ### 2026-11-04T23:26:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:0dc2342
 docs(agents): record the checks behind BCR-1
 1 file changed, 3 insertions(+)
+
+### 2026-11-04T23:38:31Z · DECIDE · myan · claude-code/opus-5.5 · f40e949
+gupta958 on #107, relayed by Myan: BCR-1 amended. Agreed: both s6 files become schema interface files (s6_ollama's surface is Ollama, embedder and TEMPLATE); index_chunk start_line >= 1, with end_line by universe.lines' rule; seed_connection plus seed_repository(connection_id), with one connection for all 100 pseudo-repositories; pad_copy writes a representation, vector and occurrence in the target generation, with a visible ' · s2-pad:{row}' header suffix hashed as stored, the stand-in seeded by row and input, a deterministic source location and a run-unique row; 60k means 60,000 live representations after activation; window header '{owner/name} · {path}'; the report gives the window and representation counts; ADR-0019 wording becomes 'one window is one occurrence'; an over-long window fails the load, naming repo, path, start line and token count. On #106: eval/harness/tests stays a trigger; unit and db get pinned to 3.13 in a separate platform PR; the fixture lands in the passes PR, green in the S2 job.
+
+### 2026-11-04T23:38:31Z · HANDOFF · myan · claude-code/opus-5.5 · f40e949
+BCR-1's Owner's decision section records the amended contract, status accepted-as-amended. Final review of #107 requested before the schema implementation starts.
+
+### 2026-11-04T23:38:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:f40e949
+docs(boundary): record gupta958's amended decision on BCR-1
+2 files changed, 65 insertions(+), 6 deletions(-)
