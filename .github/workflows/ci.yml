@@ -79,6 +79,8 @@ jobs:
         run: python3 -m s2.ci changed "$BASE" "$HEAD"
       - if: steps.scope.outputs.mode == 'full'
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          python-version: "3.13"  # the stack's Python; onnxruntime 1.31.0 has no wheel for 3.15
       - if: steps.scope.outputs.mode == 'full'
         run: uv sync --extra dev --extra s2 --locked
       - if: steps.scope.outputs.mode == 'full'
