@@ -157,8 +157,9 @@ by CI on every pull request.
   - This card no longer states a test count. It has been wrong three times: a count goes stale
     whenever any pull request adds a test without touching an interface file, which is most of them,
     so the freshness check never catches it. `uv run pytest -q` is the answer and cannot go stale.
-- Whether to pin Python 3.13 exactly (design text) or keep `>=3.13` and run on the local 3.14. Today:
-  `>=3.13`, and the release manifest records the interpreter actually used.
+- Whether to pin Python 3.13 exactly in `requires-python` (design text) or keep `>=3.13` and run on
+  the local 3.14. Today: `>=3.13`, and the release manifest records the interpreter actually used. CI
+  runs 3.13 in every Python job (`unit`, `db`, `s2`), set by `setup-uv`'s `python-version`.
 - Where the load-test stub runs once the AMD micro instance exists (DESIGN §16.4).
 
 ## Change log
@@ -177,3 +178,4 @@ by CI on every pull request.
 | 2026-10-19 | `make db-test` also runs `apps/api/tests/retrieval`, retrieval's SQL tests against the pinned database (ADR-0007 Amendment 1 step 3) | — |
 | 2026-11-03 | `eval/harness/tests` collected and `eval/harness` on the pythonpath, for S2's inputs (eval-harness, ADR-0019 Amendment 1) | — |
 | 2026-11-03 | `s2` extra: `onnxruntime==1.31.0` and `tokenizers==0.23.3`, locked, the newest released before 2026-10-20 (eval-harness, ADR-0019 Amendment 1) | — |
+| 2026-11-04 | `unit` and `db` pin Python 3.13 through `setup-uv`, as `s2` does; unpinned, uv had picked CPython 3.15.2 (gupta958's ruling 9 on #106) | — |
