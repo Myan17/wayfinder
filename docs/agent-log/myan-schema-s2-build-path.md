@@ -40,3 +40,10 @@ Pushed for CI's db job, which runs the database cases; result recorded before th
 ### 2026-11-04T23:52:36Z · COMMIT · myan · claude-code/opus-5.5 · parent:45df802
 docs(agents): hand off the build path for its CI run
 1 file changed, 3 insertions(+)
+
+### 2026-11-05T00:04:16Z · TEST · myan · claude-code/opus-5.5 · 1f20672
+CI run 41937155201 (head 6ad0fce): db-test 1 failed, 119 passed in 554.70s. The 60,000 test padded one repository for longer than push_and_claim's 5-minute claim, so activate refused (ActivationRefused: repository 1, generation 1): the fence working as designed. Every other new case passed in CI: line_count, start_line refusal, identical windows, one connection for 100 pseudo-repositories, the pad copy's identity and refusals. db-test took 162 s on main and 556 s here, so the 60,000 case costs about 6.5 min. Fix: build it as S2 will, 100 pseudo-repositories of 600 live representations each, each padded and activated within its own claim, with rows unique across the run.
+
+### 2026-11-05T00:04:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:1f20672
+test(schema): build the 60,000 case across 100 pseudo-repositories
+3 files changed, 25 insertions(+), 15 deletions(-)

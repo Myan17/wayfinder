@@ -107,17 +107,24 @@ def test_a_pad_copy_is_its_stored_input_at_its_sources_location(world):
         s6.pad_copy(db, repo_id=repo, generation_id=other, spec=spec, source=src, row=42)
 
 
-def test_60000_means_60000_live_representations_after_activation(world):
-    db, repo, spec = world
-    gen, desired, claim, reps = build(
-        db, repo, spec, [("a.py", 1, BLANK), ("a.py", 4, BLANK), ("a.py", 7, "x")]
-    )
-    real = len(set(reps))  # 2: the identical windows share one
-    for row in range(60_000 - real):
-        s6.pad_copy(db, repo_id=repo, generation_id=gen, spec=spec, source=reps[row % 3], row=row)
-    s6.finish_build(db, gen)
-    s6.activate(db, repo_id=repo, new=gen, base=None, desired=desired, claim=claim)
-    live = "SELECT count(*) FROM {} WHERE live AND repo_id = %s AND spec_id = %s"
-    assert one(db, live.format("representation"), (repo, spec.id)) == 60_000
-    assert one(db, live.format("vector_d768"), (repo, spec.id)) == 60_000
-    assert one(db, "SELECT chunk_count FROM generation WHERE id = %s", (gen,)) == 60_001  # 3 windows + copies
+def test_60000_means_60000_live_representations_after_activation(db):
+    """S2's shape: 100 pseudo-repositories under one connection, each built, padded and activated
+    within its own claim (5 minutes), with rows unique across the run."""
+    spec, conn_id, repos, row = s6.capture_spec(db, **SPEC), s6.seed_connection(db), [], 0
+    windows = [("a.py", 1, BLANK), ("a.py", 4, BLANK), ("a.py", 7, "x")]
+    for n in range(100):
+        repo = s6.seed_repository(db, connection_id=conn_id, github_repo_id=n, full_name=f"s2/pseudo-{n:02d}")
+        gen, desired, claim, reps = build(db, repo, spec, windows)
+        for i in range(600 - len(set(reps))):  # 2 real representations: the identical windows share one
+            s6.pad_copy(db, repo_id=repo, generation_id=gen, spec=spec, source=reps[i % 3], row=row)
+            row += 1
+        s6.finish_build(db, gen)
+        s6.activate(db, repo_id=repo, new=gen, base=None, desired=desired, claim=claim)
+        repos.append(repo)
+    live = "SELECT count(*) FROM {} WHERE live AND spec_id = %s AND repo_id = ANY(%s)"
+    assert one(db, live.format("representation"), (spec.id, repos)) == 60_000
+    assert one(db, live.format("vector_d768"), (spec.id, repos)) == 60_000
+    assert (
+        one(db, "SELECT count(*) FROM occurrence WHERE repo_id = ANY(%s)", (repos,)) == 60_100
+    )  # +1 per repo
+    assert row == 59_800
