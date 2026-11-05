@@ -47,3 +47,13 @@ CI run 41937155201 (head 6ad0fce): db-test 1 failed, 119 passed in 554.70s. The 
 ### 2026-11-05T00:04:16Z · COMMIT · myan · claude-code/opus-5.5 · parent:1f20672
 test(schema): build the 60,000 case across 100 pseudo-repositories
 3 files changed, 25 insertions(+), 15 deletions(-)
+
+### 2026-11-05T00:21:51Z · TEST · myan · claude-code/opus-5.5 · d8ad611
+CI run 41938567536 on d8ad611: every job green. db-test: 120 passed in 950.19s, none skipped, including all six test_s2_build_path cases and 60,000 live representations and vectors across 100 pseudo-repositories, each activated within its claim. Cost: db-test took 162 s on main and 950 s here, so the 60,000 case adds about 13 min to the db job on every pull request. Raised with gupta958 rather than changed: keep it, or move it to the S2 job, which runs only when S2's inputs change.
+
+### 2026-11-05T00:21:51Z · HANDOFF · myan · claude-code/opus-5.5 · d8ad611
+BCR-1 items 1-4 green in CI. Open for gupta958: where the 60,000 case runs. Next: the eval-harness corpus load against the schema card; the separate platform PR pinning unit and db to Python 3.13.
+
+### 2026-11-05T00:21:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:d8ad611
+docs(agents): record the build path's CI run and hand off
+1 file changed, 6 insertions(+)
