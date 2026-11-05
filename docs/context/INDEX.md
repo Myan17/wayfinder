@@ -32,7 +32,7 @@ lands its first interface file — CI enforces this.
 | `eval-data` | myan | ✅ [modules/eval-data.md](modules/eval-data.md) | `eval/datasets/manifest.schema.json` | sample dataset (with the first run) |
 | `platform` | myan | 🟡 [modules/platform.md](modules/platform.md) | `infra/compose/compose.yaml`, `Makefile` | — |
 | `observability` | myan | 🟡 [modules/observability.md](modules/observability.md) | `apps/*/telemetry/interface.*`, `infra/compose/otel/policy.yaml` | in-memory exporter |
-| `schema` | joint | ✅ [modules/schema.md](modules/schema.md) | `db/migrations/**` (read to write one), `db/views/**` | test fixtures |
+| `schema` | joint | ✅ [modules/schema.md](modules/schema.md) | `db/migrations/**` (read to write one), `db/views/**`, `db/s6_identity.py` and `db/s6_ollama.py` (the S2/S6 build path, BCR-1) | test fixtures |
 
 Owner column is the **implementation** owner (today `myan` for everything). The required reviewer for
 every path is `gupta958`, set in `.github/CODEOWNERS`.
