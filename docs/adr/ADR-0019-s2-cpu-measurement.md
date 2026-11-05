@@ -382,6 +382,71 @@ first pull request, before any measurement, and the report records them. The har
 It lands as several pull requests, each under the size limit: inputs (chunks, fixture, queries),
 counters and preflight, calibration, passes and report, then S2-7's recompute script.
 
+## Amendment 2 — Windows longer than the embedder's context (2026-11-04)
+
+Amendment 1 §2 embeds every window with the pinned `nomic-embed-text`, and BCR-1's ruling 7 kept
+`truncate: false`, so a window longer than the model's context fails the load. A local fact-finding
+run found 181 such windows. It used Ollama 0.34.2 on a Mac and is not evidence, but tokenization does
+not depend on the machine. This amendment fixes what S2 does with those windows before the loader is
+written. It changes no acceptance rule, counter, pass or calibration.
+
+### 1. What the fact-finding run found
+
+All 7,175 windows were embedded with the header `{owner/name} · {path}` and the template
+`search_document: {header}\n{body}`:
+- 6,994 were accepted. Their `prompt_eval_count` was p50 621, p95 884, p99 1,234 and max 2,029.
+- 181 (2.5%) were rejected with HTTP 400 `"the input length exceeds the context length"`. The model
+  reports a context of 2,048 tokens.
+- The rejected windows come from five files: `psf/black` `profiling/mix_huge.py` (128),
+  `profiling/mix_big.py` (17) and `profiling/mix_small.py` (2); `pydantic/pydantic` `HISTORY.md` (32);
+  and `gofiber/fiber` `docs/api/fiber.md` (2). `cli/cli` has none.
+- Ollama gives no token count for a rejected input and has no tokenize endpoint.
+- With `truncate: true`, Ollama keeps the start of the input and cuts the end, at exactly 2,048
+  tokens. Two inputs with the same long start and different tails gave identical vectors; two with
+  different starts did not. This is the `end` truncation that `capture_spec` already records in
+  `embedding_spec.truncation`, so a truncated window stays under its own specification (DESIGN §9.4.2).
+
+### 2. The rule (gupta958, 2026-11-04)
+
+- Every window is first embedded with `truncate: false`.
+- **Only** a window that Ollama rejects for exceeding the context is embedded again, once, with
+  `truncate: true`. No other error is retried, and no window is ever truncated in advance.
+- A truncated window is still **one occurrence**. Its representation stores the full header and
+  body, and its `input_hash` is the full stored input's, so the `chunk_estimate` check and the
+  7,175 total are unchanged. Only its vector comes from the truncated input.
+- The report lists **every truncated window**: its repository, pseudo-repository, path, line range
+  (start and end line), the retry's `prompt_eval_count`, and Ollama's raw error. It gives their count
+  and their fraction of all windows. For the rejected length it says "exceeds 2,048", the model's
+  context, because Ollama gives no exact count. No count is invented.
+- Amendment 1 §1's token-length distribution is reported over the accepted windows. The truncated
+  windows are counted beside it and never mixed into its percentiles.
+- The load fails if a retry fails, or if a retry's count is above 2,048. The failure names the
+  repository, path, start line, "exceeds 2,048" and the raw error.
+- This rule is S2's alone, for the 60-line stand-in windows. §9.4's chunker budgets header and body
+  below the model's limit (DESIGN §9.4.2), and the rerun required when it lands (Amendment 1 §1)
+  replaces these windows.
+
+### 3. The interface it needs: BCR-2
+
+The loader calls `db/s6_ollama.py`, which is schema's interface (BCR-1). BCR-2
+(`docs/context/boundary/BCR-2-s6-ollama-embed-count-truncate.md`) specifies the truncate flag, the
+returned count, the validation and the tests. gupta958 accepted it on 2026-11-04. The order of work is:
+1. this amendment and BCR-2;
+2. the schema pull request that implements BCR-2;
+3. the loader, written against the schema card.
+
+### Review rulings on Amendment 2 (gupta958, 2026-11-04)
+
+Relayed by Myan after #109 merged. All are applied above:
+1. Use `truncate: true` only for windows rejected for exceeding the 2,048-token context. Keep each as
+   one occurrence, and list every truncated window in the report with its path, line range and
+   successful `prompt_eval_count`.
+2. "Exceeds 2,048" is sufficient. Ollama gives no exact count for a rejected input; keep its raw
+   error and do not invent one.
+3. The `Ollama.embed` interface BCR goes inside this amendment and specifies the truncate flag, the
+   returned count, the validation and the tests. The amendment merges before the loader is written.
+4. The #108 ruling stands: the exact 60,000-row test moves to the conditional S2 job in a follow-up.
+
 ## Decision
 
 *Empty until S2 runs on the A1.* It will be completed with one of:
