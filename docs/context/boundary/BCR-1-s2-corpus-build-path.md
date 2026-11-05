@@ -182,6 +182,8 @@ Relayed by Myan from gupta958 on #107, 2026-11-04. Recorded as ruled.
      - The failure names the repository, path, start line and measured token count.
      - If real data exceeds the context, an ADR amendment with an explicit truncation rule comes
        back first.
+     - Real data does (181 of 7,175 windows). ADR-0019 Amendment 2 and BCR-2 supersede this item:
+       a rejected window is retried once with `truncate: true` and listed in the report.
 - **Follow-up owed:**
   - A schema PR with items 1–4: code, tests, card and hashes.
   - ADR-0019's wording (item 6), in that PR or the corpus load's, under `Scope: agreements`.
