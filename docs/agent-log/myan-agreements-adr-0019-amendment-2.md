@@ -49,3 +49,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-05T03:33:52Z · COMMIT · myan · claude-code/opus-5.5 · parent:4cbbfc0
 docs(agents): close task log for myan-agreements-adr-0019-amendment-2
 1 file changed, 6 insertions(+)
+
+### 2026-11-05T05:29:35Z · EDIT · myan · claude-code/opus-5.5 · 14990d0
+gupta958's review of #110: BCR-2 status set to accepted, decided 2026-11-04. The Owner's decision records accept, with the reasoning and the follow-up owed. The 'accepted on merge' wording in BCR-2's migration order and in ADR-0019 Amendment 2 §3 now matches. The closure checklist stays open until the schema PR.
+
+### 2026-11-05T05:29:35Z · TEST · myan · claude-code/opus-5.5 · 14990d0
+Docs only. check_context_freshness passes; status and decided now agree with the Owner's decision; no 'merging accepts' wording is left (grep).
+
+### 2026-11-05T05:29:35Z · COMMIT · myan · claude-code/opus-5.5 · parent:14990d0
+docs(boundary): BCR-2 accepted — record gupta958's decision
+3 files changed, 24 insertions(+), 6 deletions(-)

@@ -430,7 +430,7 @@ All 7,175 windows were embedded with the header `{owner/name} · {path}` and the
 
 The loader calls `db/s6_ollama.py`, which is schema's interface (BCR-1). BCR-2
 (`docs/context/boundary/BCR-2-s6-ollama-embed-count-truncate.md`) specifies the truncate flag, the
-returned count, the validation and the tests. Merging this amendment accepts it. The order of work is:
+returned count, the validation and the tests. gupta958 accepted it on 2026-11-04. The order of work is:
 1. this amendment and BCR-2;
 2. the schema pull request that implements BCR-2;
 3. the loader, written against the schema card.

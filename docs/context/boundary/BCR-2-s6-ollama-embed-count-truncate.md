@@ -4,9 +4,9 @@ title: s6_ollama's embed returns its token count, and may truncate a rejected wi
 requester: myan
 owner: joint (schema)
 modules: [schema, eval-harness]
-status: proposed   # direction ruled by gupta958 on 2026-11-04; accepted when ADR-0019 Amendment 2 merges
+status: accepted   # gupta958, relayed by Myan on #110
 opened: 2026-11-04
-decided: —
+decided: 2026-11-04
 labels: [schema]
 ---
 
@@ -102,7 +102,7 @@ db/s6_ollama.py
 |---|---|
 | Is this additive? | Yes. New names, and keyword arguments whose defaults keep today's behaviour. No migration and no table change |
 | Existing consumers affected | `db/s6_ollama.py`'s S6-5 runner and `db/tests/test_s6_ollama.py`. The runner uses `embedder(client, calls)`, which keeps its behaviour. The fake gains `embed_counted` |
-| Migration order | ADR-0019 Amendment 2 with this BCR merges first. Then the schema PR adds the code and tests, updates the card and its hashes, and sets this BCR to `accepted`. Then the eval-harness loader is written against the card |
+| Migration order | ADR-0019 Amendment 2 with this BCR merges first. Then the schema PR adds the code and tests, updates the card and its hashes, and ticks the closure checklist. Then the eval-harness loader is written against the card |
 | Feature flag needed | No |
 | Rollback | Revert the schema PR. Only spikes call `s6_ollama` |
 
@@ -114,8 +114,20 @@ Amendment 1 §1 requires, or else pin a separate tokenizer only to count tokens.
 
 ## Owner's decision
 
-Direction ruled by gupta958 on 2026-11-04, relayed by Myan after #109 merged. The contract above is
-written to that ruling; merging Amendment 2 accepts it.
+Relayed by Myan from gupta958 on #110, 2026-11-04. Recorded as ruled.
+
+- **Decision:** accept.
+- **Reasoning:**
+  - Amendment 2 retries only the pinned context-overflow error.
+  - It preserves the complete stored input and hash.
+  - It records every truncation and every successful token count.
+  - It fails closed for other errors.
+  - BCR-2 is additive and keeps S6's existing behaviour by default.
+- **If amended, the contract that was actually agreed:** not amended; the contract above as written.
+- **Follow-up owed:** implement BCR-2 with its specified tests and the schema card's hashes before
+  the corpus loader is written.
+
+The direction came earlier, on 2026-11-04, relayed by Myan after #109 merged:
 - Put the `Ollama.embed` interface BCR inside Amendment 2. Specify the truncate flag, the returned
   count, the validation and the tests. Merge the amendment before implementing the loader.
 - "Exceeds 2,048" is sufficient. Ollama gives no exact count for a rejected input, so keep its raw
