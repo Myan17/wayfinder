@@ -31,6 +31,9 @@ testpaths = ["apps/api/tests", "scripts/tests", "infra/manifest/tests", "eval/mi
 pythonpath = ["apps/api", "eval/miners", "eval/harness"]
 asyncio_mode = "auto"
 addopts = "-q --strict-markers"
+markers = [
+    "s2_scale: S2's exact 60,000-row build test; runs in the s2 job (make s2-scale-test), not in db-test",
+]
 
 [tool.ruff]
 line-length = 110

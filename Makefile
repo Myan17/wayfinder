@@ -1,4 +1,4 @@
-.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test schema-check manifest-check go-test go-build
+.PHONY: help setup test lint fmt authz eval load deploy digest hooks db-up db-down db-test s2-scale-test schema-check manifest-check go-test go-build
 help:            ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | expand -t22
 
@@ -49,9 +49,15 @@ db-down:         ## stop the pinned ParadeDB
 db-test:         ## schema and retrieval-SQL tests against the pinned database (needs db-up); a skip is a failure
 	@# db/tests skip without a database. Here a skip would turn a missing database into a green run,
 	@# so any skipped test fails the target.
-	@out="$$(uv run pytest db/tests apps/api/tests/retrieval -rs 2>&1)"; rc=$$?; echo "$$out"; \
+	@# The exact 60,000-row test (marker s2_scale) runs in CI's s2 job instead (gupta958's #108 ruling).
+	@out="$$(uv run pytest db/tests apps/api/tests/retrieval -m 'not s2_scale' -rs 2>&1)"; rc=$$?; echo "$$out"; \
 	  [ $$rc -eq 0 ] || exit $$rc; \
 	  if echo "$$out" | tail -1 | grep -q skipped; then echo "db-test: tests were skipped" >&2; exit 1; fi
+
+s2-scale-test:   ## only the s2_scale tests, against WAYFINDER_TEST_DSN (CI's s2 job); a skip, or no test, is a failure
+	@out="$$(uv run --no-sync pytest db/tests -m s2_scale -rs 2>&1)"; rc=$$?; echo "$$out"; \
+	  [ $$rc -eq 0 ] || exit $$rc; \
+	  if echo "$$out" | tail -1 | grep -q skipped; then echo "s2-scale-test: tests were skipped" >&2; exit 1; fi
 
 schema-check:    ## fail if db/schema.sql differs from a fresh dump of the migrations
 	db/dump-schema.sh --check

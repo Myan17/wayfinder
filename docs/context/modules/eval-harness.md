@@ -28,7 +28,7 @@ design_sections:
   - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
 verified_hashes:
   "eval/harness/s2/calibration.py": "bec8e7bd551d3503"
-  "eval/harness/s2/ci.py": "f239c3bb2b635d4e"
+  "eval/harness/s2/ci.py": "3432a3b54f647b95"
   "eval/harness/s2/compose.yml": "2603564f894d2987"
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
@@ -158,7 +158,8 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   digest from `/api/tags`. Steps 5 and 6 belong to the cold pass. `connect` always opens a new
   connection, so a new backend, and resolves its host pid only inside the Postgres cgroup.
 - `changed` is `full` when any path of `git diff --no-renames base...head` is under one of
-  Amendment 1 §5's inputs (and the harness's tests), and also whenever the base is missing or zero
+  Amendment 1 §5's inputs (and the harness's tests, the 60,000-row build test with its conftest, and
+  the `Makefile`, whose `s2-scale-test` the job runs), and also whenever the base is missing or zero
   or the diff fails. It is `no-op` only for a diff that touches none of them. The cache keys are the
   model's pinned digest and a SHA-256 of the reranker's pins, so a new pin never restores old files.
   `model(True)` only checks a restored model's digest, so a bad cache fails; `model(False)` pulls,
@@ -211,7 +212,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_preflight.py` | The strace command, classification (none, threads incl. split lines and failures, every child form, fail-closed parsing), the clock rules, the 12 cases, no pid crossing a cold reset, and thread names |
 | `eval/harness/tests/test_s2_reranker.py` | The pins and URL, verification naming each failure, all-or-nothing fetch (a later file failing after an earlier one succeeded, a tampered file, a non-empty root), the CLI's refusal, no reranker from unverified files, pair truncation, per-pair padding equal to the batch call's, tokenizer CPU on the calling thread (fresh interpreter), the L grid; with `WAYFINDER_S2_RERANKER` set, the real model ranking a relevant passage first at both L, and a rerank call's CPU on the calling thread |
 | `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; every published port on loopback; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
-| `eval/harness/tests/test_s2_ci.py` | Each of Amendment 1 §5's inputs runs in full, anything else is a no-op, renames count as both paths, a zero or empty base and a failed diff run in full, every trigger path exists, the workflow runs `s2.ci` and the dispatcher needs `s2`, keys move with the pins, a restored model is checked and never pulled, `$GITHUB_OUTPUT` |
+| `eval/harness/tests/test_s2_ci.py` | Each of Amendment 1 §5's inputs runs in full, anything else is a no-op, renames count as both paths, a zero or empty base and a failed diff run in full, every trigger path exists, the workflow runs `s2.ci` and `make s2-scale-test` and the dispatcher needs `s2`, `db-test` deselects the `s2_scale` test that `s2-scale-test` selects, keys move with the pins, a restored model is checked and never pulled, `$GITHUB_OUTPUT` |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake

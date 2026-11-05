@@ -32,7 +32,16 @@ DIRS = (
     "eval/datasets/s1/",
     "infra/spikes/s3/",
 )
-FILES = ("db/s6_identity.py", "eval/miners/s1/universe.py", "pyproject.toml", "uv.lock", WORKFLOW)
+FILES = (
+    "db/s6_identity.py",
+    "db/tests/test_s2_build_path.py",  # its 60,000-row test runs only in this job (gupta958's #108 ruling)
+    "db/tests/conftest.py",
+    "eval/miners/s1/universe.py",
+    "pyproject.toml",
+    "uv.lock",
+    "Makefile",  # make s2-scale-test
+    WORKFLOW,
+)
 
 Run = Callable[[list[str]], str]
 

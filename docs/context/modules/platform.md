@@ -18,9 +18,9 @@ design_sections:
   - "DESIGN §17.5 (recovery tiers)"
   - "DESIGN §18 (CI/CD, environments, conventions)"
 verified_hashes:
-  "Makefile": "ebbf6d58abfff743"
-  "pyproject.toml": "59664390df540831"
-verified_on: 2026-11-03
+  "Makefile": "2c8f3aef88e60b43"
+  "pyproject.toml": "854761af95de75fc"
+verified_on: 2026-11-04
 ---
 
 # platform
@@ -46,7 +46,8 @@ make fmt         # ruff format
 make guardrails  # identity, scope, agent-log, card freshness, CODEOWNERS
 make digest      # build this week's gate report from the task logs
 make db-up       # start the pinned ParadeDB (S3 digest) and wait for a real query, not just health
-make db-test     # db/tests and apps/api/tests/retrieval against it; any skipped test fails the target
+make db-test     # db/tests and apps/api/tests/retrieval against it, except marker s2_scale; any skipped test fails the target
+make s2-scale-test  # only the s2_scale tests (S2's 60,000-row build test), against WAYFINDER_TEST_DSN; a skip fails it
 make db-down     # stop it
 make schema-check  # db/dump-schema.sh --check: db/schema.sql equals a fresh dump
 make manifest-check  # validate the example release manifest and print its cache keys
@@ -92,7 +93,8 @@ the Terraform module and the load-test stub.
   says one of S2's inputs changed: `uv sync --extra dev --extra s2 --locked`, the reranker and the
   Ollama model restored from caches keyed by their pinned digests and verified after every restore
   (or fetched, verified and saved), then `eval/harness/tests` as root with `WAYFINDER_S2_DOCKER=1`
-  and `WAYFINDER_S2_RERANKER`. Otherwise it passes as a no-op and downloads nothing. Only Ollama's
+  and `WAYFINDER_S2_RERANKER`, then `make s2-scale-test` against S2's own compose Postgres (the same
+  pinned image). Otherwise it passes as a no-op and downloads nothing. Only Ollama's
   `models` directory is cached, never its key. Caches live in `.s2-cache/`, which git ignores.
 - A suite counts only once it is in `dispatcher`'s `needs`; a job outside that list can go red
   without blocking a merge.
@@ -179,3 +181,4 @@ by CI on every pull request.
 | 2026-11-03 | `eval/harness/tests` collected and `eval/harness` on the pythonpath, for S2's inputs (eval-harness, ADR-0019 Amendment 1) | — |
 | 2026-11-03 | `s2` extra: `onnxruntime==1.31.0` and `tokenizers==0.23.3`, locked, the newest released before 2026-10-20 (eval-harness, ADR-0019 Amendment 1) | — |
 | 2026-11-04 | `unit` and `db` pin Python 3.13 through `setup-uv`, as `s2` does; unpinned, uv had picked CPython 3.15.2 (gupta958's ruling 9 on #106) | — |
+| 2026-11-04 | Marker `s2_scale` and `make s2-scale-test`: S2's exact 60,000-row build test leaves `db-test` (933 s to about 160 s) and runs in job `s2`, which runs only when S2's inputs change (gupta958's #108 ruling) | — |
