@@ -36,3 +36,13 @@ PYTHONPATH=db:db/tests uv run pytest db/tests/test_s6_ollama.py db/tests/test_s6
 ### 2026-11-05T05:41:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:00fef63
 feat(schema): BCR-2 — s6_ollama's embed returns its token count, and may truncate a rejected window
 5 files changed, 283 insertions(+), 14 deletions(-)
+
+### 2026-11-05T05:41:50Z · HANDOFF · myan · claude-code/opus-5.5 · 93e95cd
+For review. Next, after it merges: the eval-harness corpus loader against the schema card, using embedder(record=..., truncate_rejected=True).
+
+### 2026-11-05T05:41:51Z · HANDOFF · myan · claude-code/opus-5.5 · 93e95cd
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-05T05:41:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:93e95cd
+docs(agents): close task log for myan-schema-s6-ollama-embed-count
+1 file changed, 6 insertions(+)
