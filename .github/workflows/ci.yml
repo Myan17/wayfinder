@@ -138,6 +138,14 @@ jobs:
         run: |
           sudo --preserve-env=WAYFINDER_S2_DOCKER,WAYFINDER_S2_RERANKER .venv/bin/python -m pytest \
             -p no:cacheprovider -rs eval/harness/tests
+      - name: the exact 60,000-row build test, on S2's own pinned Postgres
+        if: steps.scope.outputs.mode == 'full'
+        env:
+          WAYFINDER_TEST_DSN: postgresql://wayfinder:s2_local_only_not_a_secret@127.0.0.1:55433/s2
+        run: |
+          $COMPOSE up -d postgres
+          for i in $(seq 60); do $COMPOSE exec -T postgres pg_isready -q -U wayfinder -d s2 && break; sleep 2; done
+          make s2-scale-test
 
   dispatcher:
     # DESIGN 16.1: a skipped or cancelled suite must never count as a pass. This job always runs and

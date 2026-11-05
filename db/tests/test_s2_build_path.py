@@ -1,6 +1,7 @@
 """BCR-1's additions to the S2/S6 build path: `start_line`, the repository seeds and `pad_copy`.
 
-The first two tests need no database. The rest run against the pinned image (CI's `db` job).
+The first two tests need no database. The rest run against the pinned image: CI's `db` job, except
+the 60,000-row test (marker `s2_scale`), which CI's `s2` job runs with `make s2-scale-test`.
 """
 
 import psycopg
@@ -107,6 +108,7 @@ def test_a_pad_copy_is_its_stored_input_at_its_sources_location(world):
         s6.pad_copy(db, repo_id=repo, generation_id=other, spec=spec, source=src, row=42)
 
 
+@pytest.mark.s2_scale  # about 13 minutes, so it runs in CI's s2 job, not db-test (gupta958's #108 ruling)
 def test_60000_means_60000_live_representations_after_activation(db):
     """S2's shape: 100 pseudo-repositories under one connection, each built, padded and activated
     within its own claim (5 minutes), with rows unique across the run."""

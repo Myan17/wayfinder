@@ -31,6 +31,9 @@ def diff(*paths, fail=False):
         "db/views/v_chunks.sql",
         "db/migrations/0009_x.sql",
         "db/s6_identity.py",
+        "db/tests/test_s2_build_path.py",
+        "db/tests/conftest.py",
+        "Makefile",
         "eval/datasets/s1/pairs.jsonl",
         "eval/miners/s1/universe.py",
         "infra/spikes/s3/compose.yml",
@@ -63,6 +66,15 @@ def test_every_trigger_exists_and_the_workflow_is_the_one_running_the_job():
     assert "python3 -m s2.ci changed" in workflow
     assert re.search(r"needs: \[[^\]]*\bs2\b", workflow)  # the dispatcher requires it
     assert "steps.scope.outputs.mode == 'full'" in workflow
+    assert "make s2-scale-test" in workflow  # the 60,000-row test runs here, never in db-test
+
+
+def test_db_test_leaves_the_60000_row_test_to_this_job():
+    make = (ROOT / "Makefile").read_text()
+    db_test = make.split("\ndb-test:", 1)[1].split("\n\n", 1)[0]
+    s2_scale = make.split("\ns2-scale-test:", 1)[1].split("\n\n", 1)[0]
+    assert "-m 'not s2_scale'" in db_test and "-m s2_scale" in s2_scale
+    assert "@pytest.mark.s2_scale" in (ROOT / "db/tests/test_s2_build_path.py").read_text()
 
 
 def test_the_cache_keys_are_the_pinned_digests(monkeypatch):
