@@ -46,3 +46,13 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-05T05:41:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:93e95cd
 docs(agents): close task log for myan-schema-s6-ollama-embed-count
 1 file changed, 6 insertions(+)
+
+### 2026-11-06T01:19:22Z · PLAN · myan · claude-code/opus-5.5 · ea2e783
+gupta958 on #112: _error(e) read the body of a non-matching HTTPError before re-raising it, so the caller got an error with an empty body, contradicting BCR-2 (original HTTPError unchanged). Fix: read e.fp once, re-seat the error on a BytesIO of the same bytes, classify from those bytes.
+
+### 2026-11-06T01:19:22Z · TEST · myan · claude-code/opus-5.5 · ea2e783
+test_only_the_pinned_context_error_is_context_exceeded now asserts each re-raised HTTPError (400 other text, 400 no error, 500) has no __cause__, keeps msg and headers, and read() returns the exact body; and the ContextExceeded cause body is readable. Mutation: old _error restored, test fails at other.value.read(). Fixed: 7 passed, 8 skipped (DB tests skip locally). ruff check and format clean on both files.
+
+### 2026-11-06T01:19:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea2e783
+fix(schema): keep a non-matching HTTPError body readable when re-raised
+4 files changed, 27 insertions(+), 6 deletions(-)

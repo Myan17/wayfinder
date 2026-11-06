@@ -229,6 +229,10 @@ def test_only_the_pinned_context_error_is_context_exceeded(server):
         with pytest.raises(urllib.error.HTTPError) as other:
             server.client.embed_counted("m", "long")
         assert not isinstance(other.value, s6_ollama.ContextExceeded) and other.value.code == status
+        # re-raised unchanged: the original error, its cause untouched and its body still readable
+        assert other.value.__cause__ is None and other.value.msg and other.value.headers is not None
+        assert other.value.read() == json.dumps(body).encode()
+    assert caught.value.__cause__.read() == json.dumps({"error": s6_ollama.CONTEXT_EXCEEDED}).encode()
 
 
 SPEC = s6.Spec(1, s6_ollama.FIRST, MODELS[s6_ollama.FIRST], "")

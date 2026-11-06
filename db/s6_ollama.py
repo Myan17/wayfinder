@@ -13,6 +13,7 @@ unchanged, and exits 1 unless every S6-5 check passed.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import os
@@ -21,6 +22,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+import urllib.response
 import uuid
 from pathlib import Path
 from typing import NamedTuple
@@ -128,9 +130,16 @@ class Ollama:
 
 
 def _error(e: urllib.error.HTTPError) -> str | None:
-    """The `error` field of an HTTP error's JSON body, or None."""
+    """The `error` field of an HTTP error's JSON body, or None.
+
+    Reading the body consumes the stream, so the error is re-seated on a copy of the same bytes: a
+    caller that catches the re-raised HTTPError reads the body unchanged (BCR-2). `e.fp` is the raw
+    stream; `e.read` is avoided because the file wrapper would cache it bound to the drained stream.
+    """
+    body = e.fp.read()
+    urllib.response.addinfourl.__init__(e, io.BytesIO(body), e.hdrs, e.url, e.code)
     try:
-        error = json.loads(e.read()).get("error")
+        error = json.loads(body).get("error")
     except (ValueError, AttributeError):
         return None
     return error if isinstance(error, str) else None

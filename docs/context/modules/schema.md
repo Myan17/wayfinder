@@ -19,11 +19,11 @@ design_sections:
   - "DESIGN §18.3 (immutable migrations)"
 verified_hashes:
   "db/s6_identity.py": "310f4f53aa0e228d"
-  "db/s6_ollama.py": "15611490a37e69a5"
+  "db/s6_ollama.py": "af9355b75a840303"
   "db/schema.sql": "2eee78944b8f3f27"
   "db/views/eligible_repo.sql": "4c23a29fabcc67cc"
   "db/views/retrieval_rows.sql": "acf9bb56c489f0f7"
-verified_on: 2026-11-04
+verified_on: 2026-11-05
 ---
 
 # schema
@@ -114,7 +114,8 @@ db/s6_ollama.py   (its S6-5 report runner is not a consumer contract)
   - `embed_counted` sends `truncate` exactly as given and refuses a non-`bool` before any request.
   - It needs exactly one embedding and a `prompt_eval_count` that is an `int` of at least 1.
   - Only an HTTP 400 whose `error` equals `CONTEXT_EXCEEDED` becomes `ContextExceeded`, carrying
-    Ollama's raw string. Every other error is the original `HTTPError`. No count is invented for a
+    Ollama's raw string. Every other error is the original `HTTPError`, re-raised with its body still
+    readable (reading the body to classify it does not consume it). No count is invented for a
     rejected input.
   - `embedder`'s defaults keep S6's behaviour. With `truncate_rejected`, only `ContextExceeded` is
     retried, once, with `truncate: true`.
@@ -173,7 +174,7 @@ db/s6_ollama.py   (its S6-5 report runner is not a consumer contract)
 | `db/tests/test_bm25_path.py` (all) | `rep_bm25`'s six fields each match their example (split identifiers in `header` and `body_text`, whole dotted identifiers in `header_ident` and `body_ident`, Unicode ones included (`größe_berechnen`, `変数`), with their ASCII fragments not matching, path segments in `path`, split segments in `path_code`), and the unsplit fields do not match parts; an occurrence's path must equal its representation's; `path` is required; the migration refuses a `representation` table with rows, and its rollback refuses once rows exist (rollback is pre-ingestion only) |
 | `db/tests/test_s6_identity.py` (all) | Spike S6 (ADR-0005) on `db/s6_identity.py`, the build path both embedders share: S6-1 (a second specification creates new rows), S6-2 (the first specification's rows unchanged), S6-3 (reuse never crosses specifications, in embedder calls), S6-4 (serving follows the active generation: a building specification returns nothing even as the exact nearest vector, and after §9.3.5's activation the old one returns nothing while its rows remain with `live` false), for a digest pair and a template pair; activation refused without the claim, after it expires, before `ready`, on a chunk-count mismatch, for a `failed` build, after a newer push, from a stale base, when another generation was activated underneath, and when the generation's own `repo_id`, `base_generation_id` or `desired_generation` differs from what the caller passes (a caller cannot substitute current values); the v0.2 `(repo_id, content_hash)` control loses B's vector; one spec row per identity key; the embedded input is substituted once and hashed as UTF-8 |
 | `db/tests/test_s2_build_path.py` (all; the database cases run in `make db-test`) | BCR-1: `line_count` is `universe.lines`' rule; a `start_line` below 1 is refused before any write; identical windows of one file share a representation at their own lines; one connection holds 100 private pseudo-repositories, all eligible and none public; a pad copy's header, hash, vector and location, a reused row refused, a source absent from the generation refused; 60,000 means 60,000 live representations and vectors after activation, built as S2 builds it: 100 pseudo-repositories, each padded and activated within its own 5-minute claim. That last test is marked `s2_scale` and runs in CI's `s2` job (`make s2-scale-test`), not in `db-test` |
-| `db/tests/test_s6_ollama.py` (all) | `db/s6_ollama.py`'s S6-5 sequence on a fake Ollama: it passes when the alias moves to another digest; it fails when both models share a digest, or when a capture keyed on the alias returns the old row; the embedder refuses once the alias names another digest; repeatability reports a difference (byte equality, maximum absolute difference, cosine distance) without failing S6-5. Cleanup: the run uses a fresh alias, refuses one that already exists and leaves it alone, deletes nothing when its first copy fails, deletes its alias when it fails midway, and drops its temporary database even when the alias delete fails. BCR-2, against a real local HTTP server: `truncate` defaults to false and must be a `bool`; a bad count or embedding count is refused; only the exact pinned 400 is `ContextExceeded`; and on the fake: by default a rejection propagates and nothing is recorded; `truncate_rejected` retries once, records the full input's hash, does not retry a 500, and lets a rejected retry propagate, and the digest is checked again before the retry. Only Myan's real run is evidence |
+| `db/tests/test_s6_ollama.py` (all) | `db/s6_ollama.py`'s S6-5 sequence on a fake Ollama: it passes when the alias moves to another digest; it fails when both models share a digest, or when a capture keyed on the alias returns the old row; the embedder refuses once the alias names another digest; repeatability reports a difference (byte equality, maximum absolute difference, cosine distance) without failing S6-5. Cleanup: the run uses a fresh alias, refuses one that already exists and leaves it alone, deletes nothing when its first copy fails, deletes its alias when it fails midway, and drops its temporary database even when the alias delete fails. BCR-2, against a real local HTTP server: `truncate` defaults to false and must be a `bool`; a bad count or embedding count is refused; only the exact pinned 400 is `ContextExceeded`, and any other error is re-raised with its body intact; and on the fake: by default a rejection propagates and nothing is recorded; `truncate_rejected` retries once, records the full input's hash, does not retry a 500, and lets a rejected retry propagate, and the digest is checked again before the retry. Only Myan's real run is evidence |
 
 ## Fake
 
@@ -201,4 +202,5 @@ one generation) and `db/fixtures/permission.sql` (the 12-repository authorizatio
 | 2026-10-19 | `retrieval_rows` described as retrieval's location shape; the base-table scans are documented on the indexing card (ADR-0007 Amendment 1) | — |
 | 2026-10-19 | Migration `_representation_path_bm25`: `representation.path` (NOT NULL, `UNIQUE (id, repo_id, path)`), `occurrence`'s path held equal by a foreign key, `rep_bm25` rebuilt with six code-aware fields (identifiers by Unicode XID); up and down both refuse a table with rows, so rollback is pre-ingestion only. Callers now pass `path` (`db/s6_identity.py`, the S5 spike, test seeds) | — |
 | 2026-11-04 | The S2/S6 build path becomes interface: `db/s6_identity.py` and `db/s6_ollama.py` are interface files; `index_chunk(start_line)`, `line_count`, `seed_connection`, `seed_repository`, `pad_copy`; no table changes | BCR-1 |
+| 2026-11-05 | `s6_ollama`: a non-matching HTTP error keeps its body when re-raised (gupta958 on #112) | BCR-2 |
 | 2026-11-04 | `s6_ollama`: `embed_counted`, `ContextExceeded`, `Embedded`, `Call`, `embedder(record, truncate_rejected)`; S6's defaults unchanged | BCR-2 |
