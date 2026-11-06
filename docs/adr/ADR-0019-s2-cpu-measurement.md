@@ -447,6 +447,64 @@ Relayed by Myan after #109 merged. All are applied above:
    returned count, the validation and the tests. The amendment merges before the loader is written.
 4. The #108 ruling stands: the exact 60,000-row test moves to the conditional S2 job in a follow-up.
 
+## Amendment 3 — The build lease and the 60k padding (2026-11-05)
+
+The loader builds each of the 100 pseudo-repositories through the build path, inside one claim, and
+pads the corpus to 60,000 representations for the scale run. Neither was fixed. This amendment fixes
+both before the loader is written. It changes no acceptance rule, counter, pass or calibration.
+
+### 1. The build lease (gupta958, 2026-11-05)
+
+The 7,175 windows fall into the pseudo-repositories with between 14 and 724 windows each (median 53;
+the largest five are 179, 193, 205, 411 and 724), counted from the four repositories at their
+manifest commits. `push_and_claim`'s claim is a fixed 5 minutes. At that length, the 724-window
+pseudo-repository must embed at 0.41 s per window or faster, including the 2,048-token truncated
+windows (Amendment 2), and S2-6's re-index runs at lower priority beside the queries.
+
+- S2 claims each pseudo-repository with exactly `timedelta(minutes=60)`, through BCR-3
+  (`docs/context/boundary/BCR-3-s6-identity-claim-for.md`). S6 keeps 5 minutes.
+- Nothing extends a claim. If a pseudo-repository's build takes more than 60 minutes, the load fails
+  and names it. A build is never retried with a longer lease.
+- The report records the 60-minute lease and each pseudo-repository's build duration, from its
+  claim to its activation.
+
+### 2. The 60k padding (gupta958, 2026-11-05)
+
+The real corpus is loaded first. Padding then brings it to exactly 60,000 live representations:
+- **How much:** the required padding is 60,000 minus the real corpus's distinct representations
+  (identical windows in one pseudo-repository share one representation).
+- **Where:** each pseudo-repository's share is in proportion to its distinct pre-padding
+  representations, rounded by largest remainder. Equal remainders go to the lower pseudo-repository
+  id first. The 1%, 10% and 100% levels then admit about the same fractions at 60,000 as on the real
+  corpus. Each copy stays in its source's pseudo-repository (Amendment 1 §3).
+- **Order:** pseudo-repositories are padded in ascending id. Within one, copies cycle through its
+  real representations in path, then start-line order. One global row sequence starting at 0 numbers
+  every copy in the run (`pad_copy`'s `row`).
+- **Checks:** the load asserts that the total is exactly 60,000. The report gives each
+  pseudo-repository's real and padded counts, beside the padding fraction that Setup requires.
+
+### 3. The interface it needs: BCR-3
+
+`push_and_claim` belongs to schema (BCR-1). gupta958 accepted BCR-3 with an amendment on 2026-11-05:
+the claim is a `timedelta`, refused when it is zero or negative, and bound as a parameter. The order
+of work is:
+1. this amendment and BCR-3;
+2. the schema pull request that implements BCR-3;
+3. the loader, written against the schema card. It waits for BCR-2's implementation (#112) too.
+
+### Review rulings on Amendment 3 (gupta958, 2026-11-05)
+
+Relayed by Myan. Both are applied above:
+1. Accept BCR-3 with an amendment: `claim_for: timedelta = timedelta(minutes=5)`, not an interval
+   string. S2 passes exactly `timedelta(minutes=60)`. Reject zero or negative durations before
+   writing. Keep the SQL parameterized. Record the 60-minute lease and each repository's build
+   duration in the report. If any build exceeds 60 minutes, fail rather than silently extending it.
+2. Accept proportional padding: weight by each pseudo-repository's distinct pre-padding
+   representations; allocate the required padding by largest remainder; break equal remainders by
+   ascending pseudo-repository id; process repositories in ascending id, cycling sources by path and
+   start-line order; use one global row sequence beginning at 0; assert the final total is exactly
+   60,000, and report real and padded counts per repository.
+
 ## Decision
 
 *Empty until S2 runs on the A1.* It will be completed with one of:
