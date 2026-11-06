@@ -1,0 +1,65 @@
+# Task log — myan-schema-s6-ollama-embed-count
+
+| Field | Value |
+|---|---|
+| Task | BCR-2: s6_ollama embed_counted, ContextExceeded, embedder record and truncate_rejected |
+| Module | schema |
+| Branch | `myan/schema/s6-ollama-embed-count` |
+| Worktree | `../wayfinder-wt/myan-schema-s6-ollama-embed-count` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-11-05T05:38Z/30774 |
+| Started | 2026-11-05T05:38:33Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-11-05T05:39:09Z · READ · myan · claude-code/opus-5.5 · 00fef63
+BCR-2 (accepted, #110): contract, validation, six tests. db/s6_ollama.py:40-90 (Ollama._call, embed, embedder); db/tests/test_s6_ollama.py:11-41 (FakeOllama; client.calls == 0 pins no embed in the pre-existing-alias case).
+
+### 2026-11-05T05:39:09Z · PLAN · myan · claude-code/opus-5.5 · 00fef63
+Implement BCR-2 as written: CONTEXT_EXCEEDED, ContextExceeded, Embedded, Call, Ollama.embed_counted, and embedder's record and truncate_rejected options. embed() is left byte-identical. Test the Ollama class against a real local http.server on 127.0.0.1:0, so the HTTPError path is exercised for real, and the embedder against FakeOllama, which gains embed_counted with a reject set. Schema card: interface block, invariants, test row, change log, hashes. BCR-2 closure checklist ticked. Rejected: monkeypatching urlopen, which would not exercise how a 400's body is read.
+
+### 2026-11-05T05:41:28Z · EDIT · myan · claude-code/opus-5.5 · 00fef63
+db/s6_ollama.py: CONTEXT_EXCEEDED, ContextExceeded, Embedded, Call, Ollama.embed_counted, _error, and embedder(record, truncate_rejected) with a digest check before every request; embed() unchanged. db/tests/test_s6_ollama.py: FakeOllama gains requests, reject, reject_truncated, before_retry and embed_counted; six BCR-2 tests (three on a real local http.server). Schema card: interface block, invariants, test row, change log, hashes. BCR-2 closure checklist ticked.
+
+### 2026-11-05T05:41:28Z · TEST · myan · claude-code/opus-5.5 · 00fef63
+PYTHONPATH=db:db/tests uv run pytest db/tests/test_s6_ollama.py db/tests/test_s6_identity.py db/tests/test_s2_build_path.py: 10 passed, 45 skipped (no local DSN). The six BCR-2 tests need no database and pass. Mutation check: dropping the recheck before the retry, retrying any exception, loose message matching, hashing the truncated text, and accepting a bool count each fail a test. ruff check and format are clean; freshness OK. S6-5's database tests run in CI's db job.
+
+### 2026-11-05T05:41:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:00fef63
+feat(schema): BCR-2 — s6_ollama's embed returns its token count, and may truncate a rejected window
+5 files changed, 283 insertions(+), 14 deletions(-)
+
+### 2026-11-05T05:41:50Z · HANDOFF · myan · claude-code/opus-5.5 · 93e95cd
+For review. Next, after it merges: the eval-harness corpus loader against the schema card, using embedder(record=..., truncate_rejected=True).
+
+### 2026-11-05T05:41:51Z · HANDOFF · myan · claude-code/opus-5.5 · 93e95cd
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-05T05:41:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:93e95cd
+docs(agents): close task log for myan-schema-s6-ollama-embed-count
+1 file changed, 6 insertions(+)
+
+### 2026-11-06T01:19:22Z · PLAN · myan · claude-code/opus-5.5 · ea2e783
+gupta958 on #112: _error(e) read the body of a non-matching HTTPError before re-raising it, so the caller got an error with an empty body, contradicting BCR-2 (original HTTPError unchanged). Fix: read e.fp once, re-seat the error on a BytesIO of the same bytes, classify from those bytes.
+
+### 2026-11-06T01:19:22Z · TEST · myan · claude-code/opus-5.5 · ea2e783
+test_only_the_pinned_context_error_is_context_exceeded now asserts each re-raised HTTPError (400 other text, 400 no error, 500) has no __cause__, keeps msg and headers, and read() returns the exact body; and the ContextExceeded cause body is readable. Mutation: old _error restored, test fails at other.value.read(). Fixed: 7 passed, 8 skipped (DB tests skip locally). ruff check and format clean on both files.
+
+### 2026-11-06T01:19:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea2e783
+fix(schema): keep a non-matching HTTPError body readable when re-raised
+4 files changed, 27 insertions(+), 6 deletions(-)
+
+### 2026-11-06T01:19:31Z · HANDOFF · myan · claude-code/opus-5.5 · eb6712c
+Review fix pushed for gupta958: non-matching HTTPError body preserved; card, change log and hashes updated. Waiting on CI and re-review.
+
+### 2026-11-06T01:19:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:eb6712c
+docs(agents): log #112 review fix handoff
+1 file changed, 3 insertions(+)

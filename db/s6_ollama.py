@@ -13,15 +13,19 @@ unchanged, and exits 1 unless every S6-5 check passed.
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import os
 import struct
 import subprocess
 import sys
+import urllib.error
 import urllib.request
+import urllib.response
 import uuid
 from pathlib import Path
+from typing import NamedTuple
 
 import psycopg
 import s6_identity as s6
@@ -35,6 +39,31 @@ ALIAS_PREFIX = "wayfinder-s6-"  # a fresh alias each run: never re-point or dele
 TEMPLATE = "search_document: {header}\n{body}"
 OPTIONS: dict = {}  # identical for every call, including both repeatability calls
 REPORT = Path(__file__).resolve().parent / "evidence" / "s6-ollama.json"
+CONTEXT_EXCEEDED = "the input length exceeds the context length"  # Ollama 0.34.2's error, exactly (BCR-2)
+
+
+class ContextExceeded(RuntimeError):
+    """Ollama rejected an input for exceeding the model's context. `error` is Ollama's raw string; no
+    token count is invented for it (ADR-0019 Amendment 2)."""
+
+    def __init__(self, model: str, error: str):
+        super().__init__(f"{model}: {error}")
+        self.model = model
+        self.error = error
+
+
+class Embedded(NamedTuple):
+    vector: list[float]
+    prompt_eval_count: int
+
+
+class Call(NamedTuple):
+    """One successful embedder call. `input_hash` is the full stored input's, even when truncated."""
+
+    input_hash: bytes
+    prompt_eval_count: int
+    truncated: bool
+    error: str | None
 
 
 class Ollama:
@@ -79,19 +108,76 @@ class Ollama:
         body = {"model": model, "input": text, "options": OPTIONS, "truncate": False}
         return self._call("POST", "/api/embed", body)["embeddings"][0]
 
+    def embed_counted(self, model: str, text: str, *, truncate: bool = False) -> Embedded:
+        """One input, with the token count Ollama reports for it (BCR-2)."""
+        if type(truncate) is not bool:
+            raise TypeError(f"truncate must be a bool, not {truncate!r}")
+        body = {"model": model, "input": text, "options": OPTIONS, "truncate": truncate}
+        try:
+            out = self._call("POST", "/api/embed", body)
+        except urllib.error.HTTPError as e:
+            if e.code == 400 and _error(e) == CONTEXT_EXCEEDED:
+                raise ContextExceeded(model, CONTEXT_EXCEEDED) from e
+            raise
+        embeddings = out.get("embeddings")
+        if not isinstance(embeddings, list) or len(embeddings) != 1:
+            n = len(embeddings) if isinstance(embeddings, list) else embeddings
+            raise RuntimeError(f"{model} returned {n!r} embeddings for one input")
+        count = out.get("prompt_eval_count")
+        if type(count) is not int or count < 1:
+            raise RuntimeError(f"{model} returned prompt_eval_count {count!r}")
+        return Embedded(embeddings[0], count)
 
-def embedder(client, counter: dict) -> s6.Embedder:
+
+def _error(e: urllib.error.HTTPError) -> str | None:
+    """The `error` field of an HTTP error's JSON body, or None.
+
+    Reading the body consumes the stream, so the error is re-seated on a copy of the same bytes: a
+    caller that catches the re-raised HTTPError reads the body unchanged (BCR-2). `e.fp` is the raw
+    stream; `e.read` is avoided because the file wrapper would cache it bound to the drained stream.
+    """
+    body = e.fp.read()
+    urllib.response.addinfourl.__init__(e, io.BytesIO(body), e.hdrs, e.url, e.code)
+    try:
+        error = json.loads(body).get("error")
+    except (ValueError, AttributeError):
+        return None
+    return error if isinstance(error, str) else None
+
+
+def embedder(
+    client, counter: dict, *, record: list[Call] | None = None, truncate_rejected: bool = False
+) -> s6.Embedder:
     """The real embedder for s6.index_chunk. It refuses to embed unless the alias still names the
-    captured digest, so a vector can never be stored under a specification that did not produce it."""
+    captured digest, checked before every request, so a vector can never be stored under a
+    specification that did not produce it.
 
-    def embed(spec: s6.Spec, text: str) -> list[float]:
+    BCR-2: with `truncate_rejected`, an input Ollama rejects for exceeding the context is sent once more
+    with `truncate: true`; no other error is retried. With `record`, each successful call appends a
+    `Call`. `counter["calls"]` counts embedder calls, never HTTP requests. The defaults keep S6's
+    behaviour."""
+
+    def check(spec: s6.Spec) -> None:
         if client.digest(spec.model_ref) != spec.model_digest:
             raise RuntimeError(f"{spec.model_ref} no longer names {spec.model_digest}")
+
+    def embed(spec: s6.Spec, text: str) -> list[float]:
+        check(spec)
         counter["calls"] += 1
-        vector = client.embed(spec.model_ref, text)
-        if len(vector) != s6.DIMENSION:
-            raise RuntimeError(f"{spec.model_ref} returned {len(vector)} dimensions")
-        return vector
+        truncated, error = False, None
+        try:
+            got = client.embed_counted(spec.model_ref, text)
+        except ContextExceeded as e:
+            if not truncate_rejected:
+                raise
+            check(spec)
+            truncated, error = True, e.error
+            got = client.embed_counted(spec.model_ref, text, truncate=True)
+        if len(got.vector) != s6.DIMENSION:
+            raise RuntimeError(f"{spec.model_ref} returned {len(got.vector)} dimensions")
+        if record is not None:
+            record.append(Call(s6.input_hash(text), got.prompt_eval_count, truncated, error))
+        return got.vector
 
     return embed
 
