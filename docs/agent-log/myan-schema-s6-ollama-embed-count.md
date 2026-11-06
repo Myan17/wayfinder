@@ -56,3 +56,10 @@ test_only_the_pinned_context_error_is_context_exceeded now asserts each re-raise
 ### 2026-11-06T01:19:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:ea2e783
 fix(schema): keep a non-matching HTTPError body readable when re-raised
 4 files changed, 27 insertions(+), 6 deletions(-)
+
+### 2026-11-06T01:19:31Z · HANDOFF · myan · claude-code/opus-5.5 · eb6712c
+Review fix pushed for gupta958: non-matching HTTPError body preserved; card, change log and hashes updated. Waiting on CI and re-review.
+
+### 2026-11-06T01:19:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:eb6712c
+docs(agents): log #112 review fix handoff
+1 file changed, 3 insertions(+)
