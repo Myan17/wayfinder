@@ -3,6 +3,8 @@
 Every rule runs for both pairs: B differs from A only in model_digest, or only in doc_template.
 """
 
+from datetime import timedelta
+
 import pytest
 import s6_identity as s6
 from conftest import one, seed_connection, seed_repo
@@ -251,3 +253,72 @@ def test_the_embedded_input_substitutes_once_and_hashes_its_utf8_bytes():
     assert s6.embedded_input("d: {header}|{body}", "h {body}", "x{header}y") == "d: h {body}|x{header}y"
     # SHA-256 of "é" as UTF-8 (c3 a9); its Latin-1 byte (e9) would give de2e331d…
     assert s6.input_hash("é").hex() == "4a99557e4033c3539de2eb65472017cad5f9557f7a0625a09f1c3f6e2ba69c4c"
+
+
+# BCR-3: push_and_claim's claim duration.
+
+
+def _claim_left(db, repo, **kw):
+    """Claim inside one transaction, so now() is the claim's own now(), and read back the lease."""
+    with db.transaction():
+        s6.push_and_claim(db, repo, **kw)
+        return one(db, "SELECT claim_expires_at - now() FROM repository WHERE id = %s", (repo,))
+
+
+def test_the_claim_lasts_five_minutes_by_default_and_claim_for_when_given(db):
+    repo = seed_repo(db, seed_connection(db))
+    assert _claim_left(db, repo) == timedelta(minutes=5)
+    assert _claim_left(db, repo, claim_for=timedelta(minutes=60)) == timedelta(minutes=60)
+
+
+REFUSED = [
+    (timedelta(0), ValueError),
+    (timedelta(seconds=-1), ValueError),
+    ("60 minutes", TypeError),
+    (3600, TypeError),
+]
+
+
+class NoStatements:
+    def execute(self, *args, **kwargs):
+        raise AssertionError("a statement was sent")
+
+
+@pytest.mark.parametrize(("claim_for", "error"), REFUSED, ids=repr)
+def test_a_bad_claim_for_is_refused_before_any_statement(claim_for, error):
+    with pytest.raises(error):
+        s6.push_and_claim(NoStatements(), 1, claim_for=claim_for)
+
+
+@pytest.mark.parametrize(("claim_for", "error"), REFUSED, ids=repr)
+def test_a_bad_claim_for_leaves_the_repository_row_unchanged(db, claim_for, error):
+    repo = seed_repo(db, seed_connection(db))
+    s6.push_and_claim(db, repo)
+    row = "SELECT desired_generation, claim_token, claim_expires_at FROM repository WHERE id = %s"
+    before = db.execute(row, (repo,)).fetchone()
+    with pytest.raises(error):
+        s6.push_and_claim(db, repo, claim_for=claim_for)
+    assert db.execute(row, (repo,)).fetchone() == before
+
+
+class Recording:
+    def __init__(self):
+        self.sent = []
+
+    def execute(self, sql, params):
+        self.sent.append((sql, params))
+        return self
+
+    def fetchone(self):
+        return (1, "token")
+
+
+def test_the_claim_duration_is_a_bound_parameter_not_sql_text():
+    conn = Recording()
+    s6.push_and_claim(conn, 7, claim_for=timedelta(minutes=60))
+    [(sql, params)] = conn.sent
+    assert "now() + %s" in sql and "interval" not in sql and "60" not in sql
+    assert params == (timedelta(minutes=60), 7)
+    conn = Recording()
+    s6.push_and_claim(conn, 7)
+    assert conn.sent[0][1] == (timedelta(minutes=5), 7)

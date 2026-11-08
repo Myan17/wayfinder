@@ -11,6 +11,7 @@ import hashlib
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import timedelta
 
 DIMENSION = 768  # every S6 specification writes to vector_d768
 
@@ -272,14 +273,25 @@ def finish_build(conn, generation_id: int) -> None:
     )
 
 
-def push_and_claim(conn, repo_id: int) -> tuple[int, object]:
-    """Accept a push and claim the repository. S6 does not test scheduling (that is S5); it only needs
-    §9.3.5's preconditions to be real."""
+CLAIM_FOR = timedelta(minutes=5)  # S6's claim; S2 passes timedelta(minutes=60) (BCR-3)
+
+
+def push_and_claim(conn, repo_id: int, *, claim_for: timedelta = CLAIM_FOR) -> tuple[int, object]:
+    """Accept a push and claim the repository for `claim_for`. S6 does not test scheduling (that is S5);
+    it only needs §9.3.5's preconditions to be real.
+
+    BCR-3: `claim_for` must be a positive `timedelta`. Anything else is refused before any statement is
+    sent, so the repository row is unchanged. Nothing extends a claim; a build that outlives it is
+    refused by `activate`."""
+    if not isinstance(claim_for, timedelta):
+        raise TypeError(f"claim_for must be a datetime.timedelta, not {type(claim_for).__name__}")
+    if claim_for <= timedelta(0):
+        raise ValueError(f"claim_for must be positive, got {claim_for!r}")
     return conn.execute(
         "UPDATE repository SET desired_generation = desired_generation + 1, claim_token = gen_random_uuid(),"
-        " claim_expires_at = now() + interval '5 minutes' WHERE id = %s"
+        " claim_expires_at = now() + %s WHERE id = %s"
         " RETURNING desired_generation, claim_token",
-        (repo_id,),
+        (claim_for, repo_id),
     ).fetchone()
 
 
