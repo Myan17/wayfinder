@@ -34,6 +34,7 @@ DIRS = (
 )
 FILES = (
     "db/s6_identity.py",
+    "db/s6_ollama.py",  # the loader's embedder (BCR-2)
     "db/tests/test_s2_build_path.py",  # its 60,000-row test runs only in this job (gupta958's #108 ruling)
     "db/tests/conftest.py",
     "eval/miners/s1/universe.py",
