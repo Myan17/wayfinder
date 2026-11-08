@@ -74,3 +74,10 @@ Myan, 2026-11-08: 'APPROVAL REQUEST SHOULD BE FOR GUPTA958'. Added ADR-0021 rule
 ### 2026-11-08T07:41:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:2c26d88
 docs(agreements): ADR-0021 rule 11 — every human-decision request goes to gupta958
 3 files changed, 11 insertions(+), 4 deletions(-)
+
+### 2026-11-08T07:46:11Z · HANDOFF · myan · claude-code/opus-5.5 · aacdc5c
+Rebased onto 2a7a93a (#114 merged; main moved, PR was BEHIND). Old head 5c77748, no content change; guardrails pass (330 lines). gupta958 approved at 5c77748; the 12 h window and confirm-only list stand as written, since the approval answered none of the three brief questions.
+
+### 2026-11-08T07:46:11Z · COMMIT · myan · claude-code/opus-5.5 · parent:aacdc5c
+docs(agents): log the #115 rebase onto 2a7a93a
+1 file changed, 3 insertions(+)
