@@ -30,3 +30,10 @@ eval/harness tests: 112 passed, 18 skipped (the two new run() database tests and
 ### 2026-11-08T18:00:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:f1f6d29
 feat(eval-harness): S2 load command — load the corpus into a new database and write the load report
 5 files changed, 381 insertions(+), 1 deletion(-)
+
+### 2026-11-08T18:00:12Z · HANDOFF · myan · claude-code/opus-5.5 · 2cdc08e
+PR open for gupta958. Review points: the database is kept after a successful load (the passes need it) and dropped only on failure; the report's fields against Amendments 1-3; s6_ollama is imported inside run() only. Next, after the merge: the S2-dev load on this Mac cannot run (Docker does not answer), so the real load waits for the A1 (ORIENT item 9b, Myan). The next harness part is the passes (S2-1 warm and cold per stage) on top of the loaded databases.
+
+### 2026-11-08T18:00:12Z · COMMIT · myan · claude-code/opus-5.5 · parent:2cdc08e
+docs(agents): hand off the S2 load command task
+1 file changed, 3 insertions(+)
