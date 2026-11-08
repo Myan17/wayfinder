@@ -8,6 +8,7 @@ from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
 
+import psycopg
 import pytest
 from s2 import load, load_plan
 from s2.inputs import Window
@@ -16,6 +17,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "db" / "tests"))
 import conftest as schema_tests  # the schema tests' real-database fixtures
 
 db, empty_db = schema_tests.db, schema_tests.empty_db  # registered here so pytest finds them
+
+
+@pytest.fixture(autouse=True)
+def pinned():
+    """Skip, before `db` tries to create a database, when the pinned database is not reachable: CI's
+    unit job exports a DSN but has no database (retrieval's tests do the same)."""
+    try:
+        psycopg.connect(schema_tests.DSN or "", connect_timeout=2).close()
+    except psycopg.OperationalError:
+        pytest.skip("the pinned database is not reachable; make db-test runs these")
+
 
 s6 = load.s6
 Call = namedtuple("Call", "input_hash prompt_eval_count truncated error")  # s6_ollama.Call's shape
@@ -112,7 +124,7 @@ def test_padding_reaches_the_target_proportionally_with_rows_from_zero(db):
     assert {p: n for p, n in got.padded.items() if n} == {0: 4, 3: 2, 99: 2}
     assert load.live_representations(db, got.repo_ids.values()) == 12
     pads = sorted(h for (h,) in db.execute("SELECT header FROM representation WHERE header LIKE '%s2-pad%'"))
-    assert [h.rsplit(":", 1)[1] for h in pads] == sorted(str(r) for r in range(8))
+    assert sorted(int(h.rsplit(":", 1)[1]) for h in pads) == list(range(8))  # each row once, from 0
     first = db.execute("SELECT header FROM representation WHERE header LIKE '%s2-pad:0'").fetchone()[0]
     assert first == "o/a · a.py · s2-pad:0"  # pseudo-repository 0's first source, by path then line
 
