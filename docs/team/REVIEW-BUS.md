@@ -41,7 +41,7 @@ a Monitor on its open PRs                                                   revi
   open question ───────────────────► ruling_request {questions[]} ───────►  codex exec, ruling prompt
   records it once bound ◄──────────  ruling {id, decision, binds_at}  ◄──   confirm_only from labels + paths
                                      veto / confirm (Myan)
-                                     escalate @Myan17  (round 4, dispute, error)
+                                     escalate @Gupta958  (round 4, dispute, error)
 ```
 
 - **The reviewer watcher is plain Python.** It polls `gh` every few minutes and starts ChatGPT only
@@ -76,7 +76,7 @@ Each bus message is a PR comment. Its first line is a hidden header, and the res
 | `veto` / `confirm` | Myan17 or Gupta958 (plain comment `veto <id>` / `confirm <id>`) | id | Myan stops a ruling, or binds it now |
 | `review_result` | Gupta958 | head, round, verdict (`approve` / `changes` / `needs_human`), findings[], model, gates{} | The reviewer's call, and which gates passed |
 | `fix_pushed` | PR author | head, round, addressed[], disputes[] | A new head answers the findings; disputes stop the loop |
-| `escalate` | either | reason, question | A human is needed. The comment @-mentions Myan17 |
+| `escalate` | either | reason, question | A human is needed. The comment @-mentions Gupta958, the approving account (ADR-0021 rule 11) |
 
 A finding has `id`, `file`, `line`, `severity`, `blocking` and `text`. Messages from any other
 GitHub account are ignored (ADR-0021 rule 8).

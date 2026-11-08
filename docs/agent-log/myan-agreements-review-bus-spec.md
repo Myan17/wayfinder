@@ -67,3 +67,10 @@ TASK CLOSED. Pull request open for review.
 ### 2026-11-08T06:54:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:681b718
 docs(agents): close task log for myan-agreements-review-bus-spec
 1 file changed, 6 insertions(+)
+
+### 2026-11-08T07:41:19Z · DECIDE · myan · claude-code/opus-5.5 · 2c26d88
+Myan, 2026-11-08: 'APPROVAL REQUEST SHOULD BE FOR GUPTA958'. Added ADR-0021 rule 11: every request for a human decision (the PR review request, escalate, confirm-only rulings, shadow's would-approve) @-mentions Gupta958, not Myan17. A Myan17 comment mentioning Myan17 would notify nobody. #114 and #115 already request review from gupta958.
+
+### 2026-11-08T07:41:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:2c26d88
+docs(agreements): ADR-0021 rule 11 — every human-decision request goes to gupta958
+3 files changed, 11 insertions(+), 4 deletions(-)
