@@ -33,3 +33,13 @@ uv run --extra dev pytest db/tests/test_s6_identity.py: 6 passed, 38 skipped (no
 ### 2026-11-08T06:28:32Z · COMMIT · myan · claude-code/opus-5.5 · parent:27b74e6
 feat(schema): BCR-3 — push_and_claim takes claim_for, a positive timedelta
 5 files changed, 133 insertions(+), 13 deletions(-)
+
+### 2026-11-08T06:52:46Z · HANDOFF · myan · claude-code/opus-5.5 · 964270c
+PR #114 open for gupta958, CI green on 964270c (db 135 passed, s2 passed). Next after merge: the S2 corpus loader in eval-harness, against BCR-1/2/3, passing claim_for=timedelta(minutes=60) and failing the load if any build outlives its claim.
+
+### 2026-11-08T06:52:58Z · HANDOFF · myan · claude-code/opus-5.5 · 964270c
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-08T06:52:58Z · COMMIT · myan · claude-code/opus-5.5 · parent:964270c
+docs(agents): close task log for myan-schema-s6-claim-for
+1 file changed, 6 insertions(+)
