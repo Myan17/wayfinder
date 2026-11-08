@@ -47,3 +47,13 @@ Renumbered to ADR-0019. DESIGN §12 pre-assigns 0016 to 'Two source modes', whic
 ### 2026-09-28T20:41:04Z · COMMIT · myan · claude-code/opus-5.5 · parent:a7fc587
 docs(agreements): renumber the review bus ADR to 0019 (0016 is DESIGN's source modes)
 3 files changed, 14 insertions(+), 11 deletions(-)
+
+### 2026-11-08T06:54:48Z · DECIDE · myan · claude-code/opus-5.5 · dda28b4
+Myan, 2026-11-08 (ORIENT rule 2 direction): 'i want to setup an agent harness where chatgpt and claude this session can communicate by requesting and approving pr approvals and rulings'. His choices: approvals start in shadow; ChatGPT's rulings bind directly unless vetoed; the author side is the live Claude session, not a daemon; ChatGPT through the Codex CLI on his ChatGPT login. Plan approved the same day with a 12 h veto window and a confirm-only list. Rebased onto 27b74e6 and renumbered to ADR-0021, since 0019 (S2) and 0020 (S4) are taken.
+
+### 2026-11-08T06:54:49Z · PLAN · myan · claude-code/opus-5.5 · dda28b4
+Spec PR only (REVIEW-BUS.md §10 PR 1): ADR-0021 and REVIEW-BUS.md, with no code. Rewritten for Codex as the reviewer, the live session as the author (author.py and prompts/fix.md dropped), ruling_request/ruling/veto/confirm messages with a 12 h window and a confirm-only list, and shadow as the starting mode. AGENTS.md and ROSTER text is given for Myan to commit by hand. Rejected: building the watcher first; the rules merge before the code, as with ADR-0004 and ADR-0007.
+
+### 2026-11-08T06:54:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:dda28b4
+docs(agreements): ADR-0021 — the review bus with ChatGPT as the reviewer account's agent
+4 files changed, 215 insertions(+), 159 deletions(-)
