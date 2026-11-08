@@ -88,7 +88,7 @@ Relayed by Myan from gupta958, 2026-11-05. Recorded as ruled.
 
 ## Closure checklist (owner)
 
-- [ ] Card updated, `Verified-at` bumped in the implementing pull request
-- [ ] Fake updated so consumers can build before the implementation lands
-- [ ] Contract test added that pins the new invariant
-- [ ] Requester told in the pull request that the contract is ready
+- [x] Card updated, `Verified-at` bumped in the implementing pull request
+- [x] Fake updated so consumers can build before the implementation lands
+- [x] Contract test added that pins the new invariant
+- [x] Requester told in the pull request that the contract is ready
