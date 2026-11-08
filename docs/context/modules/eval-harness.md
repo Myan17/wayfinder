@@ -16,6 +16,7 @@ interface_files:
   - eval/harness/s2/ci.py
   - eval/harness/s2/load_plan.py
   - eval/harness/s2/load.py
+  - eval/harness/s2/load_run.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -36,6 +37,7 @@ verified_hashes:
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/load.py": "4339bba5510376ee"
   "eval/harness/s2/load_plan.py": "5bc0719368201d94"
+  "eval/harness/s2/load_run.py": "748434d28ff6fe2f"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
   "eval/harness/s2/services.py": "ab535ea544cb493b"
@@ -120,6 +122,16 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `lease`, `repo_ids`, per-pseudo-repository `durations` (claim to activation), `real` and `padded`
   counts, `windows`, `accepted_tokens` and `truncated`. Also `live_representations(conn, repo_ids)`.
   Any refusal raises `LoadFailed` naming the pseudo-repository or the window.
+- **`s2.load_run`** (the command, `python -m s2.load_run --mirrors DIR --size real|60k --out FILE
+  [--dsn] [--dbname]`): reads S1's `<owner>__<name>.git` mirrors at each manifest `as_of_commit`
+  (`corpus(manifest, mirrors)`), refuses unless every window count is the manifest's `chunk_estimate`
+  and the ingestion Ollama reports ADR-0019's version and digest (`check_runtime(http)`), creates and
+  migrates a new database (`s2_<size>` by default; an existing name is refused), loads into it with the
+  real embedder (`run(...)`) and keeps it for the passes, dropping it only when the load fails. It writes
+  `report(loaded, size, meta)`: the lease, build seconds per pseudo-repository, windows, distinct and live
+  representations, real and padded counts, the padding fraction, every truncated window with count and
+  fraction, the accepted windows' nearest-rank token `distribution`, and the commit, host, Ollama version
+  and model digest. `60k` is labelled scale evidence. `Refused`; exit 1 on a refusal or `LoadFailed`.
 - **`s2.ci`** (`eval/harness/s2/ci.py`), for CI's `s2` job: `changed(base, head) -> (mode, reasons)`
   with `mode` `full` or `no-op`; `triggers(paths)`; the trigger list `DIRS`, `FILES` and `WORKFLOW`;
   `keys()`; `model(restored)`. The CLI writes them to `$GITHUB_OUTPUT`. `changed` and `keys` need only
