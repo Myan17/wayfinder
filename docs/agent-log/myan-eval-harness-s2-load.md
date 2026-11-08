@@ -30,3 +30,7 @@ Local: pytest eval/harness/tests gives 105 passed and 16 skipped. The 7 new data
 ### 2026-11-08T08:39:06Z · COMMIT · myan · claude-code/opus-5.5 · parent:cc5078c
 feat(eval-harness): S2 corpus load — build each pseudo-repository in a 60-minute claim
 6 files changed, 309 insertions(+), 2 deletions(-)
+
+### 2026-11-08T08:39:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:381173e
+docs(platform): the platform card records db-test running S2's corpus-load tests
+1 file changed, 4 insertions(+), 3 deletions(-)
