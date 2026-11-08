@@ -57,3 +57,13 @@ Spec PR only (REVIEW-BUS.md §10 PR 1): ADR-0021 and REVIEW-BUS.md, with no code
 ### 2026-11-08T06:54:49Z · COMMIT · myan · claude-code/opus-5.5 · parent:dda28b4
 docs(agreements): ADR-0021 — the review bus with ChatGPT as the reviewer account's agent
 4 files changed, 215 insertions(+), 159 deletions(-)
+
+### 2026-11-08T06:54:55Z · HANDOFF · myan · claude-code/opus-5.5 · 681b718
+Spec PR open for gupta958 (Myan, by hand). It is human-tier and joint. After it merges: Myan commits the AGENTS.md and ROSTER text from ADR-0021 by hand and does setup step 0 (reinstall Codex, codex login, the reviewer GH_CONFIG_DIR); then PR 2 (protocol, state, tier, gates, github, with tests).
+
+### 2026-11-08T06:54:55Z · HANDOFF · myan · claude-code/opus-5.5 · 681b718
+TASK CLOSED. Pull request open for review.
+
+### 2026-11-08T06:54:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:681b718
+docs(agents): close task log for myan-agreements-review-bus-spec
+1 file changed, 6 insertions(+)
