@@ -14,6 +14,7 @@ interface_files:
   - eval/harness/s2/services.py
   - eval/harness/s2/compose.yml
   - eval/harness/s2/ci.py
+  - eval/harness/s2/load_plan.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -25,17 +26,18 @@ depends_on:
 design_sections:
   - "DESIGN §15 (evaluation methodology)"
   - "DESIGN §16.5 (quality gates)"
-  - "ADR-0019 and its Amendment 1 (spike S2's method and inputs)"
+  - "ADR-0019 and its Amendments 1-3 (spike S2's method, inputs, truncation, lease and padding)"
 verified_hashes:
   "eval/harness/s2/calibration.py": "bec8e7bd551d3503"
   "eval/harness/s2/ci.py": "3432a3b54f647b95"
   "eval/harness/s2/compose.yml": "2603564f894d2987"
   "eval/harness/s2/counters.py": "d395c78424b6b9b9"
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
+  "eval/harness/s2/load_plan.py": "5bc0719368201d94"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
   "eval/harness/s2/services.py": "ab535ea544cb493b"
-verified_on: 2026-11-04
+verified_on: 2026-11-08
 ---
 
 # eval-harness
@@ -98,6 +100,16 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `connect(run) -> (connection, backend host pid)`; `ServiceError`; the constants `PROJECT`,
   `OLLAMA_VERSION`, `MODEL`, `MODEL_DIGEST`, `OLLAMA` and `DSN`. `Run` and `Http` are injected;
   `subprocess_run` and `urllib_http` are the real ones.
+- **`s2.load_plan`** (pure; ADR-0019 Amendments 1-3, the plan that the loader runs through schema's
+  build path): `header(full_name, path)` is `{owner/name} · {path}`; `input_hash(window, full_name,
+  template)` is `index_chunk`'s key hash; `group(windows)` gives all 100 pseudo-repository ids, ascending,
+  with windows in path then start-line order; `sources(windows, full_names, template)` gives the distinct
+  representations at their first occurrence; `allocate(real, total=60_000)` is largest remainder with
+  ties to the lower id; `pads(sources, shares) -> list[Pad]` (`pseudo_repo`, `source`, `row`) in
+  ascending id, cycling sources, rows unique from 0; `check_lease(pseudo_repo, elapsed)` with `LEASE`
+  of 60 minutes; `embed_report(calls, by_hash) -> (accepted counts per window, list[Truncated])`, where
+  `Truncated` holds the repository, pseudo-repository, path, start and end line, the retry's count and
+  Ollama's raw error; `retry_failed(window, error)`; `LoadFailed`; `PADDED_TOTAL`, `CONTEXT_TOKENS`.
 - **`s2.ci`** (`eval/harness/s2/ci.py`), for CI's `s2` job: `changed(base, head) -> (mode, reasons)`
   with `mode` `full` or `no-op`; `triggers(paths)`; the trigger list `DIRS`, `FILES` and `WORKFLOW`;
   `keys()`; `model(restored)`. The CLI writes them to `$GITHUB_OUTPUT`. `changed` and `keys` need only
@@ -213,6 +225,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_reranker.py` | The pins and URL, verification naming each failure, all-or-nothing fetch (a later file failing after an earlier one succeeded, a tampered file, a non-empty root), the CLI's refusal, no reranker from unverified files, pair truncation, per-pair padding equal to the batch call's, tokenizer CPU on the calling thread (fresh interpreter), the L grid; with `WAYFINDER_S2_RERANKER` set, the real model ranking a relevant passage first at both L, and a rerank call's CPU on the calling thread |
 | `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; every published port on loopback; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
 | `eval/harness/tests/test_s2_ci.py` | Each of Amendment 1 §5's inputs runs in full, anything else is a no-op, renames count as both paths, a zero or empty base and a failed diff run in full, every trigger path exists, the workflow runs `s2.ci` and `make s2-scale-test` and the dispatcher needs `s2`, `db-test` deselects the `s2_scale` test that `s2-scale-test` selects, keys move with the pins, a restored model is checked and never pulled, `$GITHUB_OUTPUT` |
+| `eval/harness/tests/test_s2_load_plan.py` | The header; all 100 ids in order; identical windows sharing a source only under one file header and one repository; largest remainder (a tie goes to the lower id, a larger remainder beats a lower id), exactly 60,000 on a skewed corpus, refusal of nothing to copy or too much already; pads in ascending id, cycling, rows once from 0, a share with no source refused; the 60-minute lease, a microsecond over failing; every truncated window listed (one per window of a shared representation) and kept out of the per-window accepted counts; a retry above 2,048 failing with the repository, path, start line and raw error |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake
@@ -233,3 +246,4 @@ against it (`AGENTS.md` §3.4).
 | 2026-11-03 | Amendment 1 §4: the query set, `query` with gupta958's join ruling, and `s2.fetch_issues` | — |
 | 2026-11-03 | ADR-0019's counters and counter checks (`s2.counters`). The backend thread preflight follows in the next part | — |
 | 2026-11-03 | The backend thread preflight (`s2.preflight`) | — |
+| 2026-11-08 | `s2.load_plan`: the corpus load's plan under Amendments 1-3 (sources, padding allocation and order, the lease check, the truncation report). The loader that runs it follows | — |
