@@ -84,3 +84,10 @@ check_pr_size: 413 lines. Trimmed tests that others already cover (a live tier a
 ### 2026-11-09T03:18:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:6dadd8b
 test(agreements): drop review bus gate tests that others already cover
 2 files changed, 3 insertions(+), 15 deletions(-)
+
+### 2026-11-09T03:18:27Z · HANDOFF · myan · claude-code/opus-5.5 · 01b3c0c
+Correction to the entry above: scripts/tests/reviewbus has 102 passing tests after the trim, not 99. make test before the trim: 617 passed, 43 skipped. 398 lines. PR open for gupta958 (human-only tier). Next, after the merge: state.py (the PR life cycle from comments) and github.py (every gh call, each with its role's GH_CONFIG_DIR and account check); Codex reviews each before its PR opens.
+
+### 2026-11-09T03:18:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:01b3c0c
+docs(agents): hand off the review bus gates task
+1 file changed, 3 insertions(+)
