@@ -40,3 +40,13 @@ scripts/tests/reviewbus: 160 passed (new: the empty home, XDG and gh directories
 ### 2026-11-09T04:25:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:9e5f868
 fix(agreements): review bus agents hide host logins, fence options, allow abstaining
 5 files changed, 126 insertions(+), 23 deletions(-)
+
+### 2026-11-09T04:39:02Z · DECIDE · myan · claude-code/opus-5.5 · 0045d5d
+Codex round 2: f2-f5 fixed; f1 still blocking, verified: the reviewer's token was a plain-text file the read-only sandbox could read by absolute path, and an encoded copy would pass the token scan into a public comment. Probed with 'codex sandbox' (no model, exit codes only): the plain-text hosts.yml was readable, the macOS keychain was not (security exit 44 inside, 0 outside), network and writes were denied. So the fix is where the credential lives, not code: with Myan, the reviewer login was redone by device code with keychain storage. After it: the reviewer directory answers as gupta958, the default is still Myan17, hosts.yml holds no oauth_token, and inside the sandbox 'gh auth token' exits 1 and the keychain lookup for gupta958 exits 44. Myan17's token was already in the keychain. Neither account's GitHub credential is now readable by the model. The cli doctor (next PR) will refuse to run when either login is stored in plain text.
+
+### 2026-11-09T04:39:02Z · EDIT · myan · claude-code/opus-5.5 · 0045d5d
+Size: 403 lines. Folded the failed-run test into the unusable-answer cases (fail=True when the answer is None); 160 tests still pass.
+
+### 2026-11-09T04:39:02Z · COMMIT · myan · claude-code/opus-5.5 · parent:0045d5d
+test(agreements): fold the failed codex run into the unusable-answer cases
+2 files changed, 8 insertions(+), 6 deletions(-)

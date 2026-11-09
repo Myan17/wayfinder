@@ -89,6 +89,7 @@ def test_pr_text_stays_inside_a_fence_it_cannot_close():
         ({"verdict": "approve", "findings": []}, "has fields"),  # Codex f4: no summary
         ({**CLEAN, "extra": 1}, "has fields"),
         ({**CLEAN, "summary": " "}, "no summary"),
+        (None, "CalledProcessError"),  # codex failed or timed out
         (
             {
                 **CLEAN,
@@ -110,12 +111,7 @@ def test_pr_text_stays_inside_a_fence_it_cannot_close():
 )
 def test_an_unusable_answer_raises_agent_error(answer, why):
     with pytest.raises(agents.AgentError, match=why):
-        review(FakeCodex(answer))
-
-
-def test_a_failed_or_timed_out_run_raises_agent_error():
-    with pytest.raises(agents.AgentError, match="CalledProcessError"):
-        review(FakeCodex(fail=True))
+        review(FakeCodex(answer, fail=answer is None))
 
 
 @pytest.mark.parametrize(
