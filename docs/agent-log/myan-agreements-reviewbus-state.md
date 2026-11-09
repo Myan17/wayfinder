@@ -33,3 +33,13 @@ scripts/tests/reviewbus: 112 passed (state: 12 — idle for no request or an old
 ### 2026-11-09T03:31:03Z · COMMIT · myan · claude-code/opus-5.5 · parent:20d7d25
 feat(agreements): review bus — one PR's state rebuilt from its comments
 3 files changed, 220 insertions(+)
+
+### 2026-11-09T03:33:28Z · EDIT · myan · claude-code/opus-5.5 · 814fa3f
+Codex round 1 (before the PR): changes, four blocking findings, each verified. (f1) an undisputed fix_pushed did not request the next round, so the loop stalled; it is now the next request. (f2) a later request overrode a needs_human result on the same head; that head is now closed to the bus, status needs_human. (f3) the author could restart rounds from 1 and escape rule 10; rounds must now count up by one from 1, a third failing round stops the PR, and only 'resume' resets the count. (f4) result field values were not checked; a result now needs the request's head, an int (not bool) round equal to the request's, and a verdict from gates.VERDICTS, and a bad one is skipped without consuming the request.
+
+### 2026-11-09T03:33:28Z · TEST · myan · claude-code/opus-5.5 · 814fa3f
+scripts/tests/reviewbus: 119 passed (new: a fix on a new head requests round 2 and takes its result; needs_human holds against a later request on that head but not a new head; round 1 repeated, a first request of round 2, three failing rounds stop, a third-round approve does not, a round-1 request after the stop does not reset, resume does; four malformed results skipped with a valid one after). ruff clean.
+
+### 2026-11-09T03:33:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:814fa3f
+fix(agreements): review bus state enforces rounds, needs_human and result fields
+3 files changed, 111 insertions(+), 25 deletions(-)
