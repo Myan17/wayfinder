@@ -54,3 +54,13 @@ Rebased onto main 32f665f (#119 merged), at Myan's request so #120 can merge. Ol
 ### 2026-11-09T02:27:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:a4eeada
 docs(agents): log the rebase of the review bus protocol task onto #119
 1 file changed, 3 insertions(+)
+
+### 2026-11-09T02:52:01Z · EDIT · myan · claude-code/opus-5.5 · 321ae05
+Codex (gpt-6.1-sol, read-only, run locally at Myan's request; nothing posted) returned changes with three blocking findings on 321ae05, each verified: (f1) a header whose type is a list or object raised TypeError before the author check, now Ignored; (f2) an empty security path list parsed as [''] and passed, and single-quoted paths kept their quotes, so tier.py now drops empty entries, strips either quote, refuses an unquoted path, and the empty list fails closed; (f3) the rule 11 mention was skipped when the text merely contained '@Gupta958' (e.g. '@Gupta958-other', in code, in an HTML comment), so build now always puts the mention on its own line first.
+
+### 2026-11-09T02:52:01Z · TEST · myan · claude-code/opus-5.5 · 321ae05
+scripts/tests/reviewbus: 39 passed (new: list, object and array headers ignored from Myan17 and a third account; five texts that once suppressed the mention, across escalate, confirm-only ruling, approve and needs_human; empty, empty-string and unquoted security path lists fail closed; a trailing comma keeps the path; single-quoted paths match). The real OWNERSHIP.md still yields 21 tier globs including all four security modules' paths. ruff clean.
+
+### 2026-11-09T02:52:01Z · COMMIT · myan · claude-code/opus-5.5 · parent:321ae05
+fix(agreements): review bus — malformed types ignored, tier fails closed on empty paths, mention on its own line
+5 files changed, 62 insertions(+), 18 deletions(-)

@@ -63,3 +63,28 @@ def test_a_missing_security_module_fails_closed():
 def test_the_real_ownership_file_reads():
     g = tier.globs()
     assert "db/**" in g and "scripts/reviewbus/**" in g
+
+
+@pytest.mark.parametrize(
+    "authz, why",
+    [
+        ("[]", r"no paths for security module\(s\) \['authz'\]"),
+        ('[""]', "not a quoted string"),
+        ("[apps/api/wayfinder/authz/**]", "not a quoted string"),
+        ('["apps/api/wayfinder/authz/**", ]', None),
+    ],
+)
+def test_an_empty_or_unreadable_security_path_list_fails_closed(authz, why):
+    text = OWNERSHIP.replace('["apps/api/wayfinder/authz/**", "docs/context/modules/authz.md"]', authz)
+    if why is None:  # a trailing comma is harmless and keeps the path
+        assert "apps/api/wayfinder/authz/**" in tier.globs(text)
+        return
+    with pytest.raises(ValueError, match=why):
+        tier.globs(text)
+
+
+def test_single_quoted_paths_are_read_without_their_quotes():
+    text = OWNERSHIP.replace('"apps/api/wayfinder/egress/**"', "'apps/api/wayfinder/egress/**'")
+    assert tier.human_only(["apps/api/wayfinder/egress/proxy.py"], tier.globs(text)) == [
+        "apps/api/wayfinder/egress/proxy.py"
+    ]

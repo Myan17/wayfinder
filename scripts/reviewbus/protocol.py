@@ -81,9 +81,8 @@ def build(type_: str, fields: dict, text: str, roster: str) -> str:
     header = json.dumps({"type": type_, **fields}, sort_keys=True, separators=(",", ":"))
     if "-->" in header:
         raise ValueError("a field contains '-->', which would end the header early")
-    mention = f"@{logins(roster)[REVIEWER]}"
-    if needs_human(type_, fields) and mention.lower() not in text.lower():
-        text = f"{mention} {text}"
+    if needs_human(type_, fields):  # its own line, first, whatever the text already says
+        text = f"@{logins(roster)[REVIEWER]}\n{text}"
     return f"<!-- reviewbus {VERSION} {header} -->\n{text}"
 
 
@@ -102,8 +101,9 @@ def parse(body: str, author: str, roster: str) -> Message | None:
             data = json.loads(h.group(1))
         except ValueError as e:
             raise Ignored(f"header is not JSON: {e}") from e
-        if not isinstance(data, dict) or data.get("type") not in TYPES or data["type"] in PLAIN:
-            raise Ignored(f"unknown message type: {data.get('type') if isinstance(data, dict) else data!r}")
+        kind = data.get("type") if isinstance(data, dict) else None
+        if not isinstance(kind, str) or kind not in TYPES or kind in PLAIN:
+            raise Ignored(f"unknown message type: {kind!r}")
         type_ = data.pop("type")
         if missing := TYPES[type_][0] - data.keys():
             raise Ignored(f"{type_} is missing {sorted(missing)}")

@@ -56,13 +56,17 @@ def test_ordinary_comments_are_not_bus_messages():
         ("<!-- reviewbus v1 not json -->", "unreadable header"),
         ("<!-- reviewbus v1 {nope} -->", "not JSON"),
         ('<!-- reviewbus v1 {"type":"approve_now"} -->', "unknown message type"),
+        ('<!-- reviewbus v1 {"type":[]} -->', "unknown message type"),
+        ('<!-- reviewbus v1 {"type":{"a":1}} -->', "unknown message type"),
+        ("<!-- reviewbus v1 [1] -->", "unreadable header"),
         ('<!-- reviewbus v1 {"type":"veto","id":"x"} -->', "unknown message type"),
         ('<!-- reviewbus v1 {"type":"review_request","pr":1} -->', "missing"),
     ],
 )
-def test_a_malformed_header_is_ignored(first, why):
-    with pytest.raises(p.Ignored, match=why):
-        p.parse(first, "Myan17", ROSTER)
+def test_a_malformed_header_is_ignored_never_a_crash(first, why):
+    for who in ("Myan17", "mallory"):
+        with pytest.raises(p.Ignored, match=why):
+            p.parse(first, who, ROSTER)
 
 
 def test_build_refuses_what_parse_would_ignore():
@@ -74,18 +78,21 @@ def test_build_refuses_what_parse_would_ignore():
         p.build("review_request", {**REQ, "head": "a --> b"}, "x", ROSTER)
 
 
-def test_every_request_for_a_human_decision_mentions_gupta958():
-    esc = p.build("escalate", {"pr": 1, "reason": "round 4", "question": "q"}, "Stopped.", ROSTER)
-    assert esc.splitlines()[1] == "@Gupta958 Stopped."
+def test_every_request_for_a_human_decision_mentions_gupta958_on_its_own_line():
+    esc = {"pr": 1, "reason": "round 4", "question": "q"}
     ruling = {"pr": 1, "id": "q1", "decision": "d", "rationale": "r", "model": "m", "binds_at": "t"}
-    assert "@Gupta958" in p.build("ruling", {**ruling, "confirm_only": True}, "Confirm?", ROSTER)
-    assert "@Gupta958" not in p.build("ruling", {**ruling, "confirm_only": False}, "Binds later.", ROSTER)
     result = {**REQ, "findings": [], "model": "m", "gates": {}}
-    assert "@Gupta958" in p.build("review_result", {**result, "verdict": "approve"}, "Would approve.", ROSTER)
+    asks = [
+        ("escalate", esc),
+        ("ruling", {**ruling, "confirm_only": True}),
+        ("review_result", {**result, "verdict": "approve"}),
+        ("review_result", {**result, "verdict": "needs_human"}),
+    ]
+    for text in ("Stopped.", "@Gupta958-other", "`@Gupta958`", "<!-- @Gupta958 -->", "@gupta958 x"):
+        for type_, fields in asks:
+            assert p.build(type_, fields, text, ROSTER).splitlines()[1] == "@Gupta958", (type_, text)
+    assert "@Gupta958" not in p.build("ruling", {**ruling, "confirm_only": False}, "Binds later.", ROSTER)
     assert "@Gupta958" not in p.build("review_result", {**result, "verdict": "changes"}, "Fix.", ROSTER)
-    assert (
-        p.build("escalate", {"pr": 1, "reason": "r", "question": "q"}, "@gupta958 x", ROSTER).count("@") == 1
-    )
 
 
 def test_the_header_is_one_line_of_sorted_json():

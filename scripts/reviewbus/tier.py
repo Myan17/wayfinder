@@ -35,7 +35,13 @@ def module_paths(ownership: str) -> dict[str, list[str]]:
     block = re.search(r"```yaml\n(.*?)```", ownership, re.S)
     if not block:
         raise ValueError("OWNERSHIP.md has no yaml block")
-    return {m: [p.strip().strip('"') for p in ps.split(",")] for m, ps in _MODULE.findall(block.group(1))}
+    out = {}
+    for module, raw in _MODULE.findall(block.group(1)):
+        paths = [p.strip() for p in raw.split(",") if p.strip()]
+        if any(len(p) < 3 or p[0] not in "\"'" or p[-1] != p[0] for p in paths):
+            raise ValueError(f"OWNERSHIP.md: {module} has a path that is not a quoted string: {raw!r}")
+        out[module] = [p[1:-1] for p in paths]
+    return out
 
 
 def globs(ownership: str | None = None) -> tuple[str, ...]:
