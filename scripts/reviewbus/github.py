@@ -22,6 +22,7 @@ Run = Callable[[list[str], dict[str, str], str | None], str]  # argv, env, stdin
 REPO = "Myan17/wayfinder"
 INHERITED = ("GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GH_CONFIG_DIR")
 _SHA = re.compile(r"[0-9a-f]{40}")
+VARIABLES = ("WAYFINDER_AGENT_APPROVAL", "WAYFINDER_AGENT_RULINGS")  # the only ones the bus reads
 
 
 class WrongAccount(RuntimeError):
@@ -66,6 +67,8 @@ class GitHub:
             raise ValueError(f"unknown role {role!r}")
         if role == protocol.REVIEWER and config_dir is None:
             raise ValueError("the reviewer needs its own gh config directory (REVIEW-BUS.md §6)")
+        if role == protocol.AUTHOR and config_dir is not None:
+            raise ValueError("the author uses gh's default directory, never another login's")
         self.role, self.account = role, protocol.logins(roster)[role]
         self.config_dir, self.run = config_dir, run
 
@@ -76,20 +79,21 @@ class GitHub:
             env["GH_CONFIG_DIR"] = str(Path(self.config_dir).expanduser())
         return env
 
-    def gh(self, *args: str, stdin: str | None = None) -> str:
+    def _gh(self, *args: str, stdin: str | None = None) -> str:
+        """Private: callers use the typed methods, which carry the account, role and commit checks."""
         return self.run(["gh", *args], self.env(), stdin)
 
     # reads
 
     def login(self) -> str:
-        return self.gh("api", "user", "--jq", ".login").strip()
+        return self._gh("api", "user", "--jq", ".login").strip()
 
     def open_pulls(self) -> list[dict]:
-        return json.loads(self.gh("pr", "list", "-R", REPO, "--state", "open", "--limit", "100",
+        return json.loads(self._gh("pr", "list", "-R", REPO, "--state", "open", "--limit", "100",
                                   "--json", "number,headRefOid"))  # fmt: skip
 
     def pull(self, n: int) -> dict:
-        raw = json.loads(self.gh("pr", "view", str(_number(n)), "-R", REPO, "--json",
+        raw = json.loads(self._gh("pr", "view", str(_number(n)), "-R", REPO, "--json",
                                  "headRefOid,files,body,statusCheckRollup"))  # fmt: skip
         return {
             "head": raw["headRefOid"],
@@ -99,14 +103,16 @@ class GitHub:
         }
 
     def comments(self, n: int) -> list[dict]:
-        out = self.gh("api", "--paginate", f"repos/{REPO}/issues/{_number(n)}/comments",
+        out = self._gh("api", "--paginate", f"repos/{REPO}/issues/{_number(n)}/comments",
                       "--jq", ".[] | {author: (.user.login // \"\"), body: (.body // \"\")}")  # fmt: skip
         return [json.loads(line) for line in out.splitlines() if line.strip()]
 
     def variable(self, name: str) -> str | None:
         """A repository variable, or None when unset or unreadable: callers treat None as `off`."""
+        if name not in VARIABLES:
+            raise ValueError(f"{name!r} is not one of the bus's variables {VARIABLES}")
         try:
-            return self.gh("variable", "get", name, "-R", REPO).strip()
+            return self._gh("variable", "get", name, "-R", REPO).strip()
         except subprocess.CalledProcessError:
             return None
 
@@ -120,7 +126,7 @@ class GitHub:
     def comment(self, n: int, body: str) -> None:
         _number(n)
         self.check_account()
-        self.gh("api", "-X", "POST", f"repos/{REPO}/issues/{n}/comments", "--input", "-",
+        self._gh("api", "-X", "POST", f"repos/{REPO}/issues/{n}/comments", "--input", "-",
                 stdin=json.dumps({"body": body}))  # fmt: skip
 
     def _reviewer_only(self, what: str) -> None:
@@ -133,7 +139,7 @@ class GitHub:
         _sha(sha)
         self._reviewer_only("approve")
         self.check_account()
-        self.gh("api", "-X", "POST", f"repos/{REPO}/pulls/{n}/reviews", "--input", "-",
+        self._gh("api", "-X", "POST", f"repos/{REPO}/pulls/{n}/reviews", "--input", "-",
                 stdin=json.dumps({"commit_id": sha, "event": "APPROVE", "body": body}))  # fmt: skip
 
     def merge(self, n: int, sha: str) -> None:
@@ -142,4 +148,4 @@ class GitHub:
         _sha(sha)
         self._reviewer_only("merge")
         self.check_account()
-        self.gh("pr", "merge", str(n), "-R", REPO, "--squash", "--match-head-commit", sha)
+        self._gh("pr", "merge", str(n), "-R", REPO, "--squash", "--match-head-commit", sha)

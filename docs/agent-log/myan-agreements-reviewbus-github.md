@@ -30,3 +30,13 @@ scripts/tests/reviewbus: 132 passed (github: 13 — each role's env carries only
 ### 2026-11-09T04:02:11Z · COMMIT · myan · claude-code/opus-5.5 · parent:7fa8252
 feat(agreements): review bus — every gh call under its role's login
 3 files changed, 316 insertions(+)
+
+### 2026-11-09T04:04:39Z · EDIT · myan · claude-code/opus-5.5 · 816b1c1
+Codex round 1 (before the PR): changes. (f1, blocking, verified) the public gh() method let a caller run any gh command, a merge included, with no account, role or commit check, and an author could be built with the reviewer's config directory; gh is now private (_gh), the public surface is pinned by a test, and an author with any config directory is refused. (f2, minor, verified) variable('--help') became a gh flag; variable() now accepts only the bus's two variables.
+
+### 2026-11-09T04:04:39Z · TEST · myan · claude-code/opus-5.5 · 816b1c1
+scripts/tests/reviewbus: 133 passed (new: the author refused another login's directory; the public method set pinned; --help, an unknown name and an injected --repo refused by variable). ruff clean.
+
+### 2026-11-09T04:04:39Z · COMMIT · myan · claude-code/opus-5.5 · parent:816b1c1
+fix(agreements): review bus github.py has no raw gh call and reads only its variables
+3 files changed, 44 insertions(+), 10 deletions(-)

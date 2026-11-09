@@ -54,6 +54,24 @@ def test_the_reviewer_needs_its_own_config_directory():
         github.GitHub(protocol.REVIEWER, ROSTER)
     with pytest.raises(ValueError, match="unknown role"):
         github.GitHub("admin", ROSTER)
+    with pytest.raises(ValueError, match="never another login"):
+        github.GitHub(protocol.AUTHOR, ROSTER, Path("/tmp/gh-reviewer"))
+
+
+def test_there_is_no_public_raw_gh_call():  # Codex f1: every write goes through a checked method
+    public = {n for n in vars(github.GitHub) if not n.startswith("_")}
+    assert public == {
+        "env",
+        "login",
+        "open_pulls",
+        "pull",
+        "comments",
+        "variable",
+        "check_account",
+        "comment",
+        "approve",
+        "merge",
+    }
 
 
 def test_a_role_logged_in_as_the_other_account_writes_nothing(tmp_path):
@@ -140,4 +158,8 @@ def test_an_unreadable_variable_is_none_so_callers_treat_it_as_off(tmp_path):
     assert (
         reviewer(FakeGh("gupta958", fail={"variable"}), tmp_path).variable("WAYFINDER_AGENT_APPROVAL") is None
     )
-    assert reviewer(FakeGh("gupta958", {"variable": "shadow\n"}), tmp_path).variable("X") == "shadow"
+    gh = reviewer(FakeGh("gupta958", {"variable": "shadow\n"}), tmp_path)
+    assert gh.variable("WAYFINDER_AGENT_RULINGS") == "shadow"
+    for name in ("--help", "X", "WAYFINDER_AGENT_APPROVAL --repo evil/x"):  # Codex f2
+        with pytest.raises(ValueError, match="not one of the bus's variables"):
+            gh.variable(name)
