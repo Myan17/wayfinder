@@ -1,0 +1,32 @@
+# Task log — myan-agreements-reviewbus-gates
+
+| Field | Value |
+|---|---|
+| Task | Review bus PR 2b: the approval gates (ADR-0021 rules 4, 5 and 10; off-plan, directed by Myan) |
+| Module | agreements |
+| Branch | `myan/agreements/reviewbus-gates` |
+| Worktree | `../wayfinder-wt/myan-agreements-reviewbus-gates` |
+| Operator | myan |
+| Agent | claude-code/opus-5.5 |
+| Session | 2026-11-09T03:00Z/28821 |
+| Started | 2026-11-09T03:04:08Z |
+| Closed when | the last entry says TASK CLOSED (the header is never edited - this file is append-only) |
+
+**Append-only.** Corrections are new entries. Entries are written by `scripts/log.sh` and the
+`post-commit` hook; CI rejects a rewritten log (`scripts/check_agent_log.py`).
+
+## Cards read
+
+- (listed by `new-task.sh`; add any you read later as `READ` entries)
+
+## Timeline
+
+### 2026-11-09T03:04:46Z · PLAN · myan · claude-code/opus-5.5 · 5427abb
+REVIEW-BUS.md §10 PR 2, second part (off-plan; Myan's direction, quoted in myan-agreements-reviewbus-protocol's DECIDE: "Build the bus now"). scripts/reviewbus/gates.py: rule 5's six gates (a mode on, b no human-only path, c every required check green on the reviewed head and the head unmoved, d the verdict parses and has no blocking finding, e the description names the reviewed head, f round 1 to 3), each (ok, reason), and decide(): off does nothing, round over 3 escalates (rule 10), a malformed verdict or needs_human goes to a human, changes or a blocking finding requests changes in shadow and on (rule 4), shadow stops at would_approve, on approves only when all six hold. Written in #120's task and held back for size. Hardened before review: an empty tier or empty required-check list fails its gate, the description must name the head as a whole hex word, and a round that is not an int from 1 to 3 fails. Codex reviews it read-only before the PR opens, so the reviewer approves only the final head.
+
+### 2026-11-09T03:04:46Z · TEST · myan · claude-code/opus-5.5 · 5427abb
+scripts/tests/reviewbus: 69 passed (gates: 38, including the new empty-tier, empty-required, prefixed and suffixed sha, full and 12-character names, and rounds 0, "1" and True). ruff clean.
+
+### 2026-11-09T03:04:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:5427abb
+feat(agreements): review bus — the approval gates and decide()
+3 files changed, 293 insertions(+)
