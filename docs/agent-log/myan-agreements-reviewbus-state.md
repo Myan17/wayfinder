@@ -43,3 +43,10 @@ scripts/tests/reviewbus: 119 passed (new: a fix on a new head requests round 2 a
 ### 2026-11-09T03:33:28Z · COMMIT · myan · claude-code/opus-5.5 · parent:814fa3f
 fix(agreements): review bus state enforces rounds, needs_human and result fields
 3 files changed, 111 insertions(+), 25 deletions(-)
+
+### 2026-11-09T03:37:27Z · HANDOFF · myan · claude-code/opus-5.5 · 9d62c34
+Codex round 2: approve, no findings. make test above. PR open for gupta958 (human-only tier), with one question: restart a stopped PR only on 'resume' (this PR) versus any comment from Myan (REVIEW-BUS.md wording). Next, after the merge: github.py, every gh call with its role's GH_CONFIG_DIR and account check, Codex-reviewed before its PR opens.
+
+### 2026-11-09T03:37:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:9d62c34
+docs(agents): hand off the review bus state task
+1 file changed, 3 insertions(+)
