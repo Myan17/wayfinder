@@ -64,3 +64,13 @@ scripts/tests/reviewbus: 39 passed (new: list, object and array headers ignored 
 ### 2026-11-09T02:52:01Z · COMMIT · myan · claude-code/opus-5.5 · parent:321ae05
 fix(agreements): review bus — malformed types ignored, tier fails closed on empty paths, mention on its own line
 5 files changed, 62 insertions(+), 18 deletions(-)
+
+### 2026-11-09T02:53:50Z · EDIT · myan · claude-code/opus-5.5 · d081c5a
+Codex round 2 on d081c5a: f1 and f3 fixed; f2 still open, verified: a YAML escape such as \u0061 inside a quoted path was kept literally, so the glob never matched. tier.py now accepts only paths of [A-Za-z0-9._/*-] and refuses anything else; all 19 modules' real paths fit.
+
+### 2026-11-09T02:53:50Z · TEST · myan · claude-code/opus-5.5 · d081c5a
+scripts/tests/reviewbus: 42 passed (new: an escaped path, a single-quote escape and trailing spaces each fail closed). ruff clean.
+
+### 2026-11-09T02:53:51Z · COMMIT · myan · claude-code/opus-5.5 · parent:d081c5a
+fix(agreements): review bus tier refuses any path outside plain characters
+3 files changed, 16 insertions(+), 1 deletion(-)

@@ -27,6 +27,7 @@ RULES = (
 )
 BUS = ("scripts/reviewbus/**", "scripts/tests/reviewbus/**")
 
+_PLAIN_PATH = re.compile(r"[A-Za-z0-9._/*-]+")
 _MODULE = re.compile(r"^\s{2}([a-z0-9-]+):\s*\{owner:\s*[^,]+,\s*paths:\s*\[(.*?)\]\}", re.M)
 
 
@@ -40,7 +41,12 @@ def module_paths(ownership: str) -> dict[str, list[str]]:
         paths = [p.strip() for p in raw.split(",") if p.strip()]
         if any(len(p) < 3 or p[0] not in "\"'" or p[-1] != p[0] for p in paths):
             raise ValueError(f"OWNERSHIP.md: {module} has a path that is not a quoted string: {raw!r}")
-        out[module] = [p[1:-1] for p in paths]
+        inner = [p[1:-1] for p in paths]
+        if odd := [p for p in inner if not _PLAIN_PATH.fullmatch(p)]:
+            # escapes, spaces and other YAML string syntax are refused rather than half-parsed: a path
+            # read differently from what YAML means would silently leave files out of the tier
+            raise ValueError(f"OWNERSHIP.md: {module} has a path outside [A-Za-z0-9._/*-]: {odd}")
+        out[module] = inner
     return out
 
 

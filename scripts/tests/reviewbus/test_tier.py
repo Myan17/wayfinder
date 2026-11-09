@@ -71,6 +71,9 @@ def test_the_real_ownership_file_reads():
         ("[]", r"no paths for security module\(s\) \['authz'\]"),
         ('[""]', "not a quoted string"),
         ("[apps/api/wayfinder/authz/**]", "not a quoted string"),
+        ('["apps/\\u0061pi/wayfinder/authz/**"]', "outside"),
+        ("['apps/api/it''s/**']", "outside"),
+        ('["apps/api/wayfinder/authz/**  "]', "outside"),
         ('["apps/api/wayfinder/authz/**", ]', None),
     ],
 )
