@@ -69,11 +69,22 @@ def switch(r: Review) -> tuple[bool, str]:
     return r.mode == "on", f"WAYFINDER_AGENT_APPROVAL is {r.mode}"
 
 
+def canonical(path: object) -> bool:
+    """A repository-relative path as git prints it: no leading ./ or /, no . or .. segment, no
+    doubled or trailing slash, no backslash. Anything else could slip past a tier glob."""
+    return (
+        isinstance(path, str)
+        and bool(path)
+        and "\\" not in path
+        and all(part not in ("", ".", "..") for part in path.split("/"))
+    )
+
+
 def no_tier_path(r: Review) -> tuple[bool, str]:
-    if isinstance(r.files, (str, bytes)) or not r.files:
+    if not isinstance(r.files, (list, tuple)) or not r.files:
         return False, "no list of changed files was given; refusing rather than treating none as safe"
-    if any(not isinstance(f, str) or not f for f in r.files):
-        return False, f"the changed files are not all non-empty paths: {list(r.files)!r}"
+    if odd := [f for f in r.files if not canonical(f)]:
+        return False, f"changed paths not in canonical repository-relative form: {odd!r}"
     if not r.tier:
         return False, "no human-only tier was given; refusing rather than treating every path as safe"
     hits = tier_.human_only(r.files, r.tier)

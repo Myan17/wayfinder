@@ -40,3 +40,13 @@ scripts/tests/reviewbus: 80 passed (new: empty, string and empty-entry files; em
 ### 2026-11-09T03:06:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:e3b72d5
 fix(agreements): review bus gates refuse missing heads, files and finding fields
 3 files changed, 47 insertions(+), 4 deletions(-)
+
+### 2026-11-09T03:07:50Z · EDIT · myan · claude-code/opus-5.5 · 4934ea0
+Codex round 2: f1 and f3 fixed; f2 still open, verified: an iterator of files was consumed by validation before the tier check, and './db/...' passed the db/** glob. Gate b now takes only a non-empty list or tuple of canonical repository-relative paths (no leading ./ or /, no . or .. segment, no doubled or trailing slash, no backslash).
+
+### 2026-11-09T03:07:50Z · TEST · myan · claude-code/opus-5.5 · 4934ea0
+scripts/tests/reviewbus: 88 passed (new: an iterator, a set, ./, /, .., //, a trailing slash and backslashes, each failing gate b). ruff clean.
+
+### 2026-11-09T03:07:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:4934ea0
+fix(agreements): review bus gate b takes only canonical repository paths
+3 files changed, 28 insertions(+), 3 deletions(-)
