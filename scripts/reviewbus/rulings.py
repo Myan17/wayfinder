@@ -12,12 +12,14 @@ model, and in doubt a ruling is confirm-only.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 
 from reviewbus import protocol, tier
 
 VETO_WINDOW = timedelta(hours=12)
+_TIME = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
 ABSTAIN = "needs_human"
 LABELS = frozenset(
     {"bus", "agents-md", "codeowners", "roster", "gate-date", "cut", "authz", "egress", "acceptance-rule"}
@@ -27,7 +29,9 @@ RULE_PATHS = (
     "AGENTS.md",
     ".github/CODEOWNERS",
     "docs/team/ROSTER.md",
-    "docs/adr/ADR-0021-review-bus.md",
+    "docs/DESIGN.md",  # gate dates and §19.8 cuts
+    "ORIENT.md",  # gate dates and the work order
+    "docs/adr/**",  # acceptance rules, ADR-0021 included
     "docs/team/REVIEW-BUS.md",
     "scripts/reviewbus/**",
     "scripts/tests/reviewbus/**",
@@ -36,7 +40,7 @@ RULE_PATHS = (
 
 def parse_time(value: object) -> datetime:
     """GitHub's `2026-11-09T05:23:00Z`, strictly; anything else raises ValueError."""
-    if type(value) is not str or not value.endswith("Z") or len(value) != 20:
+    if type(value) is not str or not _TIME.fullmatch(value):
         raise ValueError(f"{value!r} is not a UTC timestamp like 2026-11-09T05:23:00Z")
     return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 

@@ -43,12 +43,19 @@ def test_an_ordinary_label_on_an_ordinary_path_may_bind():
         [".github/CODEOWNERS"],
         ["docs/team/ROSTER.md"],
         ["docs/adr/ADR-0021-review-bus.md"],
+        ["docs/adr/ADR-0019-s2.md"],  # acceptance rules (Codex f1)
+        ["docs/DESIGN.md"],  # gate dates and §19.8 cuts (Codex f1)
+        ["ORIENT.md"],
         ["apps/api/wayfinder/authz/predicate.py"],
         ["eval/harness/x.py", "apps/api/wayfinder/egress/proxy.py"],
     ],
 )
 def test_a_pr_touching_the_bus_its_rules_authz_or_egress_is_confirm_only_whatever_the_labels(files):
     assert only(["design"], files)
+
+
+def test_an_unlabeled_gate_date_or_cut_question_on_design_is_confirm_only():  # Codex f1
+    assert only([], ["docs/DESIGN.md"]) and only(["schedule"], ["docs/DESIGN.md"])
 
 
 def test_an_unlabeled_question_on_any_human_only_path_is_confirm_only():
@@ -112,7 +119,14 @@ def test_an_abstained_ruling_never_binds():
 
 
 def test_bad_times_and_fields_are_refused():
-    for bad in ("2026-11-09 05:00:00", "2026-11-09T05:00:00+00:00", "", None):
+    for bad in (
+        "2026-11-09 05:00:00",
+        "2026-11-09T05:00:00+00:00",
+        "",
+        None,
+        "2026-11- 9T05:00:00Z",
+        "2026-11-09t05:00:00Z",
+    ):
         with pytest.raises(ValueError):
             rulings.binds_at(bad)
     with pytest.raises(ValueError, match="confirm_only"):

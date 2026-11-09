@@ -30,3 +30,13 @@ scripts/tests/reviewbus: 190 passed (rulings: 30 — each of the nine confirm-on
 ### 2026-11-09T05:54:31Z · COMMIT · myan · claude-code/opus-5.5 · parent:28f5ac1
 feat(agreements): review bus — when a ruling binds, and which only Myan can bind
 3 files changed, 245 insertions(+)
+
+### 2026-11-09T05:56:18Z · EDIT · myan · claude-code/opus-5.5 · fa2eac0
+Codex round 1 (before the PR): changes. (f1, blocking, verified) an unlabeled ruling on docs/DESIGN.md could bind by silence, though DESIGN holds the gate dates and the §19.8 cuts; the always-confirm-only paths now include docs/DESIGN.md, ORIENT.md and all of docs/adr/** (acceptance rules), erring safe as rule 7 asks. (f2, minor, verified) the timestamp parser accepted '2026-11- 9' and a lowercase t; it now fullmatches YYYY-MM-DDTHH:MM:SSZ in ASCII digits.
+
+### 2026-11-09T05:56:18Z · TEST · myan · claude-code/opus-5.5 · fa2eac0
+scripts/tests/reviewbus: 194 passed (new: an ADR, DESIGN and ORIENT path confirm-only whatever the labels; an unlabeled or schedule-labeled DESIGN question confirm-only; the two loose timestamps refused). ruff clean.
+
+### 2026-11-09T05:56:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:fa2eac0
+fix(agreements): review bus rulings protect DESIGN, ORIENT and ADRs, and parse times exactly
+3 files changed, 27 insertions(+), 3 deletions(-)
