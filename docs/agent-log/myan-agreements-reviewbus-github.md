@@ -40,3 +40,10 @@ scripts/tests/reviewbus: 133 passed (new: the author refused another login's dir
 ### 2026-11-09T04:04:39Z · COMMIT · myan · claude-code/opus-5.5 · parent:816b1c1
 fix(agreements): review bus github.py has no raw gh call and reads only its variables
 3 files changed, 44 insertions(+), 10 deletions(-)
+
+### 2026-11-09T04:07:56Z · HANDOFF · myan · claude-code/opus-5.5 · e95326d
+Codex round 2: approve, no findings. make test above. PR open for gupta958 (human-only tier). Next, after the merge: REVIEW-BUS PR 3, split for size: agents.py (codex exec read-only, JSON verdict and ruling parsing) with prompts/review.md and prompts/ruling.md; then rulings.py (confirm-only marking, binds_at, veto and confirm) and reviewer.py with cli.py (doctor, once --dry-run, watch) and the example config and launchd entry.
+
+### 2026-11-09T04:07:56Z · COMMIT · myan · claude-code/opus-5.5 · parent:e95326d
+docs(agents): hand off the review bus github task
+1 file changed, 3 insertions(+)
