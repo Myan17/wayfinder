@@ -25,37 +25,21 @@ from reviewbus import gates
 PROMPTS = Path(__file__).resolve().parent / "prompts"
 TIMEOUT_S = 1800
 SECRETS = ("GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GH_CONFIG_DIR")
-FINDING = {
-    "type": "object",
-    "additionalProperties": False,
-    "required": ["id", "file", "line", "severity", "blocking", "text"],
-    "properties": {
-        "id": {"type": "string"},
-        "file": {"type": "string"},
-        "line": {"type": ["integer", "null"]},
-        "severity": {"type": "string", "enum": list(gates.SEVERITIES)},
-        "blocking": {"type": "boolean"},
-        "text": {"type": "string"},
-    },
-}
+S = {"type": "string"}
+
+
+def obj(required: list[str], **properties: dict) -> dict:
+    return {"type": "object", "additionalProperties": False, "required": required, "properties": properties}
+
+
+FINDING = obj(["id", "file", "line", "severity", "blocking", "text"], id=S, file=S,
+              line={"type": ["integer", "null"]}, severity={**S, "enum": list(gates.SEVERITIES)},
+              blocking={"type": "boolean"}, text=S)  # fmt: skip
 SCHEMAS = {
-    "review": {
-        "type": "object",
-        "additionalProperties": False,
-        "required": ["verdict", "findings", "summary"],
-        "properties": {
-            "verdict": {"type": "string", "enum": list(gates.VERDICTS)},
-            "findings": {"type": "array", "items": FINDING},
-            "summary": {"type": "string"},
-        },
-    },
-    "ruling": {
-        "type": "object",
-        "additionalProperties": False,
-        "required": ["decision", "rationale"],
-        "properties": {"decision": {"type": "string"}, "rationale": {"type": "string"}},
-    },
-}
+    "review": obj(["verdict", "findings", "summary"], verdict={**S, "enum": list(gates.VERDICTS)},
+                  findings={"type": "array", "items": FINDING}, summary=S),
+    "ruling": obj(["decision", "rationale"], decision=S, rationale=S),
+}  # fmt: skip
 Run = Callable[[list[str], dict[str, str]], None]  # argv, env; raises on failure
 
 
@@ -69,8 +53,13 @@ class AgentError(RuntimeError):
     """The model gave no usable answer; the watcher hands the PR to a human."""
 
 
-def check_ids(pr: object, head: object, base: object) -> None:
-    """The values placed outside the fence must be what they claim: a PR number and two commit shas."""
+def check_ids(pr: object, head: object, base: object, visibility: object) -> None:
+    """Public repositories only (Myan, 2026-11-09): a PR's code and text go to ChatGPT, so a private
+    repository's never do. And the values outside the fence must be a PR number and two commit shas."""
+    if visibility != "public":
+        raise AgentError(
+            f"repository visibility is {visibility!r}; the bus sends only public repositories to the model"
+        )
     if type(pr) is not int or pr < 1:
         raise AgentError(f"pull request number {pr!r} is not a positive integer")
     for name, sha in (("head", head), ("base", base)):
@@ -135,10 +124,18 @@ def ask(kind: str, workdir: Path, text: str, model: str | None, run: Run) -> dic
 
 
 def review(
-    workdir: Path, pr: int, head: str, base: str, data: str, *, model=None, run=subprocess_run
+    workdir: Path,
+    pr: int,
+    head: str,
+    base: str,
+    data: str,
+    *,
+    visibility: str,
+    model=None,
+    run=subprocess_run,
 ) -> dict:
     """The model's verdict on the checkout at `workdir`, checked against gates' schema."""
-    check_ids(pr, head, base)
+    check_ids(pr, head, base, visibility)
     answer = ask(
         "review", workdir, prompt("review", {"pr": str(pr), "head": head, "base": base}, data), model, run
     )
@@ -159,11 +156,12 @@ def ruling(
     options: Sequence[str],
     data: str,
     *,
+    visibility: str,
     model=None,
     run=subprocess_run,
 ) -> dict:
     """The model's decision: one of `options` exactly, or `needs_human`, which never binds."""
-    check_ids(pr, head, head)
+    check_ids(pr, head, head, visibility)
     if type(question_id) is not str or not _ID.fullmatch(question_id):
         raise AgentError(f"question id {question_id!r} is not 1-32 of [A-Za-z0-9._-]")
     if type(options) is not list or not options or any(type(o) is not str or not o for o in options):

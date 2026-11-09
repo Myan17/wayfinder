@@ -57,3 +57,17 @@ Codex round 3: approve, no findings. make test above. PR open for gupta958 (huma
 ### 2026-11-09T04:42:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:4a36cfd
 docs(agents): hand off the review bus agents task
 1 file changed, 3 insertions(+)
+
+### 2026-11-09T05:01:56Z · COMMIT · myan · human · parent:7ac48e4
+tmp-size-check
+2 files changed, 25 insertions(+), 9 deletions(-)
+
+### 2026-11-09T05:02:42Z · DECIDE · myan · claude-code/opus-5.5 · 7ac48e4
+Myan, reviewing #124 before approving: "No I agree and add the line public repository only". review() and ruling() now take a required visibility and refuse anything but 'public' before codex runs, since a PR's code and text go to ChatGPT. The watcher passes the repository's visibility from gh in the next PR.
+
+### 2026-11-09T05:02:42Z · EDIT · myan · claude-code/opus-5.5 · 7ac48e4
+visibility added to check_ids, with private, internal and missing visibility refused before codex runs (folded into the existing outside-the-fence test). The JSON schemas are built with a small obj() helper, the same schema byte for byte, to stay under 400 lines. 160 tests pass; ruff clean.
+
+### 2026-11-09T05:02:42Z · COMMIT · myan · claude-code/opus-5.5 · parent:7ac48e4
+feat(agreements): review bus sends only public repositories to the model
+3 files changed, 51 insertions(+), 42 deletions(-)
