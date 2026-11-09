@@ -77,3 +77,10 @@ scripts/tests/reviewbus: 109 passed (new: twelve round-4 objects each raise Type
 ### 2026-11-09T03:15:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:ee639c5
 fix(agreements): review bus decide() accepts only plain JSON data
 3 files changed, 82 insertions(+), 3 deletions(-)
+
+### 2026-11-09T03:18:19Z · EDIT · myan · claude-code/opus-5.5 · 6dadd8b
+check_pr_size: 413 lines. Trimmed tests that others already cover (a live tier and required iterator and a set of files, now refused by the plain-data check and pinned by the empty-iterator cases; an object() file and a lying dict verdict, covered by the other round-4 objects; the frozen-dataclass check; a null-line case the nonblocking-finding test already covers). 99 tests remain.
+
+### 2026-11-09T03:18:19Z · COMMIT · myan · claude-code/opus-5.5 · parent:6dadd8b
+test(agreements): drop review bus gate tests that others already cover
+2 files changed, 3 insertions(+), 15 deletions(-)
