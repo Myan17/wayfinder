@@ -94,9 +94,10 @@ class GitHub:
 
     def pull(self, n: int) -> dict:
         raw = json.loads(self._gh("pr", "view", str(_number(n)), "-R", REPO, "--json",
-                                 "headRefOid,files,body,statusCheckRollup"))  # fmt: skip
+                                 "headRefOid,baseRefOid,files,body,statusCheckRollup"))  # fmt: skip
         return {
             "head": raw["headRefOid"],
+            "base": raw["baseRefOid"],
             "files": [f["path"] for f in raw.get("files") or []],
             "body": raw.get("body") or "",
             "checks": conclusions(raw.get("statusCheckRollup") or []),
@@ -106,6 +107,10 @@ class GitHub:
         out = self._gh("api", "--paginate", f"repos/{REPO}/issues/{_number(n)}/comments",
                       "--jq", ".[] | {author: (.user.login // \"\"), body: (.body // \"\")}")  # fmt: skip
         return [json.loads(line) for line in out.splitlines() if line.strip()]
+
+    def visibility(self) -> str:
+        """`public`, `private` or `internal`, lowercased; agents.review sends only public ones."""
+        return json.loads(self._gh("repo", "view", REPO, "--json", "visibility"))["visibility"].lower()
 
     def variable(self, name: str) -> str | None:
         """A repository variable, or None when unset or unreadable: callers treat None as `off`."""
