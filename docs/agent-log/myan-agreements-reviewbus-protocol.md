@@ -40,3 +40,10 @@ check_pr_size: 578 lines with gates, over 400. Split again: this PR is protocol 
 ### 2026-11-09T01:58:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:3e41c5c
 feat(agreements): review bus — message protocol and human-only tier
 6 files changed, 376 insertions(+)
+
+### 2026-11-09T01:58:34Z · HANDOFF · myan · claude-code/opus-5.5 · 7dc5fcf
+PR open for gupta958 (human-only tier: scripts/reviewbus/**). Open question in the brief: ADR-0021 rule 8 lets only Myan17 send escalate, but REVIEW-BUS.md §3 says either, and §2 has the reviewer escalating on errors; protocol.py follows the ADR. Next, after the merge: gates.py and test_gates.py (kept in the session scratchpad, 240 lines, 21 passing tests), then state.py and github.py, then agents, rulings, reviewer, prompts and cli, then review_handoff request/ruling-request. S2 (item 7) resumes when Myan says.
+
+### 2026-11-09T01:58:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:7dc5fcf
+docs(agents): hand off the review bus protocol task
+1 file changed, 3 insertions(+)
