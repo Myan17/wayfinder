@@ -17,6 +17,8 @@ MODES = ("off", "shadow", "on")
 VERDICTS = ("approve", "changes", "needs_human")
 MAX_ROUND = 3
 FINDING = {"id": str, "file": str, "severity": str, "blocking": bool, "text": str}
+SEVERITIES = ("high", "medium", "low")
+_SHA = re.compile(r"[0-9a-f]{40}")
 # actions, from least to most the watcher may do
 NONE, ESCALATE, NEEDS_HUMAN, REQUEST_CHANGES, WOULD_APPROVE, APPROVE = (
     "none", "escalate", "needs_human", "request_changes", "would_approve", "approve_and_merge",
@@ -52,8 +54,10 @@ def verdict_problem(v: object) -> str | None:
         for key, kind in FINDING.items():
             if type(f.get(key)) is not kind:
                 return f"finding {i} has no {kind.__name__} {key!r}"
-        if not (f.get("line") is None or type(f.get("line")) is int):
-            return f"finding {i} has a line that is not an integer"
+        if f["severity"] not in SEVERITIES:
+            return f"finding {i} has severity {f['severity']!r}, not one of {SEVERITIES}"
+        if "line" not in f or not (f["line"] is None or (type(f["line"]) is int and f["line"] >= 1)):
+            return f"finding {i} needs a line that is null or a positive integer"
     return None
 
 
@@ -66,13 +70,26 @@ def switch(r: Review) -> tuple[bool, str]:
 
 
 def no_tier_path(r: Review) -> tuple[bool, str]:
+    if isinstance(r.files, (str, bytes)) or not r.files:
+        return False, "no list of changed files was given; refusing rather than treating none as safe"
+    if any(not isinstance(f, str) or not f for f in r.files):
+        return False, f"the changed files are not all non-empty paths: {list(r.files)!r}"
     if not r.tier:
         return False, "no human-only tier was given; refusing rather than treating every path as safe"
     hits = tier_.human_only(r.files, r.tier)
     return not hits, f"human-only tier: {hits}" if hits else "no human-only path"
 
 
+def heads_problem(r: Review) -> str | None:
+    for name in ("reviewed_head", "pr_head"):
+        if not isinstance(getattr(r, name), str) or not _SHA.fullmatch(getattr(r, name)):
+            return f"{name} {getattr(r, name)!r} is not a full commit sha"
+    return None
+
+
 def checks_green(r: Review) -> tuple[bool, str]:
+    if problem := heads_problem(r):
+        return False, problem
     if r.pr_head != r.reviewed_head:
         return False, f"the head moved from {r.reviewed_head[:7]} to {r.pr_head[:7]} after the review"
     if not r.required:
@@ -90,6 +107,8 @@ def verdict_clean(r: Review) -> tuple[bool, str]:
 
 def description_current(r: Review) -> tuple[bool, str]:
     """The description names the reviewed head: at least its first 7 characters, as a whole word."""
+    if problem := heads_problem(r):
+        return False, problem
     short = r.reviewed_head[:7]
     named = re.search(rf"(?<![0-9a-f]){re.escape(short)}[0-9a-f]*(?![0-9a-f])", r.description)
     ok = bool(named) and r.reviewed_head.startswith(named.group(0))

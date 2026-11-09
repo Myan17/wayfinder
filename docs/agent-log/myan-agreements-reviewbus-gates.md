@@ -30,3 +30,13 @@ scripts/tests/reviewbus: 69 passed (gates: 38, including the new empty-tier, emp
 ### 2026-11-09T03:04:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:5427abb
 feat(agreements): review bus — the approval gates and decide()
 3 files changed, 293 insertions(+)
+
+### 2026-11-09T03:06:34Z · EDIT · myan · claude-code/opus-5.5 · e3b72d5
+Codex round 1 (gpt-6.1-sol, read-only, before the PR opened) returned changes with three blocking findings, each verified: (f1) empty or non-hex heads passed gates c and e, so both heads must now be full 40-character lowercase shas; (f2) a bare string or empty files list passed gate b, so files must be a non-empty list of non-empty paths; (f3) a finding with an unknown severity or no line field passed gate d, so severity must be high, medium or low and line must be present, null or a positive integer.
+
+### 2026-11-09T03:06:34Z · TEST · myan · claude-code/opus-5.5 · e3b72d5
+scripts/tests/reviewbus: 80 passed (new: empty, string and empty-entry files; empty, short, one-character and uppercase heads; line 0, absent line and garbage severity; a nonblocking finding still approves). ruff clean.
+
+### 2026-11-09T03:06:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:e3b72d5
+fix(agreements): review bus gates refuse missing heads, files and finding fields
+3 files changed, 47 insertions(+), 4 deletions(-)

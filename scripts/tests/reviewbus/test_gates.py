@@ -10,6 +10,7 @@ from reviewbus import gates as g
 HEAD = "a" * 40
 TIER = ("db/**", "scripts/reviewbus/**")
 CLEAN = {"verdict": "approve", "findings": []}
+NOTE = {"id": "n1", "file": "x.py", "line": None, "severity": "low", "blocking": False, "text": "nit"}
 BLOCKER = {"id": "f1", "file": "x.py", "line": 3, "severity": "high", "blocking": True, "text": "bug"}
 
 
@@ -48,6 +49,13 @@ def test_every_gate_passing_in_on_mode_approves_and_merges():
         (dict(description=f"head `b{HEAD[:7]}`"), "e"),
         (dict(description=f"head `{HEAD[:7]}b`"), "e"),
         (dict(tier=()), "b"),
+        (dict(files=[]), "b"),
+        (dict(files="db/migrations/0009.sql"), "b"),
+        (dict(files=["ok.py", ""]), "b"),
+        (dict(reviewed_head="", pr_head="", description=""), "c"),
+        (dict(reviewed_head="x", pr_head="x", description="x"), "c"),
+        (dict(reviewed_head=HEAD[:7], pr_head=HEAD[:7]), "c"),
+        (dict(reviewed_head="A" * 40, pr_head="A" * 40, description="AAAAAAA"), "e"),
         (dict(required=[], checks={}), "c"),
     ],
 )
@@ -98,7 +106,13 @@ def test_round_four_escalates_whatever_the_verdict():
         ({"verdict": "approve"}, "findings is not a list"),
         ({"verdict": "approve", "findings": ["bad"]}, "finding 0 is not an object"),
         ({"verdict": "approve", "findings": [{**BLOCKER, "blocking": "yes"}]}, "no bool 'blocking'"),
-        ({"verdict": "approve", "findings": [{**BLOCKER, "line": "3"}]}, "line that is not an integer"),
+        ({"verdict": "approve", "findings": [{**BLOCKER, "line": "3"}]}, "null or a positive integer"),
+        ({"verdict": "approve", "findings": [{**BLOCKER, "line": 0}]}, "null or a positive integer"),
+        ({"verdict": "approve", "findings": [{**NOTE, "severity": "garbage"}]}, "severity 'garbage'"),
+        (
+            {"verdict": "approve", "findings": [{k: v for k, v in NOTE.items() if k != "line"}]},
+            "null or a positive integer",
+        ),
     ],
 )
 def test_a_malformed_verdict_goes_to_a_human_and_never_approves(verdict, problem):
@@ -107,7 +121,11 @@ def test_a_malformed_verdict_goes_to_a_human_and_never_approves(verdict, problem
         assert g.decide(review(mode=mode, verdict=verdict)).action == g.NEEDS_HUMAN
 
 
-def test_a_finding_without_a_line_is_valid():
+def test_a_finding_with_a_null_line_is_valid_and_a_nonblocking_one_still_approves():
+    assert g.decide(review(verdict={"verdict": "approve", "findings": [NOTE]})).action == g.APPROVE
+
+
+def test_a_finding_with_a_null_line_is_valid():
     assert g.verdict_problem({"verdict": "changes", "findings": [{**BLOCKER, "line": None}]}) is None
 
 
