@@ -30,3 +30,13 @@ scripts/tests/reviewbus: 150 passed (agents: 17 — codex runs read-only, epheme
 ### 2026-11-09T04:22:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:05e53f8
 feat(agreements): review bus — run Codex read-only and parse its verdict and rulings
 5 files changed, 334 insertions(+)
+
+### 2026-11-09T04:25:26Z · EDIT · myan · claude-code/opus-5.5 · 9e5f868
+Codex round 1 (before the PR): changes, five blocking, each verified. (f1) removing token variables did not hide the host's gh logins: codex now runs with HOME, XDG_CONFIG_HOME and GH_CONFIG_DIR set to an empty temp directory, XDG_* dropped, CODEX_HOME kept so codex still has its own login, and any answer containing a GitHub token pattern is refused, so a token can never reach a public PR. Remaining limit, stated in the PR: a read-only sandbox can still read a file by absolute path, such as the reviewer's plain-text hosts.yml; the sandbox has no network, and the token scan stops it being posted. (f2) the ruling options were outside the fence; they are now inside it with the rest of the author's data. (f3) the prompts told the model to read AGENTS.md from the PR's own checkout; both now declare everything the PR controls (files, diff, tool output) data, and take the rules from the base via git show. (f4) answers are now checked for exactly the schema's fields, a non-empty summary and rationale. (f5) a ruling may now be needs_human, which never binds; it is reserved and cannot be an option.
+
+### 2026-11-09T04:25:26Z · TEST · myan · claude-code/opus-5.5 · 9e5f868
+scripts/tests/reviewbus: 160 passed (new: the empty home, XDG and gh directories and kept CODEX_HOME; three token shapes refused; a missing summary, an extra field, a blank summary and an extra finding field refused; a hostile option sits inside the fence; needs_human accepted and reserved, a blank or extra-field rationale refused; both prompts take rules from the base). Real codex exec smoke test with the isolated environment: codex still authenticated, and inside it 'gh auth status' printed 'You are not logged into any GitHub hosts' and 'ls ~' printed nothing. ruff clean.
+
+### 2026-11-09T04:25:26Z · COMMIT · myan · claude-code/opus-5.5 · parent:9e5f868
+fix(agreements): review bus agents hide host logins, fence options, allow abstaining
+5 files changed, 126 insertions(+), 23 deletions(-)
