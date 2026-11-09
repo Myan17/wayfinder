@@ -47,3 +47,10 @@ PR open for gupta958 (human-only tier: scripts/reviewbus/**). Open question in t
 ### 2026-11-09T01:58:34Z · COMMIT · myan · claude-code/opus-5.5 · parent:7dc5fcf
 docs(agents): hand off the review bus protocol task
 1 file changed, 3 insertions(+)
+
+### 2026-11-09T02:27:25Z · HANDOFF · myan · claude-code/opus-5.5 · a4eeada
+Rebased onto main 32f665f (#119 merged), at Myan's request so #120 can merge. Old head 6b80cfa. No conflicts; the diff is unchanged.
+
+### 2026-11-09T02:27:25Z · COMMIT · myan · claude-code/opus-5.5 · parent:a4eeada
+docs(agents): log the rebase of the review bus protocol task onto #119
+1 file changed, 3 insertions(+)
