@@ -76,8 +76,13 @@ def test_every_gate_passing_in_on_mode_approves_and_merges():
     ],
 )
 def test_each_gate_can_block_an_approval(change, gate):
-    d = g.decide(review(**change))
-    assert d.action == g.NEEDS_HUMAN and not d.gates[gate][0]
+    r = review(**change)
+    assert not dict(g.GATES)[gate](review(**change))[0]  # the gate alone refuses, on a fresh input
+    if g.plain(r.files) and g.plain(r.tier) and g.plain(r.required):
+        assert g.decide(r).action == g.NEEDS_HUMAN
+    else:  # iterators and sets are refused before any gate runs
+        with pytest.raises(TypeError, match="untrusted input type"):
+            g.decide(r)
 
 
 def test_shadow_never_goes_beyond_would_approve_even_with_every_other_gate_green():
@@ -160,3 +165,54 @@ def test_round_zero_or_a_non_integer_round_never_approves():
     for bad in (0, "1", True):
         d = g.decide(review(round=bad))
         assert d.action != g.APPROVE and not d.gates["f"][0], bad
+
+
+class Liar(str):
+    def __eq__(self, other):
+        return other == "on"
+
+    __hash__ = str.__hash__
+
+
+class Truthy(list):
+    def __bool__(self):
+        return True
+
+
+class Hiding(list):
+    def __iter__(self):
+        return iter(())
+
+
+class LyingDict(dict):
+    def get(self, key, default=None):
+        return "success"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        dict(mode=Liar("shadow")),
+        dict(tier=Truthy()),
+        dict(files=Truthy()),
+        dict(files=Hiding(["db/migrations/0009.sql"])),
+        dict(required=Truthy(), checks={"unit": "failure"}),
+        dict(checks={"unit": Liar("failure"), "guardrails": "success"}),
+        dict(checks=LyingDict(unit="failure")),
+        dict(pr_head=Liar("b" * 40)),
+        dict(verdict={"verdict": Liar("approve"), "findings": []}),
+        dict(verdict={"verdict": "approve", "findings": Hiding([BLOCKER])}),
+        dict(verdict=LyingDict(verdict="approve", findings=[])),
+        dict(files=[object()]),
+    ],
+)
+def test_round_4_subclass_bypasses_raise_and_never_approve(change):
+    with pytest.raises(TypeError, match="untrusted input type"):
+        g.decide(review(**change))
+
+
+def test_plain_accepts_what_json_parsing_produces():
+    import json
+
+    assert g.plain(json.loads('{"a": [1, 2.5, true, null, "x", {"b": []}]}'))
+    assert not g.plain({1: "x"}) and not g.plain({"a": {1, 2}})

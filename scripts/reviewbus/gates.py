@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 from reviewbus import tier as tier_
 
@@ -158,7 +158,24 @@ class Decision:
     gates: dict[str, tuple[bool, str]]
 
 
+def plain(x: object) -> bool:
+    """Exactly the types JSON parsing produces, all the way down, never a subclass: a subclass can
+    override equality, truthiness or iteration and make a gate see evidence that is not there."""
+    t = type(x)
+    if t in (str, int, float, bool) or x is None:
+        return True
+    if t in (list, tuple):
+        return all(plain(v) for v in x)
+    if t is dict:
+        return all(type(k) is str and plain(v) for k, v in x.items())
+    return False
+
+
 def decide(r: Review) -> Decision:
+    """Every input must be plain JSON data (the watcher's inputs all come from parsed JSON); anything
+    else raises, and a raise can only end in a human's review, never an approval."""
+    if bad := [f.name for f in fields(r) if not plain(getattr(r, f.name))]:
+        raise TypeError(f"untrusted input type in {bad}; only plain JSON data is accepted")
     if r.mode not in MODES:
         raise ValueError(f"unknown mode {r.mode!r}; the watcher treats it as off")
     gates = {name: g(r) for name, g in GATES}

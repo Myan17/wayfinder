@@ -67,3 +67,13 @@ Rule 10's stop after round 3 went to Myan, who chose a fourth Codex round on 3d5
 ### 2026-11-09T03:10:41Z · COMMIT · myan · claude-code/opus-5.5 · parent:3d5cfea
 docs(agents): record Myan's choice of a fourth review round for the gates
 1 file changed, 3 insertions(+)
+
+### 2026-11-09T03:15:47Z · EDIT · myan · claude-code/opus-5.5 · ee639c5
+Codex round 4 on 3d5cfea: round 3's findings fixed; the requested sweep found five subclass bypasses (a str subclass lying about equality for mode, heads and conclusions; list subclasses lying about truthiness or iteration for tier, files, required and findings; dict subclasses overriding get), each verified. None is reachable from the watcher, whose inputs are all parsed JSON. Myan chose ("Option A") one fix and the PR without a fifth round: decide() first requires every Review field to be plain JSON data of exact built-in types, recursively, and raises TypeError otherwise, which can only end in a human's review.
+
+### 2026-11-09T03:15:47Z · TEST · myan · claude-code/opus-5.5 · ee639c5
+scripts/tests/reviewbus: 109 passed (new: twelve round-4 objects each raise TypeError from decide; plain() accepts json.loads output and refuses non-string keys and sets; the gate-blocking test now proves each gate fails alone and that decide either returns needs_human or refuses the input).
+
+### 2026-11-09T03:15:47Z · COMMIT · myan · claude-code/opus-5.5 · parent:ee639c5
+fix(agreements): review bus decide() accepts only plain JSON data
+3 files changed, 82 insertions(+), 3 deletions(-)
