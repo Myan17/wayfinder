@@ -60,7 +60,7 @@ def test_the_reviewer_needs_its_own_config_directory():
 
 def test_there_is_no_public_raw_gh_call():  # Codex f1: every write goes through a checked method
     public = {n for n in vars(github.GitHub) if not n.startswith("_")}
-    assert public == {
+    assert public - {"visibility"} == {
         "env",
         "login",
         "open_pulls",
@@ -134,6 +134,7 @@ def test_a_comment_goes_as_json_on_stdin_never_as_an_argument(tmp_path):
 def test_reads_are_parsed_into_plain_data(tmp_path):
     pr = {
         "headRefOid": SHA,
+        "baseRefOid": "b" * 40,
         "files": [{"path": "a.py"}, {"path": "db/x.sql"}],
         "body": None,
         "statusCheckRollup": [
@@ -147,6 +148,7 @@ def test_reads_are_parsed_into_plain_data(tmp_path):
     gh = reviewer(FakeGh("gupta958", {"pr": json.dumps(pr), "api": comments}), tmp_path)
     assert gh.pull(5) == {
         "head": SHA,
+        "base": "b" * 40,
         "files": ["a.py", "db/x.sql"],
         "body": "",
         "checks": {"unit": "failure", "go": "pending", "legacy": "success"},
@@ -163,3 +165,8 @@ def test_an_unreadable_variable_is_none_so_callers_treat_it_as_off(tmp_path):
     for name in ("--help", "X", "WAYFINDER_AGENT_APPROVAL --repo evil/x"):  # Codex f2
         with pytest.raises(ValueError, match="not one of the bus's variables"):
             gh.variable(name)
+
+
+def test_visibility_is_read_from_the_repository_and_lowercased(tmp_path):
+    gh = reviewer(FakeGh("gupta958", {"repo": '{"visibility": "PUBLIC"}'}), tmp_path)
+    assert gh.visibility() == "public"
