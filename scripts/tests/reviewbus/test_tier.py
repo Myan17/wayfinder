@@ -1,0 +1,93 @@
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # scripts/, for the reviewbus package
+from reviewbus import tier
+
+OWNERSHIP = """
+```yaml
+modules:
+  authz:         {owner: myan, paths: ["apps/api/wayfinder/authz/**", "docs/context/modules/authz.md"]}
+  egress:        {owner: myan, paths: ["apps/api/wayfinder/egress/**"]}
+  webhooks:      {owner: myan, paths: ["apps/ingestd/internal/webhook/**"]}
+  schema:        {owner: joint, paths: ["db/**", "docs/context/modules/schema.md"]}
+  eval-harness:  {owner: myan, paths: ["eval/harness/**"]}
+```
+"""
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "db/migrations/0001.sql",
+        "apps/api/wayfinder/authz/predicate.py",
+        "docs/context/modules/schema.md",
+        "AGENTS.md",
+        "docs/adr/ADR-0021-review-bus.md",
+        ".github/workflows/ci.yml",
+        ".githooks/pre-push",
+        "scripts/check_pr_size.py",
+        "scripts/gen_codeowners.py",
+        "scripts/reviewbus/gates.py",
+        "scripts/tests/reviewbus/test_gates.py",
+    ],
+)
+def test_each_rule_6_path_is_human_only(path):
+    assert tier.human_only([path], tier.globs(OWNERSHIP)) == [path]
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["eval/harness/s2/passes.py", "scripts/orient.py", "dbx/x.py", "docs/context/modules/eval-harness.md"],
+)
+def test_other_paths_are_not(path):
+    assert tier.human_only([path], tier.globs(OWNERSHIP)) == []
+
+
+def test_a_path_added_to_a_security_module_joins_the_tier():
+    added = OWNERSHIP.replace(
+        '"apps/api/wayfinder/egress/**"', '"apps/api/wayfinder/egress/**", "infra/egress/**"'
+    )
+    assert tier.human_only(["infra/egress/proxy.conf"], tier.globs(added)) == ["infra/egress/proxy.conf"]
+
+
+def test_a_missing_security_module_fails_closed():
+    with pytest.raises(ValueError, match=r"\['webhooks'\]"):
+        tier.globs(OWNERSHIP.replace("  webhooks:", "  hooks:"))
+    with pytest.raises(ValueError, match="no yaml block"):
+        tier.globs("no block")
+
+
+def test_the_real_ownership_file_reads():
+    g = tier.globs()
+    assert "db/**" in g and "scripts/reviewbus/**" in g
+
+
+@pytest.mark.parametrize(
+    "authz, why",
+    [
+        ("[]", r"no paths for security module\(s\) \['authz'\]"),
+        ('[""]', "not a quoted string"),
+        ("[apps/api/wayfinder/authz/**]", "not a quoted string"),
+        ('["apps/\\u0061pi/wayfinder/authz/**"]', "outside"),
+        ("['apps/api/it''s/**']", "outside"),
+        ('["apps/api/wayfinder/authz/**  "]', "outside"),
+        ('["apps/api/wayfinder/authz/**", ]', None),
+    ],
+)
+def test_an_empty_or_unreadable_security_path_list_fails_closed(authz, why):
+    text = OWNERSHIP.replace('["apps/api/wayfinder/authz/**", "docs/context/modules/authz.md"]', authz)
+    if why is None:  # a trailing comma is harmless and keeps the path
+        assert "apps/api/wayfinder/authz/**" in tier.globs(text)
+        return
+    with pytest.raises(ValueError, match=why):
+        tier.globs(text)
+
+
+def test_single_quoted_paths_are_read_without_their_quotes():
+    text = OWNERSHIP.replace('"apps/api/wayfinder/egress/**"', "'apps/api/wayfinder/egress/**'")
+    assert tier.human_only(["apps/api/wayfinder/egress/proxy.py"], tier.globs(text)) == [
+        "apps/api/wayfinder/egress/proxy.py"
+    ]
