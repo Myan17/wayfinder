@@ -17,6 +17,7 @@ interface_files:
   - eval/harness/s2/load_plan.py
   - eval/harness/s2/load.py
   - eval/harness/s2/load_run.py
+  - eval/harness/s2/passes.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -38,6 +39,7 @@ verified_hashes:
   "eval/harness/s2/load.py": "4339bba5510376ee"
   "eval/harness/s2/load_plan.py": "5bc0719368201d94"
   "eval/harness/s2/load_run.py": "748434d28ff6fe2f"
+  "eval/harness/s2/passes.py": "91ce5b8ddac8ed9a"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
   "eval/harness/s2/services.py": "ab535ea544cb493b"
@@ -132,6 +134,13 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   representations, real and padded counts, the padding fraction, every truncated window with count and
   fraction, the accepted windows' nearest-rank token `distribution`, and the commit, host, Ollama version
   and model digest. `60k` is labelled scale evidence. `Refused`; exit 1 on a refusal or `LoadFailed`.
+- **`s2.passes`** (pure; ADR-0019's warm and cold passes, each stage's call injected as `measure`):
+  `warm(queries, measure, *, warmup=3, timed=5) -> Warm` keeps only the timed passes; `Warm.cost_ns` is
+  the median of the per-pass means and `Warm.stats` the nearest-rank p50 and p95 over every timed call.
+  `cold(sample, reset, load, measure) -> Cold` requires the 50-query sample and runs reset, model load,
+  then one call per stage, for each query; `Cold.stats(stage)` and `Cold.model_load(what)`. `Measured`
+  holds `cpu_ns`, `wall_ns` (recorded, never judged) and `tokens`; `Stats` holds `p50_ns`, `p95_ns` and
+  `calls`; `percentile(xs, q)` is nearest-rank.
 - **`s2.ci`** (`eval/harness/s2/ci.py`), for CI's `s2` job: `changed(base, head) -> (mode, reasons)`
   with `mode` `full` or `no-op`; `triggers(paths)`; the trigger list `DIRS`, `FILES` and `WORKFLOW`;
   `keys()`; `model(restored)`. The CLI writes them to `$GITHUB_OUTPUT`. `changed` and `keys` need only
@@ -250,6 +259,7 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_load_plan.py` | The header; all 100 ids in order; identical windows sharing a source only under one file header and one repository; largest remainder (a tie goes to the lower id, a larger remainder beats a lower id), exactly 60,000 on a skewed corpus, refusal of nothing to copy or too much already; pads in ascending id, cycling, rows once from 0, a share with no source refused; the 60-minute lease, a microsecond over failing; every truncated window listed (one per window of a shared representation) and kept out of the per-window accepted counts; a retry above 2,048 failing with the repository, path, start line and raw error |
 | `eval/harness/tests/test_s2_load.py` (needs a database; in `make db-test`) | Every window an occurrence and identical windows sharing one representation; 100 `s2/pseudo-NN` rows and builds only where windows exist; headers `{owner/name} · {path}`; every claim exactly 60 minutes; padding reaching the target in proportion with rows 0..n-1 and the first copy from the first source; a build a microsecond over the lease, and a claim expired before activation, each failing the load naming the pseudo-repository; a truncated window listed and kept out of the accepted counts; a rejected retry failing the load naming the window |; the command's `run` loading a new migrated database and keeping it, and dropping it when the load fails |
 | `eval/harness/tests/test_s2_load_run.py` | Each repository read from its `<owner>__<name>.git` mirror at its as-of commit; a count differing from the manifest refusing the run; a wrong Ollama version or digest refused; nearest-rank p50, p95 and maximum; the report's lease, build seconds, counts, padding fraction, every truncated window and labels for both sizes; a refusal exiting 1 before anything is loaded |
+| `eval/harness/tests/test_s2_passes.py` | Three warm-up passes then five timed, only timed calls kept; the cost as the median of per-pass means, not the mean of all calls; nearest-rank p50 and p95 over every timed call; no queries refused; each cold pass resetting, then loading, then one call per stage, in that order; a sample other than 50 refused; cold passes measuring different stages refused |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake
@@ -273,3 +283,4 @@ against it (`AGENTS.md` §3.4).
 | 2026-11-08 | `s2.load_plan`: the corpus load's plan under Amendments 1-3 (sources, padding allocation and order, the lease check, the truncation report). The loader that runs it follows | — |
 | 2026-11-08 | `s2.load`: the corpus load, run against the database through the build path in 60-minute claims; its database tests join `make db-test`, and `db/s6_ollama.py` becomes an S2 trigger | — |
 | 2026-11-08 | `s2.load_run`: the command that loads either size into a new database and writes the load report | — |
+| 2026-11-09 | `s2.passes`: the warm and cold pass protocol and its statistics; the stage calls follow | — |
