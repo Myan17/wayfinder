@@ -50,3 +50,10 @@ Size: 403 lines. Folded the failed-run test into the unusable-answer cases (fail
 ### 2026-11-09T04:39:02Z · COMMIT · myan · claude-code/opus-5.5 · parent:0045d5d
 test(agreements): fold the failed codex run into the unusable-answer cases
 2 files changed, 8 insertions(+), 6 deletions(-)
+
+### 2026-11-09T04:42:24Z · HANDOFF · myan · claude-code/opus-5.5 · 4a36cfd
+Codex round 3: approve, no findings. make test above. PR open for gupta958 (human-only tier). Next, after the merge: rulings.py (confirm-only marking, binds_at, veto and confirm), then reviewer.py with cli.py (doctor, which also refuses a plain-text login for either role; once --dry-run; watch), the example config and the launchd entry.
+
+### 2026-11-09T04:42:24Z · COMMIT · myan · claude-code/opus-5.5 · parent:4a36cfd
+docs(agents): hand off the review bus agents task
+1 file changed, 3 insertions(+)
