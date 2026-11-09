@@ -47,3 +47,10 @@ Codex round 2: f1, f3 and f4 fixed; f2 only in part, verified: a filter defined 
 ### 2026-11-09T06:56:01Z · COMMIT · myan · claude-code/opus-5.5 · parent:b503f3c
 refactor(agreements): review bus reviewer takes its checkout as an argument
 3 files changed, 7 insertions(+), 80 deletions(-)
+
+### 2026-11-09T07:00:18Z · HANDOFF · myan · claude-code/opus-5.5 · 522758b
+Codex round 3: approve, no findings. make test above. PR open for gupta958 (human-only tier). Next, after the merge: scripts/reviewbus/checkout.py (hooks off, repository-local filters neutralised, HOME and SSH agent hidden, real-git tests for each) with cli.py (doctor refusing plain-text logins; once <pr> --dry-run; watch with a lock per PR), the rulings pass, the example config and the launchd entry.
+
+### 2026-11-09T07:00:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:522758b
+docs(agents): hand off the review bus reviewer task
+1 file changed, 3 insertions(+)
