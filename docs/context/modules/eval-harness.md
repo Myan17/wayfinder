@@ -16,6 +16,7 @@ interface_files:
   - eval/harness/s2/ci.py
   - eval/harness/s2/load_plan.py
   - eval/harness/s2/load.py
+  - eval/harness/s2/load_run.py
   - eval/harness/interface.py
   - eval/experiments/schema.json
 tables_owned:
@@ -36,6 +37,7 @@ verified_hashes:
   "eval/harness/s2/inputs.py": "e9864d746f2e2e1b"
   "eval/harness/s2/load.py": "4339bba5510376ee"
   "eval/harness/s2/load_plan.py": "5bc0719368201d94"
+  "eval/harness/s2/load_run.py": "748434d28ff6fe2f"
   "eval/harness/s2/preflight.py": "2751fca282127674"
   "eval/harness/s2/reranker.py": "03a09b91fd9c6287"
   "eval/harness/s2/services.py": "ab535ea544cb493b"
@@ -120,6 +122,16 @@ Only S2's own later parts call these. `eval/harness/interface.py` and
   `lease`, `repo_ids`, per-pseudo-repository `durations` (claim to activation), `real` and `padded`
   counts, `windows`, `accepted_tokens` and `truncated`. Also `live_representations(conn, repo_ids)`.
   Any refusal raises `LoadFailed` naming the pseudo-repository or the window.
+- **`s2.load_run`** (the command, `python -m s2.load_run --mirrors DIR --size real|60k --out FILE
+  [--dsn] [--dbname]`): reads S1's `<owner>__<name>.git` mirrors at each manifest `as_of_commit`
+  (`corpus(manifest, mirrors)`), refuses unless every window count is the manifest's `chunk_estimate`
+  and the ingestion Ollama reports ADR-0019's version and digest (`check_runtime(http)`), creates and
+  migrates a new database (`s2_<size>` by default; an existing name is refused), loads into it with the
+  real embedder (`run(...)`) and keeps it for the passes, dropping it only when the load fails. It writes
+  `report(loaded, size, meta)`: the lease, build seconds per pseudo-repository, windows, distinct and live
+  representations, real and padded counts, the padding fraction, every truncated window with count and
+  fraction, the accepted windows' nearest-rank token `distribution`, and the commit, host, Ollama version
+  and model digest. `60k` is labelled scale evidence. `Refused`; exit 1 on a refusal or `LoadFailed`.
 - **`s2.ci`** (`eval/harness/s2/ci.py`), for CI's `s2` job: `changed(base, head) -> (mode, reasons)`
   with `mode` `full` or `no-op`; `triggers(paths)`; the trigger list `DIRS`, `FILES` and `WORKFLOW`;
   `keys()`; `model(restored)`. The CLI writes them to `$GITHUB_OUTPUT`. `changed` and `keys` need only
@@ -236,7 +248,8 @@ None in Postgres. No committed files. The fetched issue file lives outside git, 
 | `eval/harness/tests/test_s2_services.py` | Digest pins, no tmpfs, volumes and ports in the compose file; every published port on loopback; host pid and cgroup from the running container; the reset's exact order, drop_caches between sync and start; version and digest refusals; the readiness timeout; with `WAYFINDER_S2_DOCKER=1` on Linux as root, a real reset and two connections with distinct backends |
 | `eval/harness/tests/test_s2_ci.py` | Each of Amendment 1 §5's inputs runs in full, anything else is a no-op, renames count as both paths, a zero or empty base and a failed diff run in full, every trigger path exists, the workflow runs `s2.ci` and `make s2-scale-test` and the dispatcher needs `s2`, `db-test` deselects the `s2_scale` test that `s2-scale-test` selects, keys move with the pins, a restored model is checked and never pulled, `$GITHUB_OUTPUT` |
 | `eval/harness/tests/test_s2_load_plan.py` | The header; all 100 ids in order; identical windows sharing a source only under one file header and one repository; largest remainder (a tie goes to the lower id, a larger remainder beats a lower id), exactly 60,000 on a skewed corpus, refusal of nothing to copy or too much already; pads in ascending id, cycling, rows once from 0, a share with no source refused; the 60-minute lease, a microsecond over failing; every truncated window listed (one per window of a shared representation) and kept out of the per-window accepted counts; a retry above 2,048 failing with the repository, path, start line and raw error |
-| `eval/harness/tests/test_s2_load.py` (needs a database; in `make db-test`) | Every window an occurrence and identical windows sharing one representation; 100 `s2/pseudo-NN` rows and builds only where windows exist; headers `{owner/name} · {path}`; every claim exactly 60 minutes; padding reaching the target in proportion with rows 0..n-1 and the first copy from the first source; a build a microsecond over the lease, and a claim expired before activation, each failing the load naming the pseudo-repository; a truncated window listed and kept out of the accepted counts; a rejected retry failing the load naming the window |
+| `eval/harness/tests/test_s2_load.py` (needs a database; in `make db-test`) | Every window an occurrence and identical windows sharing one representation; 100 `s2/pseudo-NN` rows and builds only where windows exist; headers `{owner/name} · {path}`; every claim exactly 60 minutes; padding reaching the target in proportion with rows 0..n-1 and the first copy from the first source; a build a microsecond over the lease, and a claim expired before activation, each failing the load naming the pseudo-repository; a truncated window listed and kept out of the accepted counts; a rejected retry failing the load naming the window |; the command's `run` loading a new migrated database and keeping it, and dropping it when the load fails |
+| `eval/harness/tests/test_s2_load_run.py` | Each repository read from its `<owner>__<name>.git` mirror at its as-of commit; a count differing from the manifest refusing the run; a wrong Ollama version or digest refused; nearest-rank p50, p95 and maximum; the report's lease, build seconds, counts, padding fraction, every truncated window and labels for both sizes; a refusal exiting 1 before anything is loaded |
 | `eval/harness/tests/test_s2_calibration.py` | The 30 s block, agreement within boundary ticks, harness CPU subtracted except on rerank, the inclusive 95% and 105% bounds and values just outside both, the 1% noise gate, `iowait` and `steal` reported only, a counter that does not count, no work, `/proc/stat` going backwards, the run order, and the accounting option |
 
 ## Fake
@@ -259,3 +272,4 @@ against it (`AGENTS.md` §3.4).
 | 2026-11-03 | The backend thread preflight (`s2.preflight`) | — |
 | 2026-11-08 | `s2.load_plan`: the corpus load's plan under Amendments 1-3 (sources, padding allocation and order, the lease check, the truncation report). The loader that runs it follows | — |
 | 2026-11-08 | `s2.load`: the corpus load, run against the database through the build path in 60-minute claims; its database tests join `make db-test`, and `db/s6_ollama.py` becomes an S2 trigger | — |
+| 2026-11-08 | `s2.load_run`: the command that loads either size into a new database and writes the load report | — |

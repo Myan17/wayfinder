@@ -4,13 +4,14 @@ These need WAYFINDER_TEST_DSN (CI's db job runs them through `make db-test`) and
 """
 
 import sys
+import uuid
 from collections import namedtuple
 from datetime import timedelta
 from pathlib import Path
 
 import psycopg
 import pytest
-from s2 import load, load_plan
+from s2 import load, load_plan, load_run, services
 from s2.inputs import Window
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "db" / "tests"))
@@ -154,3 +155,50 @@ def test_a_truncated_window_is_listed_and_kept_out_of_the_accepted_counts(db):
 def test_a_rejected_retry_fails_the_load_naming_the_window(db):
     with pytest.raises(load_plan.LoadFailed, match=f"8 c.md:1 exceeds 2,048: {RAW}"):
         run(db, Fake(too_long={"three\n"}))
+
+
+class Client:
+    """`s6_ollama.Ollama` as `s2.load_run.run` uses it: the pinned digest, and a fixed vector."""
+
+    def __init__(self, base):
+        self.base = base
+
+    def digest(self, name):
+        return services.MODEL_DIGEST
+
+    def embed_counted(self, model, text, *, truncate=False):
+        import s6_ollama
+
+        if "three" in text:
+            raise s6_ollama.ContextExceeded(model, RAW)
+        return s6_ollama.Embedded([1.0] + [0.0] * (s6.DIMENSION - 1), 7)
+
+
+def exists(name):
+    with psycopg.connect(schema_tests.DSN, autocommit=True) as admin:
+        return admin.execute("SELECT 1 FROM pg_database WHERE datname = %s", (name,)).fetchone() is not None
+
+
+def test_the_command_loads_into_a_new_migrated_database_and_keeps_it(monkeypatch):
+    import s6_ollama
+
+    monkeypatch.setattr(s6_ollama, "Ollama", Client)
+    name = f"wf_test_run_{uuid.uuid4().hex[:8]}"
+    try:
+        got = load_run.run(schema_tests.DSN, name, CORPUS[:3], NAMES, 6, "ollama/0.34.2")
+        assert got.windows == 3 and got.accepted_tokens == [7, 7, 7] and exists(name)
+        with psycopg.connect(psycopg.conninfo.make_conninfo(schema_tests.DSN, dbname=name)) as conn:
+            assert load.live_representations(conn, got.repo_ids.values()) == 6
+    finally:
+        with psycopg.connect(schema_tests.DSN, autocommit=True) as admin:
+            admin.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+
+
+def test_a_failed_load_drops_the_database_it_created(monkeypatch):
+    import s6_ollama
+
+    monkeypatch.setattr(s6_ollama, "Ollama", Client)
+    name = f"wf_test_run_{uuid.uuid4().hex[:8]}"
+    with pytest.raises(load_plan.LoadFailed, match=r"8 c\.md:1 exceeds 2,048"):
+        load_run.run(schema_tests.DSN, name, CORPUS, NAMES, None, "ollama/0.34.2")
+    assert not exists(name)
