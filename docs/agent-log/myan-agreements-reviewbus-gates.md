@@ -60,3 +60,10 @@ scripts/tests/reviewbus: 96 passed (new: empty and live iterators for tier and r
 ### 2026-11-09T03:09:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:1e29158
 fix(agreements): review bus gates b and c refuse iterators and empty names
 3 files changed, 29 insertions(+), 4 deletions(-)
+
+### 2026-11-09T03:10:40Z · DECIDE · myan · claude-code/opus-5.5 · 3d5cfea
+Rule 10's stop after round 3 went to Myan, who chose a fourth Codex round on 3d5cfea before the PR opens. His words: "Option A".
+
+### 2026-11-09T03:10:41Z · COMMIT · myan · claude-code/opus-5.5 · parent:3d5cfea
+docs(agents): record Myan's choice of a fourth review round for the gates
+1 file changed, 3 insertions(+)
