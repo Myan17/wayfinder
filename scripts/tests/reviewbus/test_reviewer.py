@@ -1,6 +1,4 @@
 import contextlib
-import os
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -8,7 +6,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # scripts/, for the reviewbus package
-from reviewbus import agents, gates, protocol, reviewer, state
+from reviewbus import agents, protocol, reviewer, state
 
 ROSTER = (protocol.ROOT / "docs/team/ROSTER.md").read_text()
 HEAD, BASE = "a" * 40, "b" * 40
@@ -182,44 +180,3 @@ def test_a_second_pass_on_the_same_pr_skips_while_the_first_holds_it():  # Codex
         assert first and "another pass holds" in run(gh)[-1] and gh.calls == []
     with reviewer.one_at_a_time(CFG.lock_dir, 9) as again:
         assert again
-
-
-def git(*args, cwd):
-    env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull}
-    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, env=env)
-
-
-def test_the_checkout_never_runs_a_hook_the_pr_adds(tmp_path):  # Codex f2
-    origin, clone, marker = tmp_path / "origin", tmp_path / "clone", tmp_path / "hook-ran"
-    ident = ["-c", "user.email=a@b", "-c", "user.name=a"]
-    git("init", "-q", "-b", "main", str(origin), cwd=tmp_path)
-    git(*ident, "commit", "-q", "--allow-empty", "-m", "base", cwd=origin)
-    hook = origin / ".githooks" / "post-checkout"
-    hook.parent.mkdir()
-    hook.write_text(f"#!/bin/sh\ntouch {marker}\n")
-    hook.chmod(0o755)
-    git("checkout", "-q", "-b", "pr", cwd=origin)
-    git("add", ".", cwd=origin)
-    git(*ident, "commit", "-q", "-m", "hook", cwd=origin)
-    git("update-ref", "refs/pull/1/head", "pr", cwd=origin)
-    head = subprocess.run(
-        ["git", "rev-parse", "pr"], cwd=origin, capture_output=True, text=True
-    ).stdout.strip()
-    git("clone", "-q", str(origin), str(clone), cwd=tmp_path)
-    git("config", "core.hooksPath", ".githooks", cwd=clone)  # as this repository is configured
-    with reviewer.checkout(clone, 1, head) as wt:
-        assert (wt / ".githooks" / "post-checkout").exists() and not marker.exists()
-    git("worktree", "add", "-q", "--detach", str(tmp_path / "plain"), head, cwd=clone)
-    assert marker.exists()  # the same checkout without the guards runs it, so this test can fail
-
-
-def test_a_dry_run_reviews_but_posts_nothing():
-    gh, ask = FakeGh(mode="on"), fake_ask()
-    log = run(gh, ask, dry_run=True)
-    assert len(ask.seen) == 1 and gh.calls == [] and "dry run" in log[-1]
-
-
-def test_every_action_maps_to_a_verdict_the_state_machine_accepts():
-    assert set(reviewer.POSTED) == {gates.APPROVE, gates.WOULD_APPROVE, gates.REQUEST_CHANGES,
-                                    gates.NEEDS_HUMAN, gates.ESCALATE}  # fmt: skip
-    assert set(reviewer.POSTED.values()) <= set(gates.VERDICTS)

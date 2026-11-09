@@ -1,7 +1,8 @@
 """The reviewer's pass over one pull request (REVIEW-BUS.md §2 and §4), run as gupta958.
 
 Read the mode, the PR and its comments; act only when the state is `requested`; check the PR out at
-its head in a throwaway worktree; ask Codex; let `gates.decide` choose the action; post the
+its head through `open_checkout` (the hardened checkout arrives with the CLI); ask Codex; let
+`gates.decide` choose the action; post the
 `review_result`; and approve and merge only for `approve_and_merge` in `on` mode, pinned to the
 reviewed head. Shadow mode never approves or merges. If the head moves while the model works,
 nothing is posted, and the next pass sees the new request. `dry_run` posts nothing at all.
@@ -11,10 +12,7 @@ from __future__ import annotations
 
 import contextlib
 import fcntl
-import functools
-import os
 import subprocess
-import tempfile
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -38,37 +36,6 @@ class Config:
     required: list[str] = field(default_factory=list)  # the required check names, from branch protection
     model: str | None = None
     lock_dir: Path = Path.home() / ".local/state/wayfinder-reviewbus"
-
-
-# Git as the PR's checkout needs it, with nothing the PR or the host could turn into code: no hooks
-# (the repository's own core.hooksPath points into the checked-out tree), no global or system config
-# (so no filters or credential helpers), no fsmonitor, no submodules, no prompt and no tokens.
-SAFE_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "credential.helper=",
-            "-c", "submodule.recurse=false"]  # fmt: skip
-
-
-def git_env() -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("GIT_", "GH_", "GITHUB_"))}
-    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0")
-    return env
-
-
-@contextlib.contextmanager
-def checkout(repo_dir: Path, pr: int, head: str) -> Iterator[Path]:
-    """The PR at `head`, detached, in a temporary worktree removed afterwards. Public repository:
-    fetching needs no credentials, and git runs with none and with every hook and filter off."""
-    git = ["git", *SAFE_GIT, "-C", str(repo_dir)]
-    run = functools.partial(subprocess.run, env=git_env(), check=True, timeout=300)
-    run([*git, "fetch", "--quiet", "--no-recurse-submodules", "origin", "main", f"pull/{pr}/head"])
-    with tempfile.TemporaryDirectory(prefix="reviewbus-") as tmp:
-        wt = Path(tmp) / "wt"
-        run([*git, "worktree", "add", "--quiet", "--detach", str(wt), head])
-        try:
-            yield wt
-        finally:
-            subprocess.run(
-                [*git, "worktree", "remove", "--force", str(wt)], env=git_env(), check=False, timeout=300
-            )
 
 
 @contextlib.contextmanager
@@ -119,7 +86,7 @@ def review_pr(
     *,
     dry_run: bool = False,
     ask: Callable[..., dict] = agents.review,
-    open_checkout: Callable[[Path, int, str], contextlib.AbstractContextManager[Path]] = checkout,
+    open_checkout: Callable[[Path, int, str], contextlib.AbstractContextManager[Path]],
 ) -> list[str]:
     """One pass; returns what it did, one line each, for the log."""
     with one_at_a_time(cfg.lock_dir, pr) as mine:

@@ -40,3 +40,10 @@ scripts/tests/reviewbus: 214 passed (new: the fake gh honours --json fields; a c
 ### 2026-11-09T06:53:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:4b54c36
 fix(agreements): review bus reviewer runs no PR hooks and decides on fresh evidence
 5 files changed, 148 insertions(+), 22 deletions(-)
+
+### 2026-11-09T06:56:01Z · DECIDE · myan · claude-code/opus-5.5 · b503f3c
+Codex round 2: f1, f3 and f4 fixed; f2 only in part, verified: a filter defined in the clone's own .git/config can still be selected by the PR's .gitattributes, and git still saw HOME and SSH_AUTH_SOCK. The PR was also at 422 lines. So the checkout leaves this PR: review_pr now takes open_checkout as a required argument, and the hardened checkout (hooks, filters, credentials) moves to scripts/reviewbus/checkout.py in the next PR with the CLI, where it gets its own Codex review and real-git tests. The removed code is kept for that PR.
+
+### 2026-11-09T06:56:01Z · COMMIT · myan · claude-code/opus-5.5 · parent:b503f3c
+refactor(agreements): review bus reviewer takes its checkout as an argument
+3 files changed, 7 insertions(+), 80 deletions(-)
