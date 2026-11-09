@@ -69,6 +69,12 @@ def switch(r: Review) -> tuple[bool, str]:
     return r.mode == "on", f"WAYFINDER_AGENT_APPROVAL is {r.mode}"
 
 
+def names(xs: object) -> bool:
+    """A non-empty list or tuple of non-empty strings. Iterators and other containers are refused:
+    one can be consumed or come out empty after a check that looked at it."""
+    return isinstance(xs, (list, tuple)) and bool(xs) and all(isinstance(x, str) and x for x in xs)
+
+
 def canonical(path: object) -> bool:
     """A repository-relative path as git prints it: no leading ./ or /, no . or .. segment, no
     doubled or trailing slash, no backslash. Anything else could slip past a tier glob."""
@@ -85,8 +91,8 @@ def no_tier_path(r: Review) -> tuple[bool, str]:
         return False, "no list of changed files was given; refusing rather than treating none as safe"
     if odd := [f for f in r.files if not canonical(f)]:
         return False, f"changed paths not in canonical repository-relative form: {odd!r}"
-    if not r.tier:
-        return False, "no human-only tier was given; refusing rather than treating every path as safe"
+    if not names(r.tier):
+        return False, "no human-only tier list was given; refusing rather than treating every path as safe"
     hits = tier_.human_only(r.files, r.tier)
     return not hits, f"human-only tier: {hits}" if hits else "no human-only path"
 
@@ -103,8 +109,11 @@ def checks_green(r: Review) -> tuple[bool, str]:
         return False, problem
     if r.pr_head != r.reviewed_head:
         return False, f"the head moved from {r.reviewed_head[:7]} to {r.pr_head[:7]} after the review"
-    if not r.required:
-        return False, "no required checks were given; refusing rather than treating none as green"
+    if not names(r.required) or not isinstance(r.checks, Mapping):
+        return (
+            False,
+            "no required-check list and check map were given; refusing rather than treating none as green",
+        )
     bad = {c: r.checks.get(c, "missing") for c in r.required if r.checks.get(c) != "success"}
     return not bad, f"required checks not green: {bad}" if bad else "every required check is green"
 
@@ -120,6 +129,8 @@ def description_current(r: Review) -> tuple[bool, str]:
     """The description names the reviewed head: at least its first 7 characters, as a whole word."""
     if problem := heads_problem(r):
         return False, problem
+    if not isinstance(r.description, str):
+        return False, "the description is not text"
     short = r.reviewed_head[:7]
     named = re.search(rf"(?<![0-9a-f]){re.escape(short)}[0-9a-f]*(?![0-9a-f])", r.description)
     ok = bool(named) and r.reviewed_head.startswith(named.group(0))

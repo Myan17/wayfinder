@@ -50,3 +50,13 @@ scripts/tests/reviewbus: 88 passed (new: an iterator, a set, ./, /, .., //, a tr
 ### 2026-11-09T03:07:50Z · COMMIT · myan · claude-code/opus-5.5 · parent:4934ea0
 fix(agreements): review bus gate b takes only canonical repository paths
 3 files changed, 28 insertions(+), 3 deletions(-)
+
+### 2026-11-09T03:09:14Z · EDIT · myan · claude-code/opus-5.5 · 1e29158
+Codex round 3: changes, two blocking findings of round 2's class, verified: an empty or exhausted iterator passed as tier (gate b) or required (gate c) passed the emptiness check and then checked nothing. tier and required must now be non-empty lists or tuples of non-empty strings, checks a mapping, and the description text. Rule 10 stops the review loop after round 3: these fixes are not yet reviewed by Codex, and Myan decides whether to run a fourth round or review them himself.
+
+### 2026-11-09T03:09:14Z · TEST · myan · claude-code/opus-5.5 · 1e29158
+scripts/tests/reviewbus: 96 passed (new: empty and live iterators for tier and required, an empty name in each, a list of pairs as checks, a non-text description). ruff clean.
+
+### 2026-11-09T03:09:14Z · COMMIT · myan · claude-code/opus-5.5 · parent:1e29158
+fix(agreements): review bus gates b and c refuse iterators and empty names
+3 files changed, 29 insertions(+), 4 deletions(-)
