@@ -40,3 +40,10 @@ scripts/tests/reviewbus: 194 passed (new: an ADR, DESIGN and ORIENT path confirm
 ### 2026-11-09T05:56:18Z · COMMIT · myan · claude-code/opus-5.5 · parent:fa2eac0
 fix(agreements): review bus rulings protect DESIGN, ORIENT and ADRs, and parse times exactly
 3 files changed, 27 insertions(+), 3 deletions(-)
+
+### 2026-11-09T05:59:16Z · HANDOFF · myan · claude-code/opus-5.5 · 7554c1e
+Codex round 2: approve, no findings. make test above. PR open for gupta958 (human-only tier). Next, after the merge: reviewer.py (one poll pass per open PR: state, checkout, agents, gates, post; rulings with binds_at and confirm-only) and cli.py (doctor, which refuses a plain-text login for either role; once <pr> --dry-run; watch), the example config and the launchd entry, split for size.
+
+### 2026-11-09T05:59:17Z · COMMIT · myan · claude-code/opus-5.5 · parent:7554c1e
+docs(agents): hand off the review bus rulings task
+1 file changed, 3 insertions(+)
