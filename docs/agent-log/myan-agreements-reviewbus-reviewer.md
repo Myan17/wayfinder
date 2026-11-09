@@ -30,3 +30,13 @@ scripts/tests/reviewbus: 209 passed (reviewer: 14 — shadow posts would-approve
 ### 2026-11-09T06:49:27Z · COMMIT · myan · claude-code/opus-5.5 · parent:386f302
 feat(agreements): review bus — the reviewer's pass over one pull request
 5 files changed, 325 insertions(+), 1 deletion(-)
+
+### 2026-11-09T06:53:28Z · EDIT · myan · claude-code/opus-5.5 · 4b54c36
+Codex round 1 (before the PR): changes, four blocking, each verified. (f1) pull() read baseRefOid without asking gh for it, so a real run would crash; the query now asks for it, and the fake gh answers only the fields requested, so a test fails if a field is read but not asked for. (f2) this repository's core.hooksPath=.githooks made 'git worktree add' run a post-checkout hook the PR adds, outside the sandbox: every checkout git call now runs with core.hooksPath=/dev/null, fsmonitor off, no credential helper, submodules off, GIT_CONFIG_GLOBAL=/dev/null, GIT_CONFIG_NOSYSTEM, no prompt, and no GIT_/GH_/GITHUB_ variables. (f3) the mode, checks and description were read before the model ran; the switch, the PR and the bus are now all read again after it, and the gates decide on those. (f4) a stop or a duplicate pass during the review was missed; after the model, the state must still be 'requested' at the same round, and a per-PR flock lets only one pass act.
+
+### 2026-11-09T06:53:29Z · TEST · myan · claude-code/opus-5.5 · 4b54c36
+scripts/tests/reviewbus: 214 passed (new: the fake gh honours --json fields; a check failing during the review leaves only a needs_human comment; the switch turned off during the review posts nothing; an escalation posted during the review posts nothing; a second pass skips while the first holds the lock; and a real-git test in which a PR adds an executable .githooks/post-checkout to a clone configured with core.hooksPath=.githooks: the reviewer's checkout leaves the marker absent, and a plain worktree add of the same commit creates it, so the test can fail). ruff clean.
+
+### 2026-11-09T06:53:29Z · COMMIT · myan · claude-code/opus-5.5 · parent:4b54c36
+fix(agreements): review bus reviewer runs no PR hooks and decides on fresh evidence
+5 files changed, 148 insertions(+), 22 deletions(-)

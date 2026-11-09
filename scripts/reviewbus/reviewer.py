@@ -10,6 +10,9 @@ nothing is posted, and the next pass sees the new request. `dry_run` posts nothi
 from __future__ import annotations
 
 import contextlib
+import fcntl
+import functools
+import os
 import subprocess
 import tempfile
 from collections.abc import Callable, Iterator
@@ -34,23 +37,54 @@ class Config:
     repo_dir: Path  # a local clone the watcher may fetch into and add worktrees to
     required: list[str] = field(default_factory=list)  # the required check names, from branch protection
     model: str | None = None
+    lock_dir: Path = Path.home() / ".local/state/wayfinder-reviewbus"
+
+
+# Git as the PR's checkout needs it, with nothing the PR or the host could turn into code: no hooks
+# (the repository's own core.hooksPath points into the checked-out tree), no global or system config
+# (so no filters or credential helpers), no fsmonitor, no submodules, no prompt and no tokens.
+SAFE_GIT = ["-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "-c", "credential.helper=",
+            "-c", "submodule.recurse=false"]  # fmt: skip
+
+
+def git_env() -> dict[str, str]:
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("GIT_", "GH_", "GITHUB_"))}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0")
+    return env
 
 
 @contextlib.contextmanager
 def checkout(repo_dir: Path, pr: int, head: str) -> Iterator[Path]:
     """The PR at `head`, detached, in a temporary worktree removed afterwards. Public repository:
-    fetching needs no credentials, and git runs with none."""
-    git = ["git", "-C", str(repo_dir)]
-    subprocess.run([*git, "fetch", "--quiet", "origin", "main", f"pull/{pr}/head"], check=True, timeout=300)
+    fetching needs no credentials, and git runs with none and with every hook and filter off."""
+    git = ["git", *SAFE_GIT, "-C", str(repo_dir)]
+    run = functools.partial(subprocess.run, env=git_env(), check=True, timeout=300)
+    run([*git, "fetch", "--quiet", "--no-recurse-submodules", "origin", "main", f"pull/{pr}/head"])
     with tempfile.TemporaryDirectory(prefix="reviewbus-") as tmp:
         wt = Path(tmp) / "wt"
-        subprocess.run(
-            [*git, "worktree", "add", "--quiet", "--detach", str(wt), head], check=True, timeout=300
-        )
+        run([*git, "worktree", "add", "--quiet", "--detach", str(wt), head])
         try:
             yield wt
         finally:
-            subprocess.run([*git, "worktree", "remove", "--force", str(wt)], check=False, timeout=300)
+            subprocess.run(
+                [*git, "worktree", "remove", "--force", str(wt)], env=git_env(), check=False, timeout=300
+            )
+
+
+@contextlib.contextmanager
+def one_at_a_time(lock_dir: Path, pr: int) -> Iterator[bool]:
+    """True only for the one pass holding this PR's lock; a second watcher skips the PR."""
+    lock_dir.mkdir(parents=True, exist_ok=True)
+    with open(lock_dir / f"pr-{pr}.lock", "w") as f:
+        try:
+            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            yield True
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
 
 
 def pr_text(pull: dict, comments: list[dict]) -> str:
@@ -88,9 +122,19 @@ def review_pr(
     open_checkout: Callable[[Path, int, str], contextlib.AbstractContextManager[Path]] = checkout,
 ) -> list[str]:
     """One pass; returns what it did, one line each, for the log."""
+    with one_at_a_time(cfg.lock_dir, pr) as mine:
+        if not mine:
+            return [f"#{pr}: another pass holds this PR; skipped"]
+        return _review(pr, gh, cfg, roster, dry_run, ask, open_checkout)
+
+
+def _mode(gh: GitHub) -> str:
     mode = gh.variable(MODE)
-    mode = mode if mode in gates.MODES else "off"
-    if mode == "off":
+    return mode if mode in gates.MODES else "off"
+
+
+def _review(pr, gh, cfg, roster, dry_run, ask, open_checkout) -> list[str]:
+    if _mode(gh) == "off":
         return [f"#{pr}: {MODE} is off; nothing done"]
     pull, comments = gh.pull(pr), gh.comments(pr)
     st = state.state(comments, pull["head"], roster)
@@ -104,13 +148,16 @@ def review_pr(
     except (agents.AgentError, subprocess.SubprocessError, OSError) as e:
         verdict = {"verdict": "needs_human", "findings": [], "summary": f"No usable review: {e}"}
         log.append(f"#{pr}: review failed: {e}")
+    # The model may have taken minutes: read the switch, the PR and the bus again, and decide on those.
+    mode, now = _mode(gh), gh.pull(pr)
+    after = state.state(gh.comments(pr), now["head"], roster)
+    if mode == "off" or (after.status, after.round) != ("requested", st.round) or now["head"] != pull["head"]:
+        return [*log, f"#{pr}: the PR, its bus state or the switch changed during the review; nothing posted"]
     decision = gates.decide(gates.Review(
-        mode=mode, round=st.round, reviewed_head=pull["head"], pr_head=gh.pull(pr)["head"],
-        files=pull["files"], checks=pull["checks"], required=list(cfg.required), description=pull["body"],
+        mode=mode, round=st.round, reviewed_head=pull["head"], pr_head=now["head"],
+        files=now["files"], checks=now["checks"], required=list(cfg.required), description=now["body"],
         verdict=verdict, tier=list(tier.globs()),
     ))  # fmt: skip
-    if not decision.gates["c"][0] and "moved" in decision.gates["c"][1]:
-        return [*log, f"#{pr}: {decision.gates['c'][1]}; nothing posted, the next pass reviews the new head"]
     fields = {"pr": pr, "head": pull["head"][:12], "round": st.round, "verdict": POSTED[decision.action],
               "findings": verdict.get("findings", []), "model": cfg.model or "codex default",
               "gates": {k: ok for k, (ok, _) in decision.gates.items()}}  # fmt: skip

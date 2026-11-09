@@ -94,7 +94,7 @@ class GitHub:
 
     def pull(self, n: int) -> dict:
         raw = json.loads(self._gh("pr", "view", str(_number(n)), "-R", REPO, "--json",
-                                 "headRefOid,files,body,statusCheckRollup"))  # fmt: skip
+                                 "headRefOid,baseRefOid,files,body,statusCheckRollup"))  # fmt: skip
         return {
             "head": raw["headRefOid"],
             "base": raw["baseRefOid"],

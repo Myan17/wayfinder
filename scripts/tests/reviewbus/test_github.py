@@ -25,7 +25,11 @@ class FakeGh:
             raise subprocess.CalledProcessError(1, argv)
         if argv[1:3] == ["api", "user"]:
             return self.login + "\n"
-        return self.replies.get(key, "")
+        reply = self.replies.get(key, "")
+        if argv[1:3] == ["pr", "view"] and reply:  # answer only the fields asked for, as gh does
+            wanted = argv[argv.index("--json") + 1].split(",")
+            return json.dumps({k: v for k, v in json.loads(reply).items() if k in wanted})
+        return reply
 
 
 def reviewer(fake, tmp_path):
